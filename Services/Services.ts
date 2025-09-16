@@ -2,6 +2,7 @@ export class Services {
     static DmsAssistantPlugin = Symbol("DmsAssistantPlugin");
     static OdbCache = Symbol("OdbCache");
     static ModalService = Symbol("ModalService");
+    static MarkdownService = Symbol("MarkdownService");
     
     // interfaces
     static IAIClass = Symbol("IAIClass");

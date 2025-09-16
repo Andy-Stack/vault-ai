@@ -11,6 +11,7 @@ import type { IAIClass } from "AIClasses/IAIClass";
 import { GeminiActionDefinitions } from "Actioner/Gemini/GeminiActionDefinitions";
 import type { IActionDefinitions } from "Actioner/IActionDefinitions";
 import { Gemini } from "AIClasses/Gemini/Gemini";
+import { MarkdownService } from "./MarkdownService";
 
 export function RegisterDependencies(plugin: DmsAssistantPlugin) {
     RegisterSingleton(Services.DmsAssistantPlugin, plugin);
@@ -18,8 +19,9 @@ export function RegisterDependencies(plugin: DmsAssistantPlugin) {
     RegisterSingleton(Services.ModalService, new ModalService())
     
     RegisterSingleton<IPrompt>(Services.IPrompt, new AIPrompt());
-    RegisterSingleton<IActioner>(Services.IActioner, new Actioner())
+    RegisterSingleton<IActioner>(Services.IActioner, new Actioner());
 
+    RegisterTransient<MarkdownService>(Services.MarkdownService, () => new MarkdownService());
     RegisterAiProvider(plugin);
 }
 

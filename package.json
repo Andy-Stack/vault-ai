@@ -30,6 +30,17 @@
 	"dependencies": {
 		"@google/genai": "^1.17.0",
 		"express": "^5.1.0",
+		"rehype-highlight": "^7.0.2",
+		"rehype-katex": "^7.0.1",
+		"rehype-stringify": "^10.0.1",
+		"remark-emoji": "^5.0.2",
+		"remark-footnotes": "^4.0.1",
+		"remark-gfm": "^4.0.1",
+		"remark-math": "^6.0.0",
+		"remark-parse": "^11.0.0",
+		"remark-rehype": "^11.1.2",
+		"remark-toc": "^9.0.0",
+		"unified": "^11.0.5",
 		"uuid": "^11.1.0"
 	}
 }

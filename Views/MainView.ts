@@ -1,7 +1,6 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian';
-
-import Input from '../Components/Input.svelte';
 import { mount, unmount } from 'svelte';
+import ChatWindow from 'Components/ChatWindow.svelte';
 
 export const VIEW_TYPE_MAIN = 'main-view';
 
@@ -10,7 +9,7 @@ export class MainView extends ItemView {
     super(leaf);
   }
 
-  input: ReturnType<typeof Input> | undefined;
+  input: ReturnType<typeof ChatWindow> | undefined;
 
   getViewType() {
     return VIEW_TYPE_MAIN;
@@ -24,11 +23,9 @@ export class MainView extends ItemView {
     const container = this.contentEl;
     container.empty();
     
-    this.input = mount(Input, {
+    this.input = mount(ChatWindow, {
       target: container,
-      props: {
-        input: "",
-      }
+      props: {}
     });
   }
 

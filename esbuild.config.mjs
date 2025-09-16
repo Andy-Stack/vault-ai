@@ -1,6 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import { copyFileSync, mkdirSync, existsSync, readdirSync, statSync } from "fs";
+import { join } from "path";
 
 import esbuildSvelte from 'esbuild-svelte';
 import { sveltePreprocess } from 'svelte-preprocess';
@@ -13,6 +15,27 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = (process.argv[2] === "production");
+
+// Function to copy directory recursively
+function copyDir(src, dest) {
+  if (!existsSync(dest)) {
+    mkdirSync(dest, { recursive: true });
+  }
+  
+  const files = readdirSync(src);
+  
+  for (const file of files) {
+    const srcPath = join(src, file);
+    const destPath = join(dest, file);
+    
+    if (statSync(srcPath).isDirectory()) {
+      copyDir(srcPath, destPath);
+    } else {
+      copyFileSync(srcPath, destPath);
+      console.log(`📁 Copied: ${srcPath} → ${destPath}`);
+    }
+  }
+}
 
 const context = await esbuild.context({
 	plugins: [
@@ -52,7 +75,24 @@ const context = await esbuild.context({
 
 if (prod) {
 	await context.rebuild();
+	
+	// Copy styles after production build
+	if (existsSync("Styles")) {
+		copyDir("Styles", "styles");
+		console.log("✅ Copied Styles directory to styles/");
+	} else {
+		console.log("⚠️  Styles directory not found, skipping copy");
+	}
+	
 	process.exit(0);
 } else {
+	// Copy styles for development
+	if (existsSync("Styles")) {
+		copyDir("Styles", "styles");
+		console.log("✅ Copied Styles directory to styles/");
+	} else {
+		console.log("⚠️  Styles directory not found, skipping copy");
+	}
+	
 	await context.watch();
 }

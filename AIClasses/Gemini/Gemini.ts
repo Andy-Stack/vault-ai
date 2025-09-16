@@ -1,5 +1,4 @@
 import { AIProviderURL } from "Enums/ApiProvider";
-import { isValidJson } from "Helpers";
 import { request, type RequestUrlParam } from "obsidian";
 import { Resolve } from "Services/DependencyService";
 import { Services } from "Services/Services";
@@ -8,6 +7,7 @@ import type { GeminiActionDefinitions } from "Actioner/Gemini/GeminiActionDefini
 import { create_file } from "Actioner/Actions";
 import type { IAIClass } from "AIClasses/IAIClass";
 import type { IPrompt } from "AIClasses/IPrompt";
+import type { GenerateContentResponse, Part } from "@google/genai";
 
 export class Gemini implements IAIClass {
   private readonly apiKey: string;
@@ -22,7 +22,7 @@ export class Gemini implements IAIClass {
     this.actionDefinitions = Resolve(Services.IActionDefinitions);
   }
 
-  public async apiRequest(userInput: string, actioner: IActioner): Promise<Part[] | null> { //AIResponse
+  public async apiRequest(userInput: string, actioner: IActioner): Promise<Part[] | null> {
     let prompt: string = "The users prompt is: " + userInput;
 
     let requestBody = JSON.stringify({
@@ -55,22 +55,14 @@ export class Gemini implements IAIClass {
       body: requestBody
     };
 
-    let response: GeminiApiResponse = JSON.parse(await request(reqParam));
+    let response: GenerateContentResponse = JSON.parse(await request(reqParam));
 
     console.log(response);
 
-    //TODO: tidy up this
-    let ai_response: Part[] = response.candidates[0]?.content.parts ?? "{}";
-
-    // if (isValidJson(ai_response)) {
-    //   return JSON.parse(ai_response);
-    // }
+    let ai_response: Part[] = response.candidates?.first()?.content?.parts ?? [];
 
     console.log(ai_response);
 
     return ai_response;
-
-
-    return null;
   }
 }

@@ -9,6 +9,8 @@ import { FileAction } from 'Enums/FileAction';
 import { Path } from 'Enums/Path';
 import { RegisterAiProvider, RegisterDependencies } from 'Services/ServiceRegistration';
 
+import './styles/markdown.css';
+
 interface DmsAssistantSettings {
 	apiProvider: string;
 	apiKey: string;
