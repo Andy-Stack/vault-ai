@@ -16,17 +16,11 @@ interface StreamingState {
 }
 
 export class StreamingMarkdownService {
-    private static processor: Processor<any, any, any, any, any> | null = null;
+    private readonly processor: Processor<any, any, any, any, any> | null = null;
     private streamingStates = new Map<string, StreamingState>();
 
     constructor() {
-        if (!StreamingMarkdownService.processor) {
-            StreamingMarkdownService.processor = this.createProcessor();
-        }
-    }
-
-    private createProcessor() {
-        return unified()
+        this.processor = unified()
         .use(remarkParse)
             .use(remarkGfm)
             .use(remarkEmoji)
@@ -56,7 +50,7 @@ export class StreamingMarkdownService {
     public formatText(text: string): string {
         try {
             const preprocessed = this.preprocessContent(text);
-            const result = StreamingMarkdownService.processor!.processSync(preprocessed);
+            const result = this.processor!.processSync(preprocessed);
             return String(result);
         } catch (error) {
             console.warn('Markdown processing failed:', error);
