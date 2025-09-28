@@ -3,6 +3,7 @@
   import { Services } from "Services/Services";
   import type { StreamingMarkdownService } from "Services/StreamingMarkdownService";
 	import ChatAreaThought from "./ChatAreaThought.svelte";
+	import StreamingIndicator from "./StreamingIndicator.svelte";
 
   export let messages: Array<{id: string, content: string, isUser: boolean, isStreaming: boolean}> = [];
   export let chatContainer: HTMLDivElement;
@@ -98,7 +99,7 @@
             <!-- Streaming message: use action for initialization -->
             {#if message.isStreaming}
             <div use:streamingAction={message.id} class="streaming-content"></div>
-            <span class="streaming-indicator">● ● ●</span>
+            <StreamingIndicator/>
             <ChatAreaThought/>
             {:else}
             <!-- Static message: use traditional rendering -->
@@ -168,15 +169,4 @@
     min-height: 1em; /* Ensure the element exists for binding */
   }
 
-  .streaming-indicator {
-    display: inline-block;
-    color: var(--text-accent);
-    animation: pulse 1.5s infinite;
-    margin-left: 4px;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
-  }
 </style>
