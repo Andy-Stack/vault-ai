@@ -40,7 +40,7 @@
     right: 0;
     background-color: color-mix(in srgb, var(--interactive-accent) 85%, white 15%);
     border-radius: var(--box-border-radius);
-    box-shadow: 0px 0px 8px 2px color-mix(in srgb, var(--interactive-accent) 40%, transparent 60%);
+    box-shadow: 0px 0px 8px 2px color-mix(in srgb, var(--interactive-accent) 40%, transparent 80%);
   }
   .📦:nth-child(1) {
     animation: slide var(--duration) ease-in-out infinite alternate;
