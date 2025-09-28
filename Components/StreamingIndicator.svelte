@@ -21,6 +21,7 @@
     align-items: center;
     position: relative;
     margin-left: 4px;
+    margin-top: 12px;
   }
 
   .📦 {
@@ -87,7 +88,7 @@
 
   @keyframes slide {
     0% {
-      background-color: color-mix(in srgb, var(--interactive-accent) 70%, black 30%);
+      background-color: color-mix(in srgb, var(--interactive-accent) 70%, white 30%);
       transform: translatex(0vw);
     }
     100% {
@@ -100,7 +101,7 @@
 
   @keyframes color-change {
     0% {
-      background-color: color-mix(in srgb, var(--interactive-accent) 70%, black 30%);
+      background-color: color-mix(in srgb, var(--interactive-accent) 70%, white 30%);
     }
     100% {
       background-color: color-mix(in srgb, var(--interactive-accent) 95%, white 5%);
