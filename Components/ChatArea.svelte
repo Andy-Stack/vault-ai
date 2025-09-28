@@ -127,6 +127,10 @@
     padding: var(--size-4-3);
     gap: var(--p-spacing);
   }
+
+  .chat-area::-webkit-scrollbar {
+    display: none;
+  }
   
   .message-container {
     display: flex;

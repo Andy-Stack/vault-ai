@@ -167,6 +167,9 @@
   #chat-container {
     height: 100%;
     width: 100%;
+    max-width: 40vw;
+    justify-self: center;
+    user-select: text;
     grid-row: 1;
     grid-column: 1;
     overflow: hidden;
