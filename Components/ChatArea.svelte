@@ -138,7 +138,6 @@
   }
 
   .chat-padding {
-    background-color: violet;
     height: 40vh;
     width: 100%;
   }
