@@ -117,9 +117,9 @@
     <div class="message-container" class:user={message.isUser} class:assistant={!message.isUser}>
       <div class="message-bubble" class:user={message.isUser} class:assistant={!message.isUser}>
         {#if message.isUser}
-          <p class="message-text-user">{message.content}</p>
+          <p class="message-text-user fade-in-fast">{message.content}</p>
         {:else}
-          <div class="markdown-content" class:streaming={message.isStreaming}>
+          <div class="markdown-content fade-in-fast" class:streaming={message.isStreaming}>
             <!-- Streaming message: use action for initialization -->
             {#if message.isStreaming}
             <div use:streamingAction={message.id} class="streaming-content"></div>
@@ -210,6 +210,22 @@
 
   .streaming-content {
     min-height: 1em; /* Ensure the element exists for binding */
+  }
+
+  /* Streaming message styles */
+  .fade-in-fast {
+    animation: reveal-fade 0.5s ease-in-out forwards;
+  }
+
+  @keyframes reveal-fade {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Welcome text animation */
