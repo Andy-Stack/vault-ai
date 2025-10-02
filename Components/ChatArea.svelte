@@ -4,17 +4,18 @@
   import type { StreamingMarkdownService } from "Services/StreamingMarkdownService";
 	import ChatAreaThought from "./ChatAreaThought.svelte";
 	import StreamingIndicator from "./StreamingIndicator.svelte";
-	import { slide } from "svelte/transition";
 	import { Greeting } from "Enums/Greeting";
 
   export let messages: Array<{id: string, content: string, isUser: boolean, isStreaming: boolean}> = [];
-  export let showChatPadding: boolean = false;
   export let chatContainer: HTMLDivElement;
-  
+
   let streamingMarkdownService: StreamingMarkdownService = Resolve(Services.StreamingMarkdownService);
 
   let messageElements = new Map<string, HTMLElement>();
   let lastProcessedContent = new Map<string, string>();
+  let scrollInterval: number | null = null;
+  let userScrolledUp = false;
+  let lastScrollTop = 0;
 
   function getGreetingByTime(): string {
     const hour = new Date().getHours();
@@ -42,14 +43,45 @@
     messages.forEach((message) => {
       if (!message.isUser) {
         const lastContent = lastProcessedContent.get(message.id) || '';
-        
+
         // Only update if content has changed
         if (message.content !== lastContent) {
+          if (message.isStreaming && lastContent === '') {
+            userScrolledUp = false;
+          }
+
           updateMessageContent(message);
           lastProcessedContent.set(message.id, message.content);
         }
       }
     });
+  }
+
+  function handleScroll() {
+    if (!chatContainer) return;
+
+    if (chatContainer.scrollTop < lastScrollTop) {
+      userScrolledUp = true;
+    }
+
+    lastScrollTop = chatContainer.scrollTop;
+  }
+
+  function startScrolling() {
+    if (scrollInterval || userScrolledUp) return;
+
+    scrollInterval = window.setInterval(() => {
+      if (chatContainer && !userScrolledUp) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }, 50);
+
+    setTimeout(() => {
+      if (scrollInterval) {
+        clearInterval(scrollInterval);
+        scrollInterval = null;
+      }
+    }, 500);
   }
 
   function updateMessageContent(message: {id: string, content: string, isUser: boolean, isStreaming: boolean}) {
@@ -61,6 +93,7 @@
     } else {
       streamingMarkdownService.finalizeStream(message.id, message.content);
     }
+    startScrolling();
   }
 
   function initializeMessageElement(messageId: string, element: HTMLElement) {
@@ -112,7 +145,7 @@
   }
 </script>
 
-<div class="chat-area" bind:this={chatContainer}>
+<div class="chat-area" bind:this={chatContainer} on:scroll={handleScroll}>
   {#each messages as message (message.id)}
     <div class="message-container" class:user={message.isUser} class:assistant={!message.isUser}>
       <div class="message-bubble" class:user={message.isUser} class:assistant={!message.isUser}>
@@ -125,9 +158,6 @@
             <div use:streamingAction={message.id} class="streaming-content"></div>
             <StreamingIndicator/>
             <ChatAreaThought/>
-            {#if showChatPadding}
-            <div class="chat-padding" transition:slide={{duration: 4000, delay: 0}}></div>
-            {/if}
             {:else}
             <!-- Static message: use traditional rendering -->
             {@html getStaticHTML(message)}
@@ -160,11 +190,6 @@
     display: none;
   }
 
-  .chat-padding {
-    height: 40vh;
-    width: 100%;
-  }
-  
   .message-container {
     display: flex;
     margin: 0;

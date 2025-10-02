@@ -18,8 +18,6 @@
 
   let userRequest = "";
   let isSubmitting = false;
-  let userHasScrolled = false;
-  let showChatPadding = false;
 
   let messages: Array<{
     id: string,
@@ -54,9 +52,7 @@
 
     await conversationService.saveConversation(messages);
 
-    showChatPadding = true;
     scrollToBottom();
-    userHasScrolled = false;
 
     try {
       // Create AI message placeholder
@@ -102,10 +98,8 @@
           );
           await conversationService.saveConversation(messages);
         }
-        showChatPadding = false;
       }
     } finally {
-      showChatPadding = false;
       semaphore.release();
       isSubmitting = false;
     }
@@ -143,7 +137,7 @@
 
 <main class="container">
   <div id="chat-container">
-    <ChatArea bind:messages bind:chatContainer={chatContainer} bind:showChatPadding={showChatPadding}/>
+    <ChatArea bind:messages bind:chatContainer={chatContainer}/>
   </div>
   
   <div id="input-container">
