@@ -71,6 +71,12 @@ const buildOptions = {
 	treeShaking: true,
 	outfile: "main.js",
 	minify: prod,
+	loader: {
+		'.css': 'css',
+		'.ttf': 'file',
+		'.woff': 'file',
+		'.woff2': 'file',
+	},
 };
 
 if (prod) {
