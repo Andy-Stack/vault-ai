@@ -1,4 +1,35 @@
 /* ============================== */
+/* Main View Customization */
+/* ============================== */
+
+.workspace-leaf-content[data-type="main-view"] .view-content {
+  background: linear-gradient(
+    to bottom,
+    var(--color-base-25),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-20),
+    var(--color-base-10),
+    var(--color-base-10),
+    var(--color-base-05)
+  );
+  padding-top: 0;
+}
+
+/* ============================== */
 /* CSS Variables for Theming */
 /* ============================== */
 

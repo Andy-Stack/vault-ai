@@ -169,7 +169,7 @@
     display: grid;
     grid-template-rows: 1fr auto;
     grid-template-columns: 1fr;
-    height: 100%;
+    height: calc(100% - var(--size-4-16));
     border-radius: var(--radius-m);
     color: var(--font-interface-theme);
   }
@@ -192,7 +192,7 @@
     grid-template-rows: var(--size-4-3) 1fr var(--size-4-3);
     grid-template-columns: var(--size-4-3) 1fr var(--size-4-3) auto var(--size-4-3);
     border-radius: var(--modal-radius);
-    background-color: var(--modal-background);
+    background-color: var(--color-base-00);
   }
 
   #input {

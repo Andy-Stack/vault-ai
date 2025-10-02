@@ -5,6 +5,7 @@
 	import ChatAreaThought from "./ChatAreaThought.svelte";
 	import StreamingIndicator from "./StreamingIndicator.svelte";
 	import { slide } from "svelte/transition";
+	import { Greeting } from "Enums/Greeting";
 
   export let messages: Array<{id: string, content: string, isUser: boolean, isStreaming: boolean}> = [];
   export let showChatPadding: boolean = false;
@@ -14,6 +15,27 @@
 
   let messageElements = new Map<string, HTMLElement>();
   let lastProcessedContent = new Map<string, string>();
+
+  function getGreetingByTime(): string {
+    const hour = new Date().getHours();
+
+    // Morning: 5am - 11:59am
+    if (hour >= 5 && hour < 12) {
+      return Greeting.Morning;
+    }
+    // Midday: 12pm - 4:59pm
+    else if (hour >= 12 && hour < 17) {
+      return Greeting.Midday;
+    }
+    // Evening: 5pm - 8:59pm
+    else if (hour >= 17 && hour < 21) {
+      return Greeting.Evening;
+    }
+    // Night: 9pm - 4:59am
+    else {
+      return Greeting.Night;
+    }
+  }
 
   // Track streaming messages and update them incrementally
   $: {
@@ -104,7 +126,7 @@
             <StreamingIndicator/>
             <ChatAreaThought/>
             {#if showChatPadding}
-            <div class="chat-padding" transition:slide={{duration: 3000, delay: 0}}></div>
+            <div class="chat-padding" transition:slide={{duration: 4000, delay: 0}}></div>
             {/if}
             {:else}
             <!-- Static message: use traditional rendering -->
@@ -118,7 +140,7 @@
   
   {#if messages.length === 0}
     <div class="empty-state">
-      <p>Start a conversation by typing a message below.</p>
+      <div class="typing-in">{getGreetingByTime()}</div>
     </div>
   {/if}
 </div>
@@ -188,6 +210,44 @@
 
   .streaming-content {
     min-height: 1em; /* Ensure the element exists for binding */
+  }
+
+  /* Welcome text animation */
+  .typing-in {
+    overflow: hidden;
+    white-space: nowrap;
+    animation: reveal-center 3s ease-in-out forwards;
+    max-width: 0;
+    margin: 0 auto;
+    padding: 5px;
+  }
+
+  @keyframes reveal-center {
+    0% { 
+      max-width: 0;
+      opacity: 0;
+      filter: blur(1px);
+    }
+    50% {
+      max-width: 50%;
+      opacity: 0.9;
+      filter: blur(0.5px)
+    }
+    70% {
+      max-width: 60%;
+      opacity: 0.95;
+      filter: blur(0px)
+    }
+    90% {
+      max-width: 80%;
+      opacity: 0.95;
+      filter: blur(0px)
+    }
+    100% { 
+      max-width: 100%;
+      opacity: 1;
+      filter: blur(0px);
+    }
   }
 
 </style>
