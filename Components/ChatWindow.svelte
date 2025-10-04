@@ -59,7 +59,7 @@
       // Stream the response
       let accumulatedContent = "";
 
-      for await (const chunk of ai.streamRequest(requestToSend, actioner)) {
+      for await (const chunk of ai.streamRequest(conversation, actioner)) {
         if (chunk.error) {
           console.error("Streaming error:", chunk.error);
           // Update message with error

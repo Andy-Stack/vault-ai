@@ -4,8 +4,8 @@ import { AIProvider } from './Enums/ApiProvider';
 
 import { MainView, VIEW_TYPE_MAIN } from 'Views/MainView';
 import { Services } from 'Services/Services';
-import { OdbCache } from 'ODB/Core/OdbCache';
-import { FileAction } from 'Enums/FileAction';
+// import { OdbCache } from 'ODB/Core/OdbCache';
+// import { FileAction } from 'Enums/FileAction';
 import { Path } from 'Enums/Path';
 import { RegisterAiProvider, RegisterDependencies } from 'Services/ServiceRegistration';
 
@@ -71,22 +71,22 @@ export default class AIAgentPlugin extends Plugin {
 			console.log('click', evt);
 		});
 
-		let odbCache: OdbCache = Resolve<OdbCache>(Services.OdbCache)
+		// let odbCache: OdbCache = Resolve<OdbCache>(Services.OdbCache)
 
-		await odbCache.buildCache();
+		// await odbCache.buildCache();
 
-		this.registerEvent(
-			this.app.vault.on(FileAction.Create, (file) => odbCache.onFileChanged(file, FileAction.Create))
-		);
-		this.registerEvent(
-			this.app.vault.on(FileAction.Modify, (file) => odbCache.onFileChanged(file, FileAction.Modify))
-		);
-		this.registerEvent(
-			this.app.vault.on(FileAction.Delete, (file) => odbCache.onFileChanged(file, FileAction.Delete))
-		);
-		this.registerEvent(
-			this.app.vault.on(FileAction.Rename, (file) => odbCache.onFileChanged(file, FileAction.Rename))
-		);
+		// this.registerEvent(
+		// 	this.app.vault.on(FileAction.Create, (file) => odbCache.onFileChanged(file, FileAction.Create))
+		// );
+		// this.registerEvent(
+		// 	this.app.vault.on(FileAction.Modify, (file) => odbCache.onFileChanged(file, FileAction.Modify))
+		// );
+		// this.registerEvent(
+		// 	this.app.vault.on(FileAction.Delete, (file) => odbCache.onFileChanged(file, FileAction.Delete))
+		// );
+		// this.registerEvent(
+		// 	this.app.vault.on(FileAction.Rename, (file) => odbCache.onFileChanged(file, FileAction.Rename))
+		// );
 	}
 
 	async onunload() {
@@ -185,12 +185,6 @@ function CreateDirectories(plugin: AIAgentPlugin) {
 		const vault = plugin.app.vault;
 		if (vault.getAbstractFileByPath(Path.Root) == null) {
 			vault.createFolder(Path.Root);
-		}
-		if (vault.getAbstractFileByPath(Path.Schemas) == null) {
-			vault.createFolder(Path.Schemas);
-		}
-		if (vault.getAbstractFileByPath(Path.Records) == null) {
-			vault.createFolder(Path.Records);
 		}
 	});
 }

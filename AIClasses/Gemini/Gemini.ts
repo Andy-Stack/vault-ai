@@ -5,6 +5,8 @@ import type { GeminiActionDefinitions } from "Actioner/Gemini/GeminiActionDefini
 import type { IAIClass } from "AIClasses/IAIClass";
 import type { IPrompt } from "AIClasses/IPrompt";
 import { StreamingService, type StreamChunk } from "Services/StreamingService";
+import type { Conversation } from "Conversations/Conversation";
+import { Role } from "Enums/Role";
 
 export class Gemini implements IAIClass {
   private readonly apiKey: string;
@@ -23,10 +25,18 @@ export class Gemini implements IAIClass {
    * Stream response from Gemini API
    */
   public async* streamRequest(
-    userInput: string,
+    conversation: Conversation,
     actioner: IActioner
   ): AsyncGenerator<StreamChunk, void, unknown> {
-    const prompt = "The users prompt is: " + userInput;
+    
+    const contents = conversation.contents.map(content => ({
+      role: content.role === Role.User ? "user" : "model",
+      parts: [
+        {
+          text: content.content
+        }
+      ]
+    }));
 
     const requestBody = {
       system_instruction: {
@@ -35,20 +45,11 @@ export class Gemini implements IAIClass {
             text: this.aiPrompt.systemInstruction()
           },
           {
-            text: this.aiPrompt.userInstruction()
+            text: await this.aiPrompt.userInstruction()
           }
         ]
       },
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: ""
-            },
-          ],
-        },
-      ],
+      contents: contents,
       tools: [
         {
           google_search: {},

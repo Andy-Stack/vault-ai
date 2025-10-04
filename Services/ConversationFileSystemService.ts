@@ -41,6 +41,7 @@ export class ConversationFileSystemService {
         };
 
         await this.fileSystemService.writeObjectToFile(this.currentConversationPath, conversationData);
+        console.log("Conversation saved to:", this.currentConversationPath);
         return this.currentConversationPath;
     }
 
