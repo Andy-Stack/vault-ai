@@ -5,34 +5,40 @@ import { mount, unmount } from 'svelte';
 import { Resolve } from 'Services/DependencyService';
 import { Services } from 'Services/Services';
 import type { ConversationFileSystemService } from 'Services/ConversationFileSystemService';
+import type { FileSystemService } from 'Services/FileSystemService';
 import { dateToString } from 'Helpers/Helpers';
+import { conversationStore } from 'Stores/conversationStore';
 
 interface ListItem {
     id: string;
     date: string;
     title: string;
     selected: boolean;
+    filePath: string;
 }
 
 export class ConversationHistoryModal extends Modal {
 
     private readonly conversationFileSystemService: ConversationFileSystemService = Resolve(Services.ConversationFileSystemService);
+    private readonly fileSystemService: FileSystemService = Resolve(Services.FileSystemService);
 
     private component: Record<string, any> | null = null;
     private items: ListItem[];
+    private conversations: Conversation[];
 
     constructor(app: App) {
         super(app);
     }
 
     override async open() {
-        const conversations: Conversation[] = await this.conversationFileSystemService.getAllConversations();
+        this.conversations = await this.conversationFileSystemService.getAllConversations();
 
-        this.items = conversations.map((conversation, index) => ({
+        this.items = this.conversations.map((conversation, index) => ({
             id: index.toString(),
             date: dateToString(conversation.created, false),
             title: conversation.title,
-            selected: false
+            selected: false,
+            filePath: this.conversationFileSystemService.generateConversationPath(conversation)
         }));
 
         super.open();
@@ -54,11 +60,28 @@ export class ConversationHistoryModal extends Modal {
         });
     }
 
-    handleDelete(itemIds: string[]) {
+    async handleDelete(itemIds: string[]) {
+        const itemsToDelete = this.items.filter(item => itemIds.includes(item.id));
+
+        let shouldResetChat = false;
+        const currentPath = this.conversationFileSystemService.getCurrentConversationPath();
+
+        for (const item of itemsToDelete) {
+            const deleted = await this.fileSystemService.deleteFile(item.filePath);
+            if (deleted && currentPath === item.filePath) {
+                shouldResetChat = true;
+            }
+        }
+
         this.items = this.items.filter(item => !itemIds.includes(item.id));
 
         if (this.component) {
             this.component.items = this.items;
+        }
+
+        if (shouldResetChat) {
+            this.conversationFileSystemService.resetCurrentConversation();
+            conversationStore.reset();
         }
     }
 

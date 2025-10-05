@@ -46,6 +46,10 @@ export class ConversationFileSystemService {
         this.currentConversationPath = null;
     }
 
+    public getCurrentConversationPath(): string | null {
+        return this.currentConversationPath;
+    }
+
     public async deleteCurrentConversation(): Promise<boolean> {
         if (!this.currentConversationPath) {
             return false;

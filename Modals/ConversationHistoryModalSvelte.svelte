@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { setIcon } from "obsidian";
-	import { fade } from "svelte/transition";
+	import { fade, slide } from "svelte/transition";
 
     export let items: Array<{id: string, date: string, title: string, selected: boolean}>;
     export let onClose: () => void;
@@ -32,6 +32,7 @@
         return;
       }
       onDelete(Array.from(selectedItems));
+      items = items.filter((item) => !selectedItems.has(item.id))
       selectedItems.clear();
       selectedItems = selectedItems;
     }
@@ -61,12 +62,12 @@
     </div>
     <div class="conversation-history-modal-content">
       {#if items.length === 0}
-      <p class="history-empty-state">
+      <p class="history-empty-state" in:fade={{ duration: 200 }} out:fade={{ duration: 200 }}>
         Conversation history is empty.
       </p>
       {:else}
       {#each items as item (item.id)}
-      <div class="history-list-modal-content">
+      <div class="history-list-modal-content" in:fade={{ duration: 200 }} out:fade={{ duration: 200 }}>
         <span class="history-list-modal-date">{item.date}</span>
         <span class="history-list-modal-separator">|</span>
         <span class="history-list-modal-title">{item.title}</span>
@@ -111,7 +112,6 @@
     .conversation-history-modal-content {
       grid-row: 4;
       grid-column: 2;
-      min-height: 10vh;
       overflow: scroll;
       scroll-behavior: smooth;
     }
@@ -130,6 +130,7 @@
       display: grid;
       grid-template-rows: 1fr;
       grid-template-columns: auto auto 1fr auto;
+      margin-bottom: var(--size-4-2);
     }
 
     .history-list-modal-date {

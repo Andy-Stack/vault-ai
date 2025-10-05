@@ -5,6 +5,7 @@ export class Conversation {
 
     title: string;
     created: Date;
+    path: string;
 
     contents: ConversationContent[] = [];
 
