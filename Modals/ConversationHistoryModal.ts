@@ -55,9 +55,21 @@ export class ConversationHistoryModal extends Modal {
             props: {
                 items: this.items,
                 onClose: () => this.close(),
-                onDelete: (itemIds: string[]) => this.handleDelete(itemIds)
+                onDelete: (itemIds: string[]) => this.handleDelete(itemIds),
+                onSelect: (itemId: string) => this.handleSelect(itemId)
             }
         });
+    }
+
+    handleSelect(itemId: string) {
+        const index = parseInt(itemId);
+        const selectedConversation = this.conversations[index];
+        const filePath = this.items[index].filePath;
+
+        if (selectedConversation) {
+            conversationStore.loadConversation(selectedConversation, filePath);
+            this.close();
+        }
     }
 
     async handleDelete(itemIds: string[]) {

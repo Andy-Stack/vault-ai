@@ -5,6 +5,7 @@
     export let items: Array<{id: string, date: string, title: string, selected: boolean}>;
     export let onClose: () => void;
     export let onDelete: (itemIds: string[]) => void;
+    export let onSelect: (itemId: string) => void;
   
     let deleteButton: HTMLButtonElement;
     let closeButton: HTMLButtonElement;
@@ -35,6 +36,10 @@
       items = items.filter((item) => !selectedItems.has(item.id))
       selectedItems.clear();
       selectedItems = selectedItems;
+    }
+
+    function handleConversationClick(itemId: string, event: UIEvent) {
+      onSelect(itemId);
     }
   </script>
 
@@ -68,11 +73,18 @@
       {:else}
       {#each items as item (item.id)}
       <div class="history-list-modal-content" in:fade={{ duration: 200 }} out:fade={{ duration: 200 }}>
-        <span class="history-list-modal-date">{item.date}</span>
-        <span class="history-list-modal-separator">|</span>
-        <span class="history-list-modal-title">{item.title}</span>
-        <input 
-          type="checkbox" 
+        <div
+          class="history-list-modal-clickable"
+          on:click={(e) => handleConversationClick(item.id, e)}
+          on:keydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
+          role="button"
+          tabindex="0">
+          <span class="history-list-modal-date">{item.date}</span>
+          <span class="history-list-modal-separator">|</span>
+          <span class="history-list-modal-title">{item.title}</span>
+        </div>
+        <input
+          type="checkbox"
           class="history-list-modal-checkbox"
           checked={selectedItems.has(item.id)}
           on:change={() => toggleSelection(item.id)}
@@ -129,8 +141,28 @@
     .history-list-modal-content {
       display: grid;
       grid-template-rows: 1fr;
-      grid-template-columns: auto auto 1fr auto;
+      grid-template-columns: 1fr auto;
       margin-bottom: var(--size-4-2);
+    }
+
+    .history-list-modal-clickable {
+      grid-row: 1;
+      grid-column: 1;
+      display: grid;
+      grid-template-rows: 1fr;
+      grid-template-columns: auto auto 1fr;
+      cursor: pointer;
+      padding: var(--size-2-2) 0;
+      border-radius: var(--radius-s);
+      transition: background-color 0.2s ease;
+    }
+
+    .history-list-modal-clickable:hover {
+      background-color: var(--color-base-20);
+    }
+
+    .history-list-modal-clickable:active {
+      background-color: var(--color-base-25);
     }
 
     .history-list-modal-date {
@@ -158,8 +190,9 @@
 
     .history-list-modal-checkbox {
       grid-row: 1;
-      grid-column: 4;
-      margin: 0px var(--size-4-3) 0px var(--size-2-3)
+      grid-column: 2;
+      margin: 0px var(--size-4-3) 0px var(--size-2-3);
+      align-self: center;
     }
 
     #delete-button {

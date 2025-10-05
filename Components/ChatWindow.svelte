@@ -136,6 +136,14 @@
     conversation = new Conversation();
     conversationStore.clearResetFlag();
   }
+
+  $: if ($conversationStore.conversationToLoad) {
+    const { conversation: loadedConversation, filePath } = $conversationStore.conversationToLoad;
+    conversation = loadedConversation;
+    conversationService.setCurrentConversationPath(filePath);
+    conversationStore.clearLoadFlag();
+    scrollToBottom();
+  }
 </script>
 
 <main class="container">

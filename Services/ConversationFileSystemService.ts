@@ -50,6 +50,10 @@ export class ConversationFileSystemService {
         return this.currentConversationPath;
     }
 
+    public setCurrentConversationPath(filePath: string): void {
+        this.currentConversationPath = filePath;
+    }
+
     public async deleteCurrentConversation(): Promise<boolean> {
         if (!this.currentConversationPath) {
             return false;
