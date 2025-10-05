@@ -72,7 +72,9 @@ export class StreamingMarkdownService {
 
     public streamChunk(messageId: string, fullText: string): void {
         const state = this.streamingStates.get(messageId);
-        if (!state || state.isComplete) return;
+        if (!state || state.isComplete) {
+            return;
+        }
 
         // Update buffer
         state.buffer = fullText;
@@ -91,7 +93,9 @@ export class StreamingMarkdownService {
 
         const render = () => {
             const state = this.streamingStates.get(messageId);
-            if (!state) return;
+            if (!state) {
+                return;
+            }
 
             try {
                 const html = this.formatText(state.buffer);
@@ -114,7 +118,9 @@ export class StreamingMarkdownService {
 
     public finalizeStream(messageId: string, fullText: string): void {
         const state = this.streamingStates.get(messageId);
-        if (!state) return;
+        if (!state) {
+            return;
+        }
 
         state.isComplete = true;
         state.buffer = fullText;

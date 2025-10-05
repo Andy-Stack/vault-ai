@@ -16,11 +16,13 @@
   let plugin: AIAgentPlugin = Resolve(Services.AIAgentPlugin);
   let streamingMarkdownService: StreamingMarkdownService = Resolve(Services.StreamingMarkdownService);
 
-  let messageElements = new Map<string, HTMLElement>();
-  let lastProcessedContent = new Map<string, string>();
+  let messageElements: Map<string, HTMLElement> = new Map<string, HTMLElement>();
+  let lastProcessedContent: Map<string, string> = new Map<string, string>();
+  let currentStreamFinalized: boolean = false;
+
   let scrollInterval: number | null = null;
-  let userScrolledUp = false;
-  let lastScrollTop = 0;
+  let userScrolledUp: boolean = false;
+  let lastScrollTop: number = 0;
 
   function getGreetingByTime(): string {
     const hour = new Date().getHours();
@@ -98,8 +100,10 @@
 
     if (message.isCurrentlyStreaming) {
       streamingMarkdownService.streamChunk(message.id, message.content);
-    } else {
+      currentStreamFinalized = false;
+    } else if (!currentStreamFinalized) {
       streamingMarkdownService.finalizeStream(message.id, message.content);
+      currentStreamFinalized = true;
     }
     startScrolling();
   }
