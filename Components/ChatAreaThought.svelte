@@ -1,53 +1,73 @@
 <script lang="ts">
-	import { AIThoughtMessage } from "Messages/AIThoughtMessage";
-    import { Resolve } from "Services/DependencyService";
-	import type { MessageService } from "Services/MessageService";
-    import { Services } from "Services/Services";
-    import { onDestroy } from "svelte";
-	import { fade } from "svelte/transition";
-  
-    let messageService: MessageService = Resolve(Services.MessageService);
-    let currentThought: string | null = null;
-    let isVisible: boolean = false;
-  
-    // Handler for AI thought messages
-    function handleAIThought(message: AIThoughtMessage): void {
-      currentThought = message.thought;
-      isVisible = currentThought !== null && currentThought.trim().length > 0;
-    }
-  
-    messageService.register(AIThoughtMessage, handleAIThought);
-  
-    onDestroy(() => {
-      messageService.unregister(AIThoughtMessage, handleAIThought);
-    });
-  </script>
-  
-  {#if isVisible && currentThought}
-    <div class="ai-thought-container" in:fade={{ duration: 200 }} out:fade={{ duration: 200 }}>
-      <div class="ai-thought-bubble">
-        <span>{currentThought}</span>
-      </div>
+  import { fade } from "svelte/transition";
+  export let thought: string | null = null;
+  $: isVisible = thought !== null && thought.trim().length > 0;
+</script>
+
+{#if isVisible && thought}
+  <div class="ai-thought-container" in:fade={{ duration: 200 }} out:fade={{ duration: 200 }}>
+    <div class="ai-thought-bubble">
+      <span>{thought}</span>
     </div>
-  {/if}
-  
-  <style>
-    .ai-thought-container {
-      margin-top: var(--size-2-1);
-      margin-bottom: var(--size-2-1);
+  </div>
+{/if}
+
+<style>
+  .ai-thought-container {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .ai-thought-bubble {
+    --border-width: 1px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 10px;
+    max-width: 100%;
+  }
+
+  .ai-thought-bubble span {
+    position: relative;
+    z-index: 1;
+    background: var(--color-base-05);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: italic;
+    word-wrap: break-word;
+    width: 100%;
+  }
+
+  .ai-thought-bubble::after {
+    position: absolute;
+    content: "";
+    top: calc(-1 * var(--border-width));
+    left: calc(-1 * var(--border-width));
+    z-index: 0;
+    width: calc(100% + var(--border-width) * 2);
+    height: calc(100% + var(--border-width) * 2);
+    background: linear-gradient(
+      60deg,
+      hsl(224, 85%, 66%),
+      hsl(269, 85%, 66%),
+      hsl(314, 85%, 66%),
+      hsl(359, 85%, 66%),
+      hsl(44, 85%, 66%),
+      hsl(89, 85%, 66%),
+      hsl(134, 85%, 66%),
+      hsl(179, 85%, 66%)
+    );
+    background-size: 300% 300%;
+    background-position: 0 50%;
+    border-radius: 10px;
+    animation: moveGradient 3s alternate infinite;
+  }
+
+  @keyframes moveGradient {
+    50% {
+      background-position: 100% 50%;
     }
-  
-    .ai-thought-bubble {
-      display: inline-flex;
-      align-items: center;
-      background: var(--metadata-background);
-      border: var(--border-width) solid var(--metadata-border-color);
-      border-radius: var(--metadata-border-radius);
-      padding: var(--metadata-padding);
-      font-size: var(--metadata-label-font-size);
-      color: var(--text-muted);
-      font-style: italic;
-      max-width: 100%;
-      word-wrap: break-word;
-    }
-  </style>
+  }
+</style>

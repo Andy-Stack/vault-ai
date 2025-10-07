@@ -30,6 +30,8 @@
 
   let conversation = new Conversation();
 
+  let currentThought: string | null = null;
+
   async function handleSubmit() {
     if (!await semaphore.wait()) {
       return;
@@ -54,9 +56,7 @@
       while (functionCall) {
 
         if ('user_message' in functionCall.arguments) {
-          conversation.contents = [...conversation.contents, new ConversationContent(
-            Role.Assistant, functionCall.arguments.user_message)];
-          await conversationService.saveConversation(conversation);
+          currentThought = functionCall.arguments.user_message
         }
 
         conversation.contents = [...conversation.contents, new ConversationContent(
@@ -71,8 +71,9 @@
         functionCall = await streamRequestResponse();
       }
     } finally {
-      semaphore.release();
+      currentThought = null;
       isSubmitting = false;
+      semaphore.release();
       tick().then(() => {
         textareaElement?.focus();
       });
@@ -186,7 +187,7 @@
 
 <main class="container">
   <div id="chat-container">
-    <ChatArea messages={conversation.contents} bind:isStreaming bind:isSubmitting bind:chatContainer={chatContainer}/>
+    <ChatArea messages={conversation.contents} bind:currentThought bind:isStreaming bind:isSubmitting bind:chatContainer={chatContainer}/>
   </div>
   
   <div id="input-container">
@@ -214,7 +215,7 @@
 <style>
   .container {
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: 1fr auto var(--size-2-1);
     grid-template-columns: 1fr;
     height: calc(100% - var(--size-4-16));
     border-radius: var(--radius-m);

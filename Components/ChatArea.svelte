@@ -10,6 +10,7 @@
   import type { ConversationContent } from "Conversations/ConversationContent";
 
   export let messages: ConversationContent[] = [];
+  export let currentThought: string | null = null;
   export let isStreaming: boolean = false;
   export let isSubmitting: boolean = false;
   export let chatContainer: HTMLDivElement;
@@ -183,8 +184,8 @@
     {/if}
   {/each}
 
+  <ChatAreaThought thought={currentThought}/>
   {#if isSubmitting}
-  <ChatAreaThought/>
   <StreamingIndicator/>
   {/if}
   
