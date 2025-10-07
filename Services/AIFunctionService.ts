@@ -14,7 +14,10 @@ export class AIFunctionService {
         switch (functionCall.name) {
             case AIFunction.ListVaultFiles:
                 return new AIFunctionResponse(functionCall.name, await this.listVaultFiles());
-            
+
+            case AIFunction.ReadFile:
+                return new AIFunctionResponse(functionCall.name, await this.readFile(functionCall.arguments.file_path));
+
             // this is only used by gemini
             case AIFunction.RequestWebSearch:
                 return new AIFunctionResponse(functionCall.name, {})
@@ -36,5 +39,13 @@ export class AIFunctionService {
             path: file.path,
             size_bytes: file.stat.size
         }));
+    }
+
+    private async readFile(filePath: string): Promise<object> {
+        const content = await this.fileSystemService.readFile(filePath);
+        if (content === null) {
+            return { error: `File not found: ${filePath}` };
+        }
+        return { content };
     }
 }

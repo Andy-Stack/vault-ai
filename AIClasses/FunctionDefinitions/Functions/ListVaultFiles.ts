@@ -1,5 +1,5 @@
 import { AIFunction } from "Enums/AIFunction";
-import type { IAIFunctionDefinition } from "./IAIFunctionDefinition";
+import type { IAIFunctionDefinition } from "../IAIFunctionDefinition";
 
 export const ListVaultFiles: IAIFunctionDefinition = {
     name: AIFunction.ListVaultFiles,

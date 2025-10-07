@@ -94,8 +94,6 @@ export class Gemini implements IAIClass {
       tools: [tools]
     };
 
-    console.log(requestBody);
-
     yield* this.streamingService.streamRequest(
       AIProviderURL.Gemini.replace("API_KEY", this.apiKey),
       requestBody,
