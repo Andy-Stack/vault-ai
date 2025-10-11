@@ -1,4 +1,8 @@
-<div class="container">
+<script lang="ts">
+  export let streamingElement: HTMLElement | undefined;
+</script>
+
+<div class="container" bind:this={streamingElement}>
   <span class="📦"></span>
   <span class="📦"></span>
   <span class="📦"></span>

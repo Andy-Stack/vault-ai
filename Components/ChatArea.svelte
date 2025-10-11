@@ -5,9 +5,9 @@
 	import ChatAreaThought from "./ChatAreaThought.svelte";
 	import StreamingIndicator from "./StreamingIndicator.svelte";
 	import { Greeting } from "Enums/Greeting";
-	import type AIAgentPlugin from "main";
 	import { Role } from "Enums/Role";
   import type { ConversationContent } from "Conversations/ConversationContent";
+	import { tick } from "svelte";
 
   export let messages: ConversationContent[] = [];
   export let currentThought: string | null = null;
@@ -15,16 +15,18 @@
   export let isSubmitting: boolean = false;
   export let chatContainer: HTMLDivElement;
 
-  let plugin: AIAgentPlugin = Resolve(Services.AIAgentPlugin);
+  let thoughtElement: HTMLElement | undefined;
+  let streamingElement: HTMLElement | undefined;
+
   let streamingMarkdownService: StreamingMarkdownService = Resolve(Services.StreamingMarkdownService);
 
   let messageElements: Map<string, HTMLElement> = new Map<string, HTMLElement>();
   let lastProcessedContent: Map<string, string> = new Map<string, string>();
   let currentStreamFinalized: boolean = false;
 
-  let scrollInterval: number | null = null;
-  let userScrolledUp: boolean = false;
-  let lastScrollTop: number = 0;
+  let messagePadding: number = 0;
+  let staticMessagePadding: number = 0;
+  let responsePadding: number = 0;
 
   function getGreetingByTime(): string {
     const hour = new Date().getHours();
@@ -58,9 +60,6 @@
         if (message.content !== lastContent) {
           // Check if this is the last message and we're currently streaming
           const isLastMessage = messageIndex === messages.length - 1;
-          if (isStreaming && isLastMessage && lastContent === '') {
-            userScrolledUp = false;
-          }
 
           updateMessageContent({ ...message, id: messageId, isCurrentlyStreaming: isStreaming && isLastMessage });
           lastProcessedContent.set(messageId, message.content);
@@ -69,42 +68,11 @@
     });
   }
 
-  $: {
-    if (currentThought) {
-      startScrolling();
-    }
-  }
-
-  function handleScroll() {
-    if (!chatContainer) return;
-
-    if (chatContainer.scrollTop < lastScrollTop) {
-      userScrolledUp = true;
-    }
-
-    lastScrollTop = chatContainer.scrollTop;
-  }
-
-  function startScrolling() {
-    if (scrollInterval || userScrolledUp) return;
-
-    scrollInterval = plugin.registerInterval(window.setInterval(() => {
-      if (chatContainer && !userScrolledUp) {
-        chatContainer.scrollBy({ top: chatContainer.innerHeight, behavior: 'smooth' });
-      }
-    }, 50));
-
-    setTimeout(() => {
-      if (scrollInterval) {
-        clearInterval(scrollInterval);
-        scrollInterval = null;
-      }
-    }, 500);
-  }
-
   function updateMessageContent(message: {id: string, content: string, role: string, isCurrentlyStreaming: boolean}) {
     const element = messageElements.get(message.id);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     if (message.isCurrentlyStreaming) {
       streamingMarkdownService.streamChunk(message.id, message.content);
@@ -113,7 +81,6 @@
       streamingMarkdownService.finalizeStream(message.id, message.content);
       currentStreamFinalized = true;
     }
-    startScrolling();
   }
 
   function initializeMessageElement(messageId: string, element: HTMLElement) {
@@ -167,15 +134,107 @@
       }
     }
   }
+
+  /**
+   * Chat area padding logic during message streaming 
+  */
+
+  function messageContainerAction(element: HTMLElement) {
+    tick().then(() => {
+      if (element.classList.contains(Role.Assistant)) {
+        assistantMessageAction(element);
+      }
+      else {
+        userMessageAction(element);
+      }
+    });
+  }
+  
+  function userMessageAction(element: HTMLElement) {
+    requestAnimationFrame(() => {
+      const paddingTop = parseFloat(getComputedStyle(chatContainer).paddingTop) || 0;
+
+      if (element.offsetHeight > chatContainer.offsetHeight / 2) {
+        messagePadding = chatContainer.offsetHeight * 0.75;
+        staticMessagePadding = messagePadding;
+      } else {
+        staticMessagePadding = Math.max(0,
+          chatContainer.offsetHeight -
+          element.offsetHeight -
+          paddingTop);
+
+        messagePadding = Math.max(0,
+          chatContainer.offsetHeight -
+          element.offsetHeight -
+          calculateStreamingThoughtSize() -
+          paddingTop);
+      }
+      chatContainer.style.paddingBottom = `${messagePadding}px`;
+      responsePadding = staticMessagePadding;
+
+      tick().then(() => {
+        chatContainer.scroll({ top: chatContainer.scrollHeight, behavior: "smooth" });
+      });
+    });
+  }
+
+  function assistantMessageAction(element: HTMLElement) {
+    const resizeObserver = new ResizeObserver(() => {
+      requestAnimationFrame(() => {
+        messagePadding = Math.max(0,
+          staticMessagePadding -
+          element.offsetHeight -
+          calculateStreamingThoughtSize() -
+          parseFloat(getComputedStyle(chatContainer).gap) || 0);
+
+        chatContainer.style.paddingBottom = `${messagePadding}px`;
+      });
+    });
+
+    resizeObserver.observe(element);
+
+    return {
+      destroy() {
+        resizeObserver.disconnect();
+      }
+    }
+  }
+
+  $: {
+    if (chatContainer && messages.length == 0) {
+      chatContainer.style.paddingBottom = "";
+    }
+  }
+
+  function calculateStreamingThoughtSize() {
+    const thoughtHeight = thoughtElement?.offsetHeight || 0;
+    const streamingHeight = streamingElement?.offsetHeight || 0;
+
+    let thoughtMargins = 0;
+    if (thoughtElement) {
+      thoughtMargins = parseFloat(getComputedStyle(thoughtElement).marginTop) || 0 +
+        parseFloat(getComputedStyle(thoughtElement).marginBottom) || 0;  
+    }
+    let indicatorMargins = 0;
+    if (streamingElement) {
+      indicatorMargins = parseFloat(getComputedStyle(streamingElement).marginTop) || 0 +
+        parseFloat(getComputedStyle(streamingElement).marginBottom) || 0;
+    }
+
+    const gap = parseFloat(getComputedStyle(chatContainer).gap) || 0;
+    const gaps = thoughtElement && streamingElement ? 2 : thoughtElement || streamingElement ? 1 : 0;
+
+    return thoughtHeight + streamingHeight + thoughtMargins + indicatorMargins + (gaps * gap);
+  }
 </script>
 
-<div class="chat-area" bind:this={chatContainer} on:scroll={handleScroll}>
+<div class="chat-area" bind:this={chatContainer}>
   {#each messages as message, messageIndex (`${message.role}-${messageIndex}`)}
     {#if !message.isFunctionCall && !message.isFunctionCallResponse && message.content}
-      <div class="message-container {message.role === Role.User ? 'user' : 'assistant'}">
-        <div class="message-bubble {message.role === Role.User ? 'user' : 'assistant'}">
+      <div class="message-container {message.role === Role.User ? Role.User : Role.Assistant}" use:messageContainerAction>
+        <div class="message-bubble {message.role === Role.User ? Role.User : Role.Assistant}">
           {#if message.role === Role.User}
-            <p class="message-text-user fade-in-fast">{message.content}</p>
+            <div class="message-text-user fade-in-fast">{message.content}</div>
           {:else}
             <div class="markdown-content fade-in-fast {isStreaming && messageIndex === messages.length - 1 ? 'streaming' : ''}">
               {#if isStreaming && messageIndex === messages.length - 1}
@@ -190,9 +249,9 @@
     {/if}
   {/each}
 
-  <ChatAreaThought thought={currentThought}/>
+  <ChatAreaThought bind:thoughtElement thought={currentThought}/>
   {#if isSubmitting}
-  <StreamingIndicator/>
+    <StreamingIndicator bind:streamingElement/>
   {/if}
   
   {#if messages.length === 0}
@@ -302,5 +361,4 @@
       filter: blur(0px);
     }
   }
-
 </style>

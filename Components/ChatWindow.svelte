@@ -251,7 +251,6 @@
       on:keydown={handleKeydown}
       on:input={autoResize}
       placeholder="Type a message..."
-      disabled={isSubmitting}
       rows="1">
     </textarea>
   
