@@ -16,11 +16,15 @@
   export let chatContainer: HTMLDivElement;
 
   export function onFinishedSubmitting() {
-    if (lastAssistantMessageElement && lastAssistantMessageElement.offsetHeight < 
-      chatContainer.offsetHeight - parseFloat(getComputedStyle(chatContainer).padding) * 2) {
-      // Recalculate padding when streaming ends to fix race condition with streaming indicator removal
-      assistantMessageAction(lastAssistantMessageElement);
-    } 
+    tick().then(() => {
+      requestAnimationFrame(() => {
+        if (lastAssistantMessageElement && lastAssistantMessageElement.offsetHeight < 
+          chatContainer.offsetHeight - parseFloat(getComputedStyle(chatContainer).padding) * 2) {
+          // Recalculate padding when streaming ends to fix race condition with streaming indicator removal
+          assistantMessageAction(lastAssistantMessageElement);
+        }
+      });
+    });
   }
 
   let thoughtElement: HTMLElement | undefined;
