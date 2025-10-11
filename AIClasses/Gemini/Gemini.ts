@@ -13,6 +13,7 @@ import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunc
 
 export class Gemini implements IAIClass {
   private readonly REQUEST_WEB_SEARCH: string = "request_web_search";
+  private readonly STOP_REASON_STOP: string = "STOP";
 
   private readonly apiKey: string;
   private readonly aiPrompt: IPrompt = Resolve(Services.IPrompt);
@@ -138,6 +139,9 @@ export class Gemini implements IAIClass {
       }
 
       const isComplete = !!candidate?.finishReason;
+      const finishReason = candidate?.finishReason;
+
+      const shouldContinue = isComplete && finishReason !== this.STOP_REASON_STOP;
 
       // If streaming is complete and we have accumulated a function call, return it
       if (isComplete && this.accumulatedFunctionName) {
@@ -151,6 +155,7 @@ export class Gemini implements IAIClass {
         content: text,
         isComplete: isComplete,
         functionCall: functionCall,
+        shouldContinue: shouldContinue,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown parsing error";

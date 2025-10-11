@@ -5,6 +5,7 @@ export interface StreamChunk {
   isComplete: boolean;
   error?: string;
   functionCall?: AIFunctionCall;
+  shouldContinue?: boolean;
 }
 
 export class StreamingService {

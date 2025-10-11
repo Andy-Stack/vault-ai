@@ -106,23 +106,25 @@
 
       scrollToBottom();
 
-      let functionCall: AIFunctionCall | null = await streamRequestResponse();
-      while (functionCall) {
+      let response = await streamRequestResponse();
+      while (response.functionCall || response.shouldContinue) {
 
-        if ('user_message' in functionCall.arguments) {
-          currentThought = functionCall.arguments.user_message
+        if (response.functionCall) {
+          if ('user_message' in response.functionCall.arguments) {
+            currentThought = response.functionCall.arguments.user_message
+          }
+
+          conversation.contents = [...conversation.contents, new ConversationContent(
+            Role.Assistant, response.functionCall.toConversationString(), new Date(), true)];
+          await conversationService.saveConversation(conversation);
+
+          const functionResponse: AIFunctionResponse = await aiFunctionService.performAIFunction(response.functionCall);
+          conversation.contents = [...conversation.contents, new ConversationContent(
+            Role.User, functionResponse.toConversationString(), new Date(), false, true)];
+          await conversationService.saveConversation(conversation);
         }
 
-        conversation.contents = [...conversation.contents, new ConversationContent(
-          Role.Assistant, functionCall.toConversationString(), new Date(), true)];
-        await conversationService.saveConversation(conversation);  
-        
-        const functionResponse: AIFunctionResponse = await aiFunctionService.performAIFunction(functionCall);
-        conversation.contents = [...conversation.contents, new ConversationContent(
-          Role.User, functionResponse.toConversationString(), new Date(), false, true)];
-        await conversationService.saveConversation(conversation);
-
-        functionCall = await streamRequestResponse();
+        response = await streamRequestResponse();
       }
     } finally {
       currentThought = null;
@@ -131,7 +133,7 @@
     }
   }
 
-  async function streamRequestResponse(): Promise<AIFunctionCall | null> {
+  async function streamRequestResponse(): Promise<{ functionCall: AIFunctionCall | null, shouldContinue: boolean }> {
     // Create AI message placeholder
     const aiMessageIndex = conversation.contents.length;
     conversation.contents = [...conversation.contents, new ConversationContent(Role.Assistant, "")];
@@ -139,6 +141,7 @@
 
     let accumulatedContent = "";
     let capturedFunctionCall: AIFunctionCall | null = null;
+    let capturedShouldContinue = false;
 
     for await (const chunk of ai.streamRequest(conversation)) {
       if (chunk.error) {
@@ -167,6 +170,10 @@
         capturedFunctionCall = chunk.functionCall;
       }
 
+      if (chunk.shouldContinue) {
+        capturedShouldContinue = true;
+      }
+
       if (chunk.isComplete) {
         isStreaming = false;
         // If there's a function call, remove the placeholder message
@@ -187,7 +194,7 @@
       }
     }
 
-    return capturedFunctionCall;
+    return { functionCall: capturedFunctionCall, shouldContinue: capturedShouldContinue };
   }
 
   function handleKeydown(e: KeyboardEvent) {
