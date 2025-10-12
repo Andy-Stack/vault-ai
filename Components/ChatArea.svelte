@@ -11,9 +11,9 @@
 
   export let messages: ConversationContent[] = [];
   export let currentThought: string | null = null;
-  export let isStreaming: boolean = false;
   export let isSubmitting: boolean = false;
   export let chatContainer: HTMLDivElement;
+  export let currentStreamingMessageId: string | null = null;
 
   export function onFinishedSubmitting() {
     tick().then(() => {
@@ -64,18 +64,17 @@
 
   // Track streaming messages and update them incrementally
   $: {
-    messages.forEach((message, messageIndex) => {
+    messages.forEach((message) => {
       if (message.role !== Role.User) {
-        const messageId = `${message.role}-${messageIndex}`;
-        const lastContent = lastProcessedContent.get(messageId) || "";
+        const lastContent = lastProcessedContent.get(message.id) || "";
 
         // Only update if content has changed
         if (message.content !== lastContent) {
-          // Check if this is the last message and we're currently streaming
-          const isLastMessage = messageIndex === messages.length - 1;
+          // Check if this specific message is currently streaming
+          const isCurrentlyStreaming = currentStreamingMessageId === message.id;
 
-          updateMessageContent({ ...message, id: messageId, isCurrentlyStreaming: isStreaming && isLastMessage });
-          lastProcessedContent.set(messageId, message.content);
+          updateMessageContent({ ...message, isCurrentlyStreaming });
+          lastProcessedContent.set(message.id, message.content);
         }
       }
     });
@@ -113,14 +112,13 @@
   }
 
   // Process static messages (user messages and initial load)
-  function getStaticHTML(message: ConversationContent, messageIndex: number): string {
+  function getStaticHTML(message: ConversationContent): string {
     if (message.role === Role.User) {
       return `<div>${message.content}</div>`;
     }
 
-    // For assistant messages, check if this is the last message and we're streaming
-    const isLastMessage = messageIndex === messages.length - 1;
-    const isCurrentlyStreaming = isStreaming && isLastMessage;
+    // For assistant messages, check if this specific message is currently streaming
+    const isCurrentlyStreaming = currentStreamingMessageId === message.id;
 
     // For assistant messages that aren't streaming, use traditional parsing
     if (!isCurrentlyStreaming) {
@@ -137,7 +135,7 @@
 
   // Make sure to clean up when messages are removed
   $: {
-    const currentMessageIds = new Set(messages.map((msg, messageIndex) => `${msg.role}-${messageIndex}`));
+    const currentMessageIds = new Set(messages.map((msg) => msg.id));
 
     // Remove tracking for messages that no longer exist
     for (const [id] of messageElements) {
@@ -244,18 +242,18 @@
 </script>
 
 <div class="chat-area" bind:this={chatContainer}>
-  {#each messages as message, messageIndex (`${message.role}-${messageIndex}`)}
+  {#each messages as message (message.id)}
     {#if !message.isFunctionCall && !message.isFunctionCallResponse && message.content}
       <div class="message-container {message.role === Role.User ? Role.User : Role.Assistant}" use:messageContainerAction>
         <div class="message-bubble {message.role === Role.User ? Role.User : Role.Assistant}">
           {#if message.role === Role.User}
             <div class="message-text-user fade-in-fast">{message.content}</div>
           {:else}
-            <div class="markdown-content fade-in-fast {isStreaming && messageIndex === messages.length - 1 ? 'streaming' : ''}">
-              {#if isStreaming && messageIndex === messages.length - 1}
-                <div use:streamingAction={`${message.role}-${messageIndex}`} class="streaming-content"></div>
+            <div class="markdown-content fade-in-fast {currentStreamingMessageId === message.id ? 'streaming' : ''}">
+              {#if currentStreamingMessageId === message.id}
+                <div use:streamingAction={message.id} class="streaming-content"></div>
               {:else}
-                {@html getStaticHTML(message, messageIndex)}
+                {@html getStaticHTML(message)}
               {/if}
             </div>
           {/if}

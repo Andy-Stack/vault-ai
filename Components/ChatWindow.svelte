@@ -36,6 +36,7 @@
   let hasNoApiKey = false;
   let isSubmitting = false;
   let isStreaming = false;
+  let currentStreamingMessageId: string | null = null;
 
   let conversation = new Conversation();
 
@@ -138,9 +139,12 @@
   }
 
   async function streamRequestResponse(): Promise<{ functionCall: AIFunctionCall | null, shouldContinue: boolean }> {
-    // Create AI message placeholder
-    const aiMessageIndex = conversation.contents.length;
-    conversation.contents = [...conversation.contents, new ConversationContent(Role.Assistant, "")];
+    // Create AI message with stable ID
+    const aiMessage = new ConversationContent(Role.Assistant, "");
+    conversation.contents = [...conversation.contents, aiMessage];
+
+    // Track which message is currently streaming
+    currentStreamingMessageId = aiMessage.id;
     isStreaming = true;
 
     let accumulatedContent = "";
@@ -150,12 +154,13 @@
     for await (const chunk of ai.streamRequest(conversation)) {
       if (chunk.error) {
         console.error("Streaming error:", chunk.error);
-        conversation.contents = conversation.contents.map((msg, messageIndex) =>
-          messageIndex === aiMessageIndex
+        conversation.contents = conversation.contents.map((msg) =>
+          msg.id === aiMessage.id
             ? { ...msg, content: "Error: " + chunk.error }
             : msg
         );
         isStreaming = false;
+        currentStreamingMessageId = null;
         await conversationService.saveConversation(conversation);
         break;
       }
@@ -163,8 +168,8 @@
       if (chunk.content) {
         currentThought = null;
         accumulatedContent += chunk.content;
-        conversation.contents = conversation.contents.map((msg, messageIndex) =>
-          messageIndex === aiMessageIndex
+        conversation.contents = conversation.contents.map((msg) =>
+          msg.id === aiMessage.id
             ? { ...msg, content: accumulatedContent }
             : msg
         );
@@ -179,24 +184,31 @@
       }
 
       if (chunk.isComplete) {
+        // Mark streaming as complete for this message
         isStreaming = false;
-        // If there's a function call, remove the placeholder message
-        if (capturedFunctionCall) {
-          conversation.contents = conversation.contents.filter((_, messageIndex) => messageIndex !== aiMessageIndex);
-        } else if (accumulatedContent.trim() !== "") {
-          // Only save the message if it has content and no function call
-          conversation.contents = conversation.contents.map((msg, messageIndex) =>
-            messageIndex === aiMessageIndex
+        currentStreamingMessageId = null;
+
+        // Handle message based on content and function call presence
+        if (accumulatedContent.trim() !== "") {
+          console.log(`acc: ${accumulatedContent}, func: ${capturedFunctionCall}, cont: ${capturedShouldContinue}`)
+          // We have content - always keep the message
+          conversation.contents = conversation.contents.map((msg) =>
+            msg.id === aiMessage.id
               ? { ...msg, content: accumulatedContent }
               : msg
           );
+        } else if (capturedFunctionCall) {
+          // No content but there's a function call - remove the empty placeholder
+          conversation.contents = conversation.contents.filter((msg) => msg.id !== aiMessage.id);
         } else {
-          // Remove the empty placeholder message
-          conversation.contents = conversation.contents.filter((_, messageIndex) => messageIndex !== aiMessageIndex);
+          // No content and no function call - remove empty message
+          conversation.contents = conversation.contents.filter((msg) => msg.id !== aiMessage.id);
         }
         await conversationService.saveConversation(conversation);
       }
     }
+
+    console.log(`shouldContinue: ${capturedShouldContinue}`)
 
     return { functionCall: capturedFunctionCall, shouldContinue: capturedShouldContinue };
   }
@@ -250,7 +262,7 @@
 
 <main class="container">
   <div id="chat-container">
-    <ChatArea messages={conversation.contents} bind:this={chatArea} bind:currentThought bind:isStreaming bind:isSubmitting bind:chatContainer/>
+    <ChatArea messages={conversation.contents} bind:this={chatArea} bind:currentThought bind:isSubmitting bind:chatContainer currentStreamingMessageId={currentStreamingMessageId}/>
   </div>
   
   <div id="input-container">
