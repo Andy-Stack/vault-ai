@@ -1,6 +1,6 @@
 import { AIProvider } from "Enums/ApiProvider";
 import type AIAgentPlugin from "main";
-import { RegisterSingleton, RegisterTransient } from "./DependencyService";
+import { RegisterSingleton, RegisterTransient, Resolve } from "./DependencyService";
 import { Services } from "./Services";
 import { AIPrompt, type IPrompt } from "AIClasses/IPrompt";
 import type { IAIClass } from "AIClasses/IAIClass";
@@ -15,6 +15,7 @@ import { AIFunctionService } from "./AIFunctionService";
 import { StreamingService } from "./StreamingService";
 import { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
 import { WorkSpaceService } from "./WorkSpaceService";
+import { ChatService } from "./ChatService";
 
 export function RegisterDependencies(plugin: AIAgentPlugin) {
     RegisterSingleton(Services.AIAgentPlugin, plugin);
@@ -27,6 +28,7 @@ export function RegisterDependencies(plugin: AIAgentPlugin) {
     RegisterSingleton<AIFunctionDefinitions>(Services.AIFunctionDefinitions, new AIFunctionDefinitions());
     RegisterSingleton<AIFunctionService>(Services.AIFunctionService, new AIFunctionService());
     RegisterSingleton<StreamingService>(Services.StreamingService, new StreamingService());
+    RegisterSingleton<ChatService>(Services.ChatService, new ChatService());
 
     RegisterTransient<StreamingMarkdownService>(Services.StreamingMarkdownService, () => new StreamingMarkdownService());
 
@@ -38,6 +40,8 @@ export function RegisterAiProvider(plugin: AIAgentPlugin) {
     if (plugin.settings.apiProvider == AIProvider.Gemini) {
         RegisterSingleton<IAIClass>(Services.IAIClass, new Gemini());
     }
+    const chatService: ChatService = Resolve(Services.ChatService);
+    chatService.resolveAIProvider();
 }
 
 function RegisterModals(app: App) {

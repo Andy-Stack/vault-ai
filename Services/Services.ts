@@ -9,6 +9,7 @@ export class Services {
     static StreamingMarkdownService = Symbol("StreamingMarkdownService");
     static AIFunctionDefinitions = Symbol("AIFunctionDefinitions");
     static AIFunctionService = Symbol("AIFunctionService");
+    static ChatService = Symbol("ChatService");
 
     // interfaces
     static IAIClass = Symbol("IAIClass");

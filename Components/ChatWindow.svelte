@@ -1,32 +1,23 @@
 <script lang="ts">
-  import { Semaphore } from "Helpers/Semaphore";
   import { Resolve } from "Services/DependencyService";
   import { Services } from "Services/Services";
   import ChatArea from "./ChatArea.svelte";
-  import type { IAIClass } from "AIClasses/IAIClass";
 	import { tick, onMount } from "svelte";
-  import { ConversationFileSystemService } from "Services/ConversationFileSystemService";
-  import { Notice, setIcon } from "obsidian";
+  import { setIcon } from "obsidian";
   import { conversationStore } from "../Stores/conversationStore";
-	import { Role } from "Enums/Role";
   import { Conversation } from "Conversations/Conversation";
-  import { ConversationContent } from "Conversations/ConversationContent";
-  import type { AIFunctionCall } from "AIClasses/AIFunctionCall";
-	import type { AIFunctionService } from "Services/AIFunctionService";
-	import type { AIFunctionResponse } from "AIClasses/FunctionDefinitions/AIFunctionResponse";
 	import type AIAgentPlugin from "main";
 	import { openPluginSettings } from "Helpers/Helpers";
 	import { Selector } from "Enums/Selector";
 	import type { WorkSpaceService } from "Services/WorkSpaceService";
+  import type { ChatService } from "Services/ChatService";
+  import type { ConversationFileSystemService } from "Services/ConversationFileSystemService";
 
   let plugin: AIAgentPlugin = Resolve(Services.AIAgentPlugin);
-
-  let ai: IAIClass = Resolve(Services.IAIClass);
-  let conversationService: ConversationFileSystemService = Resolve(Services.ConversationFileSystemService);
-  let aiFunctionService: AIFunctionService = Resolve(Services.AIFunctionService);
+  let chatService: ChatService = Resolve(Services.ChatService);
   let workSpaceService: WorkSpaceService = Resolve(Services.WorkSpaceService);
+  let conversationService: ConversationFileSystemService = Resolve(Services.ConversationFileSystemService);
 
-  let semaphore: Semaphore = new Semaphore(1, false);
   let textareaElement: HTMLTextAreaElement;
   let chatContainer: HTMLDivElement;
   let submitButton: HTMLButtonElement;
@@ -37,7 +28,6 @@
   let isSubmitting = false;
   let isStreaming = false;
   let currentStreamingMessageId: string | null = null;
-  let abortController: AbortController | null = null;
 
   let conversation = new Conversation();
 
@@ -85,13 +75,9 @@
   }
 
   function handleStop() {
-    if (abortController) {
-      abortController.abort();
-      abortController = null;
-    }
+    chatService.stop();
     currentThought = null;
     isSubmitting = false;
-    semaphore.release();
     tick().then(() => {
       chatArea.onFinishedSubmitting();
     });
@@ -99,129 +85,39 @@
 
   async function handleSubmit() {
     focusInput();
-    if (!await semaphore.wait()) {
+
+    if (handleNoApiKey()) {
       return;
     }
 
-    try {
-      if (handleNoApiKey()) {
-        return;
-      }
-
-      if (userRequest.trim() === "" || isSubmitting) {
-        return;
-      }
-      isSubmitting = true;
-      abortController = new AbortController();
-
-      conversation.contents = [...conversation.contents, new ConversationContent(Role.User, userRequest)];
-      await conversationService.saveConversation(conversation);
-
-      textareaElement.value = "";
-      userRequest = "";
-      autoResize();
-
-      scrollToBottom();
-
-      let response = await streamRequestResponse();
-      while (response.functionCall || response.shouldContinue) {
-
-        if (response.functionCall) {
-          if ('user_message' in response.functionCall.arguments) {
-            currentThought = response.functionCall.arguments.user_message
-          }
-
-          conversation.contents = [...conversation.contents, new ConversationContent(
-            Role.Assistant, response.functionCall.toConversationString(), new Date(), true)];
-          await conversationService.saveConversation(conversation);
-
-          const functionResponse: AIFunctionResponse = await aiFunctionService.performAIFunction(response.functionCall);
-          conversation.contents = [...conversation.contents, new ConversationContent(
-            Role.User, functionResponse.toConversationString(), new Date(), false, true)];
-          await conversationService.saveConversation(conversation);
-        }
-
-        response = await streamRequestResponse();
-      }
-    } finally {
-      currentThought = null;
-      isSubmitting = false;
-      abortController = null;
-      semaphore.release();
-      tick().then(() => {
-        chatArea.onFinishedSubmitting();
-      });
-    }
-  }
-
-  async function streamRequestResponse(): Promise<{ functionCall: AIFunctionCall | null, shouldContinue: boolean }> {
-    // Create AI message with stable ID
-    const aiMessage = new ConversationContent(Role.Assistant, "");
-    conversation.contents = [...conversation.contents, aiMessage];
-
-    // Track which message is currently streaming
-    currentStreamingMessageId = aiMessage.id;
-    isStreaming = true;
-
-    let accumulatedContent = "";
-    let capturedFunctionCall: AIFunctionCall | null = null;
-    let capturedShouldContinue = false;
-
-    for await (const chunk of ai.streamRequest(conversation, abortController?.signal)) {
-      if (chunk.error) {
-        console.error("Streaming error:", chunk.error);
-        conversation.contents = conversation.contents.map((msg) =>
-          msg.id === aiMessage.id
-            ? { ...msg, content: "Error: " + chunk.error }
-            : msg
-        );
-        isStreaming = false;
-        currentStreamingMessageId = null;
-        await conversationService.saveConversation(conversation);
-        break;
-      }
-
-      if (chunk.content) {
-        currentThought = null;
-        accumulatedContent += chunk.content;
-        conversation.contents = conversation.contents.map((msg) =>
-          msg.id === aiMessage.id
-            ? { ...msg, content: accumulatedContent }
-            : msg
-        );
-      }
-
-      if (chunk.functionCall) {
-        capturedFunctionCall = chunk.functionCall;
-      }
-
-      if (chunk.shouldContinue) {
-        capturedShouldContinue = true;
-      }
-
-      if (chunk.isComplete) {
-        isStreaming = false;
-        currentStreamingMessageId = null;
-
-        if (accumulatedContent.trim() !== "") {
-          // We have content - always keep the message
-          conversation.contents = conversation.contents.map((msg) =>
-            msg.id === aiMessage.id
-              ? { ...msg, content: accumulatedContent }
-              : msg
-          );
-        } else if (capturedFunctionCall) {
-          // No content but there's a function call - remove the empty placeholder
-          conversation.contents = conversation.contents.filter((msg) => msg.id !== aiMessage.id);
-        } else {
-          // No content and no function call - remove empty message
-          conversation.contents = conversation.contents.filter((msg) => msg.id !== aiMessage.id);
-        }
-        await conversationService.saveConversation(conversation);
-      }
+    if (userRequest.trim() === "" || isSubmitting) {
+      return;
     }
 
-    return { functionCall: capturedFunctionCall, shouldContinue: capturedShouldContinue };
+    isSubmitting = true;
+    const currentRequest = userRequest;
+
+    textareaElement.value = "";
+    userRequest = "";
+    autoResize();
+    scrollToBottom();
+
+    conversation = await chatService.submit(conversation, currentRequest, {
+      onStreamingUpdate: (updatedConversation, streamingId, streaming) => {
+        conversation = updatedConversation;
+        currentStreamingMessageId = streamingId;
+        isStreaming = streaming;
+      },
+      onThoughtUpdate: (thought) => {
+        currentThought = thought;
+      },
+      onComplete: () => {
+        isSubmitting = false;
+        tick().then(() => {
+          chatArea.onFinishedSubmitting();
+        });
+      }
+    });
   }
 
   function handleKeydown(e: KeyboardEvent) {
