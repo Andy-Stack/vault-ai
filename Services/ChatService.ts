@@ -32,7 +32,7 @@ export class ChatService {
 		this.ai = Resolve<IAIClass>(Services.IAIClass);
 	}
 
-	async submit(conversation: Conversation, userRequest: string, callbacks: ChatServiceCallbacks): Promise<Conversation> {
+	async submit(conversation: Conversation, allowDestructiveActions: boolean, userRequest: string, callbacks: ChatServiceCallbacks): Promise<Conversation> {
 		if (!await this.semaphore.wait()) {
 			return conversation;
 		}
@@ -49,7 +49,7 @@ export class ChatService {
 			await this.conversationService.saveConversation(conversation);
 
 			// Process AI responses and function calls
-			let response = await this.streamRequestResponse(conversation, callbacks);
+			let response = await this.streamRequestResponse(conversation, allowDestructiveActions, callbacks);
 			while (response.functionCall || response.shouldContinue) {
 
 				if (response.functionCall) {
@@ -67,7 +67,7 @@ export class ChatService {
 					await this.conversationService.saveConversation(conversation);
 				}
 
-				response = await this.streamRequestResponse(conversation, callbacks);
+				response = await this.streamRequestResponse(conversation, allowDestructiveActions, callbacks);
 			}
 
 			return conversation;
@@ -88,7 +88,7 @@ export class ChatService {
 	}
 
 	private async streamRequestResponse(
-		conversation: Conversation, callbacks: ChatServiceCallbacks
+		conversation: Conversation, allowDestructiveActions: boolean, callbacks: ChatServiceCallbacks
 	): Promise<{ functionCall: AIFunctionCall | null, shouldContinue: boolean }> {
 		// this should never happen
 		if (!this.ai) {
@@ -106,7 +106,7 @@ export class ChatService {
 		let capturedFunctionCall: AIFunctionCall | null = null;
 		let capturedShouldContinue = false;
 
-		for await (const chunk of this.ai.streamRequest(conversation, this.abortController?.signal)) {
+		for await (const chunk of this.ai.streamRequest(conversation, allowDestructiveActions, this.abortController?.signal)) {
 			if (chunk.error) {
 				console.error("Streaming error:", chunk.error);
 				conversation.contents = conversation.contents.map((msg) =>

@@ -21,12 +21,14 @@
   let textareaElement: HTMLTextAreaElement;
   let chatContainer: HTMLDivElement;
   let submitButton: HTMLButtonElement;
+  let editModeButton: HTMLButtonElement;
   let chatArea: ChatArea;
 
   let userRequest = "";
   let hasNoApiKey = false;
   let isSubmitting = false;
   let isStreaming = false;
+  let editModeActive = false;
   let currentStreamingMessageId: string | null = null;
 
   let conversation = new Conversation();
@@ -100,7 +102,7 @@
     autoResize();
     scrollToBottom();
 
-    conversation = await chatService.submit(conversation, currentRequest, {
+    conversation = await chatService.submit(conversation, editModeActive, currentRequest, {
       onStreamingUpdate: (updatedConversation, streamingId, streaming) => {
         conversation = updatedConversation;
         currentStreamingMessageId = streamingId;
@@ -146,7 +148,11 @@
   }
 
   $: if (submitButton) {
-    setIcon(submitButton, isSubmitting ? 'square' : 'send-horizontal');
+    setIcon(submitButton, isSubmitting ? "square" : "send-horizontal");
+  }
+
+  $: if (editModeButton) {
+    setIcon(editModeButton, editModeActive ? "pencil" : "pencil-off");
   }
 
   $: if ($conversationStore.shouldReset) {
@@ -168,10 +174,11 @@
     <ChatArea messages={conversation.contents} bind:this={chatArea} bind:currentThought bind:isSubmitting bind:chatContainer currentStreamingMessageId={currentStreamingMessageId}/>
   </div>
   
-  <div id="input-container">
+  <div id="input-container" class:edit-mode={editModeActive}>
     <textarea
-      id="input"
+      id="input-field"
       class:error={hasNoApiKey}
+      class:edit-mode={editModeActive && !hasNoApiKey}
       bind:this={textareaElement}
       bind:value={userRequest}
       on:keydown={handleKeydown}
@@ -181,7 +188,17 @@
     </textarea>
   
     <button
-      id="submit"
+      id="edit-mode-button"
+      class:edit-mode={editModeActive}
+      bind:this={editModeButton}
+      on:click={() => { editModeActive = !editModeActive }}
+      disabled={isSubmitting}
+      aria-label={editModeActive ? "Turn off Agent Mode" : "Turn on Agent Mode"}>
+    </button>
+
+    <button
+      id="submit-button"
+      class:edit-mode={editModeActive}
       bind:this={submitButton}
       on:click={() => { isSubmitting ? handleStop() : handleSubmit() }}
       disabled={!isSubmitting && userRequest.trim() === ""}
@@ -216,12 +233,17 @@
     grid-column: 1;
     display: grid;
     grid-template-rows: var(--size-4-3) 1fr var(--size-4-3);
-    grid-template-columns: var(--size-4-3) 1fr var(--size-4-3) auto var(--size-4-3);
+    grid-template-columns: var(--size-4-3) 1fr var(--size-4-2) auto var(--size-4-2) auto var(--size-4-3);
     border-radius: var(--modal-radius);
     background-color: var(--color-base-00);
   }
 
-  #input {
+  #input-container.edit-mode {
+    border-color: var(--color-blue);
+    transition: border-color 0.5s ease-out;
+  }
+
+  #input-field {
     grid-row: 2;
     grid-column: 2;
     min-height: var(--input-height);
@@ -233,33 +255,66 @@
     overflow-y: auto;
     scroll-behavior: smooth;
     color: var(--font-interface-theme);
-    transition: border-color 0.3s ease-out;
+    transition: border-color 0.5s ease-out;
   }
 
-  #input:focus {
+  #input-field:focus {
     border-color: var(--color-accent);
-    transition: border-color 0.3s ease-out;
+    box-shadow: 0px 0px 4px 1px var(--color-accent);
+    transition: border-color 0.5s ease-out;
+  }
+  
+  #input-field.edit-mode:focus {
+    border-color: var(--color-blue);
+    box-shadow: 0px 0px 3px 1px var(--color-blue);
+    transition: border-color 0.5s ease-out;
   }
 
-  #input.error,
-  #input.error:focus {
+  #input-field.error,
+  #input-field.error:focus {
     border-color: var(--color-red);
+    box-shadow: 0px 0px 4px 1px var(--color-red);
+    transition: border-color 0.5s ease-out;
   }
 
-  #input::-webkit-scrollbar {
+  #input-field::-webkit-scrollbar {
     display: none;
   }
 
-  #submit {
+  #edit-mode-button {
     grid-row: 2;
     grid-column: 4;
     border-radius: var(--button-radius);
     align-self: end;
-    background-color: var(--interactive-accent);
-    transition-duration: 0.25s;
+    transition-duration: 0.5s;
   }
 
-  #submit:not(:disabled):hover {
+  #edit-mode-button.edit-mode {
+    box-shadow: 0px 0px 1px 1px var(--color-blue);
+    color: var(--color-blue);
+  }
+
+  #submit-button:not(:disabled):hover {
+    cursor: pointer;
+    background-color: var(--interactive-accent-hover);
+  }
+
+  #submit-button {
+    grid-row: 2;
+    grid-column: 6;
+    border-radius: var(--button-radius);
+    padding-left: var(--size-4-5);
+    padding-right: var(--size-4-5);
+    align-self: end;
+    transition-duration: 0.5s;
+    background-color: var(--interactive-accent);
+  }
+
+  #submit-button.edit-mode {
+    background-color: var(--color-blue);
+  }
+
+  #submit-button:not(:disabled):hover {
     cursor: pointer;
     background-color: var(--interactive-accent-hover);
   }

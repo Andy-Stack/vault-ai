@@ -27,7 +27,9 @@ export class Gemini implements IAIClass {
     this.apiKey = this.plugin.settings.apiKey;
   }
 
-  public async* streamRequest(conversation: Conversation, abortSignal?: AbortSignal): AsyncGenerator<StreamChunk, void, unknown> {
+  public async* streamRequest(
+    conversation: Conversation, allowDestructiveActions: boolean, abortSignal?: AbortSignal
+  ): AsyncGenerator<StreamChunk, void, unknown> {
     // next request should use web search only (gemini api doesn't support custom tooling and grounding at the same time)
     let requestWebSearch = this.accumulatedFunctionName == this.REQUEST_WEB_SEARCH;
 
@@ -60,7 +62,7 @@ export class Gemini implements IAIClass {
             required: ["reasoning"]
           }
         },
-        ...this.mapFunctionDefinitions(this.aiFunctionDefinitions.getQueryActions()),
+        ...this.mapFunctionDefinitions(this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)),
       ]
     }
 
