@@ -76,6 +76,11 @@
     return hasNoApiKey;
   }
 
+  function toggleEditMode() {
+    editModeActive = !editModeActive;
+    focusInput();
+  }
+
   function handleStop() {
     chatService.stop();
     currentThought = null;
@@ -197,7 +202,7 @@
       id="edit-mode-button"
       class:edit-mode={editModeActive}
       bind:this={editModeButton}
-      on:click={() => { editModeActive = !editModeActive }}
+      on:click={() => { toggleEditMode() }}
       disabled={isSubmitting}
       aria-label={editModeActive ? "Turn off Agent Mode" : "Turn on Agent Mode"}>
     </button>
