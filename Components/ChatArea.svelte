@@ -52,7 +52,6 @@
 
   let messagePadding: number = 0;
   let staticMessagePadding: number = 0;
-  let responsePadding: number = 0;
   let lastAssistantMessageElement: HTMLElement | undefined;
 
   function getGreetingByTime(): string {
@@ -200,7 +199,6 @@
           paddingTop);
       }
       chatContainer.style.paddingBottom = `${messagePadding}px`;
-      responsePadding = staticMessagePadding;
 
       tick().then(() => {
         chatContainer.scroll({ top: chatContainer.scrollHeight, behavior: "smooth" });
@@ -213,8 +211,11 @@
 
     const resizeObserver = new ResizeObserver(() => {
       requestAnimationFrame(() => {
+        const previousAssistantMessagesHeight = calculatePreviousAssistantMessagesHeight(element);
+
         messagePadding = Math.max(0,
           staticMessagePadding -
+          previousAssistantMessagesHeight -
           element.offsetHeight -
           calculateStreamingThoughtSize() -
           parseFloat(getComputedStyle(chatContainer).gap) || 0);
@@ -230,6 +231,44 @@
         resizeObserver.disconnect();
       }
     }
+  }
+
+  function calculatePreviousAssistantMessagesHeight(currentElement: HTMLElement): number {
+    // Find the index of the current message in the messages array
+    const currentMessageIndex = messages.findIndex((msg) => {
+      const msgElement = messageElements.get(msg.id);
+      return msgElement?.parentElement === currentElement;
+    });
+
+    if (currentMessageIndex === -1) {
+      return 0;
+    }
+
+    // Walk backward from current message to find the last user message
+    let totalHeight = 0;
+    const gap = parseFloat(getComputedStyle(chatContainer).gap) || 0;
+
+    for (let i = currentMessageIndex - 1; i >= 0; i--) {
+      const msg = messages[i];
+
+      // Stop when we hit a user message
+      if (msg.role === Role.User) {
+        break;
+      }
+
+      // Sum up heights of all assistant messages before the current one
+      if (msg.role === Role.Assistant && !msg.isFunctionCall && !msg.isFunctionCallResponse && msg.content) {
+        const msgElement = messageElements.get(msg.id);
+        if (msgElement) {
+          const containerElement = msgElement.parentElement;
+          if (containerElement) {
+            totalHeight += containerElement.offsetHeight + gap;
+          }
+        }
+      }
+    }
+
+    return totalHeight;
   }
 
   $: {
