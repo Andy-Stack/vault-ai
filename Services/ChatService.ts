@@ -19,8 +19,12 @@ export class ChatService {
 	private ai: IAIClass | undefined;
 	private conversationService: ConversationFileSystemService;
 	private aiFunctionService: AIFunctionService;
+	
 	private abortController: AbortController | null = null;
+	private isAborting: boolean = false;
+
 	private semaphore: Semaphore;
+	private semaphoreHeld: boolean = false;
 
 	constructor() {
 		this.conversationService = Resolve<ConversationFileSystemService>(Services.ConversationFileSystemService);
@@ -36,6 +40,8 @@ export class ChatService {
 		if (!await this.semaphore.wait()) {
 			return conversation;
 		}
+
+		this.semaphoreHeld = true;
 
 		try {
 			if (userRequest.trim() === "") {
@@ -74,12 +80,17 @@ export class ChatService {
 		} finally {
 			callbacks.onThoughtUpdate(null);
 			this.abortController = null;
-			this.semaphore.release();
+			this.isAborting = false;
+			if (this.semaphoreHeld) {
+				this.semaphoreHeld = false;
+				this.semaphore.release();	
+			}
 			callbacks.onComplete();
 		}
 	}
 
 	stop(): void {
+		this.isAborting = true;
 		if (this.abortController) {
 			this.abortController.abort();
 			this.abortController = null;

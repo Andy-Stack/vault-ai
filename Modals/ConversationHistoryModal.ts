@@ -9,6 +9,7 @@ import type { FileSystemService } from 'Services/FileSystemService';
 import { dateToString } from 'Helpers/Helpers';
 import { conversationStore } from 'Stores/conversationStore';
 import { Selector } from 'Enums/Selector';
+import type { ChatService } from 'Services/ChatService';
 
 interface ListItem {
     id: string;
@@ -22,6 +23,7 @@ export class ConversationHistoryModal extends Modal {
 
     private readonly conversationFileSystemService: ConversationFileSystemService = Resolve<ConversationFileSystemService>(Services.ConversationFileSystemService);
     private readonly fileSystemService: FileSystemService = Resolve<FileSystemService>(Services.FileSystemService);
+    private readonly chatService: ChatService = Resolve<ChatService>(Services.ChatService);
 
     private component: Record<string, any> | null = null;
     private items: ListItem[];
@@ -77,6 +79,8 @@ export class ConversationHistoryModal extends Modal {
     }
 
     async handleDelete(itemIds: string[]) {
+        this.chatService.stop();
+
         const itemsToDelete = this.items.filter(item => itemIds.includes(item.id));
 
         let shouldResetChat = false;

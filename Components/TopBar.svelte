@@ -7,12 +7,14 @@
   import { conversationStore } from '../Stores/conversationStore';
 	import type { ConversationHistoryModal } from 'Modals/ConversationHistoryModal';
 	import { openPluginSettings } from 'Helpers/Helpers';
+	import type { ChatService } from 'Services/ChatService';
 
   export let leaf: WorkspaceLeaf;
   export let onNewConversation: (() => void) | undefined = undefined;
 
   const plugin = Resolve<AIAgentPlugin>(Services.AIAgentPlugin);
   const conversationService = Resolve<ConversationFileSystemService>(Services.ConversationFileSystemService);
+  const chatService: ChatService = Resolve<ChatService>(Services.ChatService);
 
   function startNewConversation() {
     conversationService.resetCurrentConversation();
@@ -21,6 +23,7 @@
   }
 
   async function deleteCurrentConversation() {
+    chatService.stop();
     await conversationService.deleteCurrentConversation();
     conversationStore.reset();
     onNewConversation?.();

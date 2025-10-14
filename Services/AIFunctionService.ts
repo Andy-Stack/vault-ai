@@ -37,8 +37,8 @@ export class AIFunctionService {
     }
 
     private async searchVaultFiles(searchTerm: string): Promise<object> {
-        const matches: SearchMatch[] = await this.fileSystemService.searchVaultFiles(searchTerm);
-        
+        const matches: SearchMatch[] = searchTerm.trim() === "" ? [] : await this.fileSystemService.searchVaultFiles(searchTerm);
+
         if (matches.length === 0) {
             const files: TFile[] = await this.fileSystemService.listFilesInDirectory("/");
             return files.map((file) => ({

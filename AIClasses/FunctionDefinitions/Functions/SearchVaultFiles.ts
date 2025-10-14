@@ -9,6 +9,8 @@ export const SearchVaultFiles: IAIFunctionDefinition = {
                 **IMPORTANT: When a search returns 0 results, a complete list of all vault files will be automatically returned.**
                 This allows you to verify the search scope and attempt alternative search strategies.
                 
+                Use an empty search term to retrieve a complete list of all vault files explicitly.
+                
                 Use this function when you need to:
                 - Find files based on what's written INSIDE them
                 - Search for specific concepts, keywords, or text within notes
