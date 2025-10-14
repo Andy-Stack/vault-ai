@@ -300,11 +300,6 @@
     transition-duration: 0.5s;
   }
 
-  #edit-mode-button.edit-mode {
-    box-shadow: 0px 0px 1px 1px var(--color-blue);
-    color: var(--color-blue);
-  }
-
   #submit-button:not(:disabled):hover {
     cursor: pointer;
     background-color: var(--interactive-accent-hover);

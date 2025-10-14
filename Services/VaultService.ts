@@ -3,6 +3,7 @@ import { Resolve } from "./DependencyService";
 import { Services } from "./Services";
 import type AIAgentPlugin from "main";
 import { Path } from "Enums/Path";
+import { escapeRegex } from "Helpers/Helpers";
 
 /* This service protects the users vault through their exclusions. The plugin root is excluded by default */
 export class VaultService {
@@ -88,6 +89,27 @@ export class VaultService {
         // if an excluded file or directory is present we just filter it rather than 
         // reporting it since this function could touch a large part of the vault
         return files.filter(file => !this.isExclusion(file.path, allowAccessToPluginRoot));
+    }
+
+    public async searchVaultFiles(searchTerm: string): Promise<TFile[]> {
+        let regex: RegExp;
+        try {
+            regex = new RegExp(searchTerm, "i");
+        } catch {
+            regex = new RegExp(escapeRegex(searchTerm), "i");
+        }
+
+        const files: TFile[] = this.vault.getFiles().filter(file => !this.isExclusion(file.path));
+
+        const matches: TFile[] = [];
+        for (const file of files) {
+            const content = await this.vault.cachedRead(file);
+            if (regex.test(content)) {
+                matches.push(file);
+            }
+        }
+
+        return matches;
     }
 
     private isExclusion(filePath: string, allowAccessToPluginRoot: boolean = false): boolean {

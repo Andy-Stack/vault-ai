@@ -96,6 +96,10 @@ export class FileSystemService {
         }
     }
 
+    public async searchVaultFiles(searchTerm: string): Promise<TFile[]> {
+        return await this.vaultService.searchVaultFiles(searchTerm);
+    }
+
     private async createDirectories(vaultService: VaultService, filePath: string, allowAccessToPluginRoot: boolean = false) {
         const dirPath: string = filePath.substring(0, filePath.lastIndexOf('/'));
 

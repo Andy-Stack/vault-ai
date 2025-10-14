@@ -12,8 +12,8 @@ export class AIFunctionService {
 
     public async performAIFunction(functionCall: AIFunctionCall): Promise<AIFunctionResponse> {
         switch (functionCall.name) {
-            case AIFunction.ListVaultFiles:
-                return new AIFunctionResponse(functionCall.name, await this.listVaultFiles());
+            case AIFunction.SearchVaultFiles:
+                return new AIFunctionResponse(functionCall.name, await this.searchVaultFiles(functionCall.arguments.search_term));
 
             case AIFunction.ReadFile:
                 return new AIFunctionResponse(functionCall.name, await this.readFile(functionCall.arguments.file_path));
@@ -32,12 +32,11 @@ export class AIFunctionService {
         }
     }
 
-    private async listVaultFiles(): Promise<object> {
-        const files: TFile[] = await this.fileSystemService.listFilesInDirectory("/");
+    private async searchVaultFiles(searchTerm: string): Promise<object> {
+        const files: TFile[] = await this.fileSystemService.searchVaultFiles(searchTerm);
         return files.map((file) => ({
             name: file.basename,
-            path: file.path,
-            size_bytes: file.stat.size
+            path: file.path
         }));
     }
 

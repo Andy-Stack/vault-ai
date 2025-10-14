@@ -1,5 +1,5 @@
 export enum AIFunction {
-    ListVaultFiles = "list_vault_files",
+    SearchVaultFiles = "search_vault_files",
     ReadFile = "read_file",
 
     // used by gemini

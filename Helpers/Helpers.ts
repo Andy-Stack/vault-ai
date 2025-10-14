@@ -34,3 +34,7 @@ export function dateToString(date: Date, includeTime: boolean = true): string {
         }).replace(/[:\s]/g, '-');
     }
 }
+
+export function escapeRegex(string: string): string {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
