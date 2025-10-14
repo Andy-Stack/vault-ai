@@ -10,9 +10,9 @@ export const SearchVaultFiles: IAIFunctionDefinition = {
                 This allows you to verify the search scope and attempt alternative search strategies.
                 
                 Use an empty search term to retrieve a complete list of all vault files explicitly.
-                
+
                 Use this function when you need to:
-                - Find files based on what's written INSIDE them
+                - Retrieve a full list of files in the users vault
                 - Search for specific concepts, keywords, or text within notes
                 - Locate content that matches a pattern or phrase
                 - Answer questions about what the user has written about a topic`,

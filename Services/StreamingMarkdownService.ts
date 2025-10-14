@@ -24,9 +24,13 @@ export class StreamingMarkdownService {
     private readonly fileSystemService: FileSystemService = Resolve<FileSystemService>(Services.FileSystemService);
 
     private readonly processor: Processor<any, any, any, any, any> | null = null;
-    private streamingStates = new Map<string, StreamingState>();
+    private streamingStates: Map<string, StreamingState> = new Map<string, StreamingState>();
+
+    private cachedPermaLinks: string[];
 
     constructor() {
+        this.cachedPermaLinks = this.fileSystemService.getVaultFileListForMarkDown();
+
         this.processor = unified()
         .use(remarkParse)
             .use(remarkGfm)
@@ -53,7 +57,7 @@ export class StreamingMarkdownService {
                 closeSelfClosing: true
             })
             .use(wikiLinkPlugin, {
-                permalinks: this.fileSystemService.getVaultFileListForMarkDown(),
+                permalinks: this.cachedPermaLinks,
                 wikiLinkClassName: Selector.MarkDownLink,
                 pageResolver: (pageName: string) => [pageName],
                 hrefTemplate: (permalink: string) => `#/page/${encodeURIComponent(permalink)}`
@@ -71,7 +75,6 @@ export class StreamingMarkdownService {
         }
     }
 
-    // Simplified streaming approach
     public initializeStream(messageId: string, container: HTMLElement): void {
         container.innerHTML = "";
         
@@ -84,12 +87,14 @@ export class StreamingMarkdownService {
     }
 
     public streamChunk(messageId: string, fullText: string): void {
+        // ensure perma links are up to date during each chunk
+        this.fileSystemService.getVaultFileListForMarkDown()
+
         const state = this.streamingStates.get(messageId);
         if (!state || state.isComplete) {
             return;
         }
 
-        // Update buffer
         state.buffer = fullText;
 
         // Use debounced rendering for better performance
