@@ -321,6 +321,7 @@
   {/each}
 
   <ChatAreaThought bind:thoughtElement thought={currentThought}/>
+  <StreamingIndicator bind:streamingElement editModeActive={editModeActive}/>
   {#if isSubmitting}
     <StreamingIndicator bind:streamingElement editModeActive={editModeActive}/>
   {/if}

@@ -100,6 +100,10 @@
 /* CSS Variables for Theming */
 /* ============================== */
 
+body {
+  --interactive-accent-blue: color-mix(in srgb, var(--interactive-accent) 50%, var(--color-blue) 50%);
+}
+
 :root {
   --code-background: #24292e;
   --code-background-inline: rgba(27, 31, 35, 0.05);

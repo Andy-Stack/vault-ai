@@ -250,7 +250,7 @@
   }
 
   #input-container.edit-mode {
-    border-color: var(--color-blue);
+    border-color: var(--interactive-accent-blue);
     transition: border-color 0.5s ease-out;
   }
 
@@ -276,8 +276,8 @@
   }
   
   #input-field.edit-mode:focus {
-    border-color: var(--color-blue);
-    box-shadow: 0px 0px 3px 1px var(--color-blue);
+    border-color: var(--interactive-accent-blue);
+    box-shadow: 0px 0px 3px 1px var(--interactive-accent-blue);
     transition: border-color 0.5s ease-out;
   }
 
@@ -317,7 +317,7 @@
   }
 
   #submit-button.edit-mode {
-    background-color: var(--color-blue);
+    background-color: var(--interactive-accent-blue);
   }
 
   #submit-button:not(:disabled):hover {
