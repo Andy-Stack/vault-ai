@@ -52,7 +52,7 @@ export class VaultService {
             console.log(`Plugin attempted to modify a file that is in the exclusions list: ${file.path}`)
             return;
         }
-        await this.vault.modify(file, content);
+        await this.vault.process(file, () => content);
     }
 
     public async delete(file: TAbstractFile, force?: boolean, allowAccessToPluginRoot: boolean = false): Promise<void> {
