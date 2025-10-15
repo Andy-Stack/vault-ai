@@ -1,5 +1,6 @@
 export enum Path {
-    Root = "AI Agent",
-    UserInstruction = `${Path.Root}/AGENT_INSTRUCTIONS.md`,
-    Conversations = `${Path.Root}/Conversations`
+    Root = "/",
+    AIAgentDir = "AI Agent",
+    UserInstruction = `${Path.AIAgentDir}/AGENT_INSTRUCTIONS.md`,
+    Conversations = `${Path.AIAgentDir}/Conversations`
 };

@@ -51,16 +51,6 @@ export class Gemini implements IAIClass {
           description: `Use this function when you need to search the web for current
                         information, recent events, news, or facts that may have changed.
                         After calling this, you will be able to perform web searches.`,
-          parameters: {
-            type: "object",
-            properties: {
-              reasoning: {
-                type: "string",
-                description: "Brief explanation of why web search is needed"
-              }
-            },
-            required: ["reasoning"]
-          }
         },
         ...this.mapFunctionDefinitions(this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)),
       ]

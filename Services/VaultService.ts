@@ -9,7 +9,7 @@ import type { SearchMatch, SearchSnippet } from "../Helpers/SearchTypes";
 /* This service protects the users vault through their exclusions. The plugin root is excluded by default */
 export class VaultService {
 
-    private readonly AGENT_ROOT = `${Path.Root}/**`;
+    private readonly AGENT_ROOT = `${Path.AIAgentDir}/**`;
     private readonly USER_INSTRUCTION = Path.UserInstruction;
 
     private readonly plugin: AIAgentPlugin;
@@ -95,12 +95,12 @@ export class VaultService {
     public async searchVaultFiles(searchTerm: string): Promise<SearchMatch[]> {
         let regex: RegExp;
         try {
-            regex = new RegExp(searchTerm, "ig"); // Added 'g' flag for global matching
+            regex = new RegExp(searchTerm, "ig");
         } catch {
             regex = new RegExp(escapeRegex(searchTerm), "ig");
         }
 
-        const files: TFile[] = this.vault.getFiles().filter(file => !this.isExclusion(file.path));
+        const files: TFile[] = await this.listFilesInDirectory(Path.Root);
 
         const allMatches: SearchMatch[] = [];
 
@@ -141,6 +141,14 @@ export class VaultService {
         const results: SearchMatch[] = [];
         for (const [file, snippets] of resultMap.entries()) {
             results.push({ file, snippets });
+        }
+
+        // add filename matches
+        for (const file of files) {
+            if (file.basename.match(regex) &&
+                !results.some(result => result.file.basename === file.basename)) {
+                    results.push({ file, snippets: [] });
+            }
         }
 
         return results;
