@@ -32,7 +32,7 @@ export class FileSystemService {
 
     public async writeFile(filePath: string, content: string, allowAccessToPluginRoot: boolean = false): Promise<boolean | any> {
         try {
-            let file: TAbstractFile | null = this.vaultService.getAbstractFileByPath(filePath, allowAccessToPluginRoot);
+            const file: TAbstractFile | null = this.vaultService.getAbstractFileByPath(filePath, allowAccessToPluginRoot);
             if (file == null || !(file instanceof TFile)) {
                 await this.vaultService.create(filePath, content, allowAccessToPluginRoot);
                 return true;
@@ -77,7 +77,7 @@ export class FileSystemService {
 
     public async writeObjectToFile(filePath: string, data: object, allowAccessToPluginRoot: boolean = false): Promise<boolean> {
         try {
-            let file: TAbstractFile | null = this.vaultService.getAbstractFileByPath(filePath, allowAccessToPluginRoot);
+            const file: TAbstractFile | null = this.vaultService.getAbstractFileByPath(filePath, allowAccessToPluginRoot);
 
             if (file && file instanceof TFile) {
                 await this.vaultService.modify(file, JSON.stringify(data, null, 4), allowAccessToPluginRoot);

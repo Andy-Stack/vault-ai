@@ -31,7 +31,7 @@ export class Gemini implements IAIClass {
     conversation: Conversation, allowDestructiveActions: boolean, abortSignal?: AbortSignal
   ): AsyncGenerator<StreamChunk, void, unknown> {
     // next request should use web search only (gemini api doesn't support custom tooling and grounding at the same time)
-    let requestWebSearch = this.accumulatedFunctionName == this.REQUEST_WEB_SEARCH;
+    const requestWebSearch = this.accumulatedFunctionName == this.REQUEST_WEB_SEARCH;
 
     // Reset function call accumulation state for new request
     this.accumulatedFunctionName = null;
