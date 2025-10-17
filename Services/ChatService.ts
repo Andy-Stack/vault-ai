@@ -139,7 +139,7 @@ export class ChatService {
 	}
 
 	public setStatusBarTokens(inputTokens: number, outputTokens: number): void {
-		this.statusBarService.setStatusBarMessage(`Input Tokens: ${inputTokens} / Output Tokens: ${outputTokens}`);
+		this.statusBarService.animateTokens(inputTokens, outputTokens);
 	}
 
 	private async streamRequestResponse(
