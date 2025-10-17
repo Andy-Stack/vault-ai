@@ -1,25 +1,27 @@
 import { WorkspaceLeaf, Plugin } from 'obsidian';
 import { AIProvider } from './Enums/ApiProvider';
-
 import { MainView, VIEW_TYPE_MAIN } from 'Views/MainView';
 import { RegisterAiProvider, RegisterDependencies } from 'Services/ServiceRegistration';
 import { AIAgentSettingTab } from 'AIAgentSettingTab';
+import { Services } from 'Services/Services';
+import type { StatusBarService } from 'Services/StatusBarService';
+import { Resolve } from 'Services/DependencyService';
 
-interface AIAgentSettings {
+interface IAIAgentSettings {
 	apiProvider: string;
 	apiKey: string;
 	exclusions: string[];
 }
 
-const DEFAULT_SETTINGS: AIAgentSettings = {
+const DEFAULT_SETTINGS: IAIAgentSettings = {
 	apiProvider: AIProvider.Gemini,
 	apiKey: "",
 	exclusions: []
 }
 
 export default class AIAgentPlugin extends Plugin {
-	settings: AIAgentSettings;
-
+	public settings: IAIAgentSettings;
+	
 	async onload() {
 		// KaTeX CSS is bundled with the plugin to comply with CSP
 		require('katex/dist/katex.min.css');
@@ -43,18 +45,15 @@ export default class AIAgentPlugin extends Plugin {
 			}
 		});
 
-		this.addRibbonIcon('sparkles', 'AI Agent', (evt: MouseEvent) => {
+		this.addRibbonIcon('sparkles', 'AI Agent', (_: MouseEvent) => {
 			this.activateView();
 		});
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
 
 		this.addSettingTab(new AIAgentSettingTab(this.app, this));
 	}
 
 	async onunload() {
+		Resolve<StatusBarService>(Services.StatusBarService).removeStatusBarMessage();
 	}
 
 	async activateView() {

@@ -1,8 +1,8 @@
 export class Services {
     static AIAgentPlugin = Symbol("AIAgentPlugin");
+    static StatusBarService = Symbol("StatusBarService");
     static FileManager = Symbol("FileManager");
     static VaultService = Symbol("VaultService");
-    static MessageService = Symbol("MessageService");
     static WorkSpaceService = Symbol("WorkSpaceService");
     static FileSystemService = Symbol("FileSystemService");
     static ConversationFileSystemService = Symbol("ConversationFileSystemService");
@@ -17,6 +17,7 @@ export class Services {
     // interfaces
     static IAIClass = Symbol("IAIClass");
     static IPrompt = Symbol("IPrompt");
+    static ITokenService = Symbol("ITokenService");
     static IConversationNamingService = Symbol("IConversationNamingService");
 
     // modals
