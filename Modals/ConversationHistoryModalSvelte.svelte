@@ -130,7 +130,7 @@
       display: grid;
       grid-template-rows: auto;
       grid-template-columns: var(--size-4-2) auto 1fr var(--size-4-2) auto var(--size-4-2);
-      background-color: var(--color-base-30);
+      background-color: var(--background-modifier-hover);
       border-radius: var(--radius-m);
     }
 
@@ -171,11 +171,11 @@
     }
 
     .history-list-modal-clickable:hover {
-      background-color: var(--color-base-20);
+      background-color: var(--background-secondary);
     }
 
     .history-list-modal-clickable:active {
-      background-color: var(--color-base-25);
+      background-color: var(--background-secondary-alt);
     }
 
     .history-list-modal-date {
@@ -187,7 +187,7 @@
     .history-list-modal-separator {
       grid-row: 1;
       grid-column: 2;
-      color: var(--color-base-35);
+      color: var(--text-faint);
       margin: 0px var(--size-4-3);
     }
 
@@ -237,8 +237,8 @@
 
     .conversation-search-input {
       max-width: 200px;
-      background-color: var(--color-base-20);
-      border: 1px solid var(--color-base-35);
+      background-color: var(--background-secondary);
+      border: 1px solid var(--background-modifier-border);
       border-radius: var(--radius-s);
       padding: var(--size-2-1) var(--size-2-3);
       color: var(--text-normal);

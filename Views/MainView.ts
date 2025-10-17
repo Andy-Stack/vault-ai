@@ -18,7 +18,7 @@ export class MainView extends ItemView {
   }
 
   getDisplayText() {
-    return 'Main View';
+    return "AI Agent";
   }
 
   async onOpen() {

@@ -27,7 +27,6 @@
   let userRequest = "";
   let hasNoApiKey = false;
   let isSubmitting = false;
-  let isStreaming = false;
   let editModeActive = false;
   let currentStreamingMessageId: string | null = null;
 
@@ -112,7 +111,6 @@
       onStreamingUpdate: (updatedConversation, streamingId, streaming) => {
         conversation = updatedConversation;
         currentStreamingMessageId = streamingId;
-        isStreaming = streaming;
       },
       onThoughtUpdate: (thought) => {
         currentThought = thought;
@@ -251,11 +249,11 @@
     grid-template-rows: var(--size-4-3) 1fr var(--size-4-3);
     grid-template-columns: var(--size-4-3) 1fr var(--size-4-2) auto var(--size-4-2) auto var(--size-4-3);
     border-radius: var(--modal-radius);
-    background-color: var(--color-base-00);
+    background-color: var(--background-primary);
   }
 
   #input-container.edit-mode {
-    border-color: var(--interactive-accent-blue);
+    border-color: var(--interactive-accent);
     transition: border-color 0.5s ease-out;
   }
 
@@ -281,8 +279,8 @@
   }
   
   #input-field.edit-mode:focus {
-    border-color: var(--interactive-accent-blue);
-    box-shadow: 0px 0px 3px 1px var(--interactive-accent-blue);
+    border-color: var(--interactive-accent);
+    box-shadow: 0px 0px 3px 1px var(--interactive-accent);
     transition: border-color 0.5s ease-out;
   }
 
@@ -322,11 +320,11 @@
   }
 
   #submit-button.edit-mode {
-    background-color: var(--interactive-accent-blue);
+    background-color: var(--interactive-accent);
   }
 
   #submit-button.edit-mode:not(:disabled):hover {
     cursor: pointer;
-    background-color: var(--interactive-accent-blue-hover);
+    background-color: var(--interactive-accent-hover);
   }
 </style>

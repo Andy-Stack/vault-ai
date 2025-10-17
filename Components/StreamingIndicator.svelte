@@ -31,7 +31,7 @@
   }
 
   .container.edit-mode {
-    --streaming-color: var(--interactive-accent-blue);
+    --streaming-color: var(--interactive-accent);
   }
 
   .📦 {

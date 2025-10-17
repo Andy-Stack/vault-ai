@@ -139,14 +139,14 @@
     display: grid;
     grid-template-rows: auto;
     grid-template-columns: var(--size-4-2) auto auto auto auto auto auto 1fr 0.1fr auto var(--size-4-2);
-    background-color: var(--color-base-30);
+    background-color: var(--background-modifier-hover);
     border-radius: var(--radius-m);
   }
 
   .top-bar-divider {
     width: var(--divider-width);
     height: auto;
-    background: var(--color-base-35);
+    background: var(--background-modifier-border-hover);
     margin: var(--size-4-2) var(--size-4-3);
   }
 

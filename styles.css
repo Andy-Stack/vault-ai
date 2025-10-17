@@ -3,29 +3,7 @@
 /* ============================== */
 
 .workspace-leaf-content[data-type="main-view"] .view-content {
-  background: linear-gradient(
-    to bottom,
-    var(--color-base-25),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20),
-    var(--color-base-20)
-  );
+  background-color: var(--background-secondary);
   padding-top: 0;
 }
 
@@ -107,7 +85,7 @@
 }
 
 .top-bar-button:hover {
-  background-color: var(--color-base-35);
+  background-color: var(--background-modifier-hover);
 }
 
 .api-request-aborted {
@@ -119,48 +97,24 @@
   padding: var(--size-2-3);
 }
 
+
 /* ============================== */
 /* CSS Variables for Theming */
 /* ============================== */
 
+/* Custom variables mapped to Obsidian theme variables */
 body {
-  --interactive-accent-blue: color-mix(in srgb, var(--interactive-accent) 50%, var(--color-blue) 50%);
-  --interactive-accent-blue-hover: color-mix(in srgb, var(--interactive-accent-hover) 50%, var(--color-blue) 50%);
-}
-
-:root {
-  --code-background: #24292e;
-  --code-background-inline: rgba(27, 31, 35, 0.05);
-  --text-color: #24292e;
-  --text-muted: #586069;
-  --link-color: #0969da;
-  --blockquote-border: #d0d7de;
-  --table-border: #d0d7de;
-  --table-header-background: #f6f8fa;
-  --hr-color: #d0d7de;
-  --checkbox-bg: #fff;
-  --checkbox-border: #d1d5da;
-  --checkbox-checked-bg: #0969da;
-  --footnote-border: #d0d7de;
-}
-
-/* Dark mode variables */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --code-background: #161b22;
-    --code-background-inline: rgba(240, 246, 252, 0.15);
-    --text-color: #c9d1d9;
-    --text-muted: #8b949e;
-    --link-color: #58a6ff;
-    --blockquote-border: #3b434b;
-    --table-border: #3b434b;
-    --table-header-background: #161b22;
-    --hr-color: #3b434b;
-    --checkbox-bg: #161b22;
-    --checkbox-border: #3b434b;
-    --checkbox-checked-bg: #58a6ff;
-    --footnote-border: #3b434b;
-  }
+  --code-background-inline: var(--code-background);
+  --text-color: var(--text-normal);
+  --link-color: var(--link-color);
+  --blockquote-border: var(--blockquote-border-color);
+  --table-border: var(--table-border-color);
+  --table-header-background: var(--table-header-background);
+  --hr-color: var(--hr-color);
+  --checkbox-bg: var(--background-primary);
+  --checkbox-border: var(--background-modifier-border);
+  --checkbox-checked-bg: var(--interactive-accent);
+  --footnote-border: var(--background-modifier-border);
 }
 
 /* ============================== */
@@ -172,8 +126,8 @@ body {
   display: block;
   overflow-x: auto;
   padding: 0.5em;
-  color: #e1e4e8;
-  background: #24292e;
+  color: var(--code-normal);
+  background: var(--code-background);
 }
 
 /* Language indicator */
@@ -191,8 +145,8 @@ body {
   right: 0;
   padding: 0.25em 0.5em;
   font-size: 0.75em;
-  color: #8b949e;
-  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-faint);
+  background: var(--background-modifier-cover);
   border-radius: 0 0 0 0.25em;
 }
 
@@ -1304,8 +1258,8 @@ body {
 
 /* Mark/highlight */
 .message-bubble.assistant mark {
-  background-color: #fff3cd;
-  color: #000;
+  background-color: var(--text-highlight-bg);
+  color: var(--text-normal);
   padding: 0.2em;
   border-radius: 2px;
 }
