@@ -24,7 +24,11 @@
     if (lastAssistantMessageElement && lastAssistantMessageElement.offsetHeight < 
       chatContainer.offsetHeight - parseFloat(getComputedStyle(chatContainer).padding) * 2) {
       // Recalculate padding when streaming ends to fix race condition with streaming indicator removal
-      assistantMessageAction(lastAssistantMessageElement);
+      tick().then(() => {
+        if (lastAssistantMessageElement) {
+          assistantMessageAction(lastAssistantMessageElement);
+        }
+      });
 
       // use an interval to complete scrolling once the dom has finished updating
       const scrollInterval: number = plugin.registerInterval(window.setInterval(() => {

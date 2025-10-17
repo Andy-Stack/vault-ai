@@ -253,7 +253,7 @@
   }
 
   #input-container.edit-mode {
-    border-color: var(--interactive-accent);
+    border-color: var(--alt-interactive-accent);
     transition: border-color 0.5s ease-out;
   }
 
@@ -279,8 +279,8 @@
   }
   
   #input-field.edit-mode:focus {
-    border-color: var(--interactive-accent);
-    box-shadow: 0px 0px 3px 1px var(--interactive-accent);
+    border-color: var(--alt-interactive-accent);
+    box-shadow: 0px 0px 3px 1px var(--alt-interactive-accent);
     transition: border-color 0.5s ease-out;
   }
 
@@ -320,11 +320,11 @@
   }
 
   #submit-button.edit-mode {
-    background-color: var(--interactive-accent);
+    background-color: var(--alt-interactive-accent);
   }
 
   #submit-button.edit-mode:not(:disabled):hover {
     cursor: pointer;
-    background-color: var(--interactive-accent-hover);
+    background-color: var(--alt-interactive-accent-hover);
   }
 </style>
