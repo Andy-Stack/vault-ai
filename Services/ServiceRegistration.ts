@@ -4,7 +4,9 @@ import { RegisterSingleton, RegisterTransient, Resolve } from "./DependencyServi
 import { Services } from "./Services";
 import { AIPrompt, type IPrompt } from "AIClasses/IPrompt";
 import type { IAIClass } from "AIClasses/IAIClass";
+import type { IConversationNamingService } from "AIClasses/IConversationNamingService";
 import { Gemini } from "AIClasses/Gemini/Gemini";
+import { GeminiConversationNamingService } from "AIClasses/Gemini/GeminiConversationNamingService";
 import { StreamingMarkdownService } from "./StreamingMarkdownService";
 import { MessageService } from "./MessageService";
 import { FileSystemService } from "./FileSystemService";
@@ -16,6 +18,7 @@ import { StreamingService } from "./StreamingService";
 import { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
 import { WorkSpaceService } from "./WorkSpaceService";
 import { ChatService } from "./ChatService";
+import { ConversationNamingService } from "./ConversationNamingService";
 import { VaultService } from "./VaultService";
 
 export function RegisterDependencies(plugin: AIAgentPlugin) {
@@ -27,6 +30,7 @@ export function RegisterDependencies(plugin: AIAgentPlugin) {
     RegisterSingleton<WorkSpaceService>(Services.WorkSpaceService, new WorkSpaceService());
     RegisterSingleton<FileSystemService>(Services.FileSystemService, new FileSystemService());
     RegisterSingleton<ConversationFileSystemService>(Services.ConversationFileSystemService, new ConversationFileSystemService());
+    RegisterSingleton<ConversationNamingService>(Services.ConversationNamingService, new ConversationNamingService());
 
     RegisterSingleton<IPrompt>(Services.IPrompt, new AIPrompt());
     RegisterSingleton<AIFunctionDefinitions>(Services.AIFunctionDefinitions, new AIFunctionDefinitions());
@@ -43,8 +47,10 @@ export function RegisterDependencies(plugin: AIAgentPlugin) {
 export function RegisterAiProvider(plugin: AIAgentPlugin) {
     if (plugin.settings.apiProvider == AIProvider.Gemini) {
         RegisterSingleton<IAIClass>(Services.IAIClass, new Gemini());
+        RegisterSingleton<IConversationNamingService>(Services.IConversationNamingService, new GeminiConversationNamingService());
     }
     Resolve<ChatService>(Services.ChatService).resolveAIProvider();
+    Resolve<ConversationNamingService>(Services.ConversationNamingService).resolveNamingProvider();
 }
 
 function RegisterModals(app: App) {

@@ -5,5 +5,6 @@ export enum AIProvider {
 };
 
 export enum AIProviderURL {
-    Gemini = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=API_KEY&alt=sse"
+    Gemini = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=API_KEY&alt=sse",
+    GeminiNamer = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=API_KEY&alt=sse"
 }

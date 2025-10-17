@@ -62,11 +62,11 @@ export class ConversationFileSystemService {
 
         const deleted = await this.fileSystemService.deleteFile(this.currentConversationPath, true);
 
-        if (deleted) {
+        if (deleted.success) {
             this.resetCurrentConversation();
         }
 
-        return deleted;
+        return deleted.success;
     }
 
     public async getAllConversations(): Promise<Conversation[]> {
@@ -88,6 +88,20 @@ export class ConversationFileSystemService {
         }
 
         return conversations;
+    }
+
+    public async updateConversationTitle(oldPath: string, newTitle: string): Promise<void> {
+        const newPath = `${Path.Conversations}/${newTitle}.json`;
+
+        const result = await this.fileSystemService.moveFile(oldPath, newPath, true);
+
+        if (!result.success) {
+            throw new Error(`Failed to update conversation title: ${result.error}`);
+        }
+
+        if (this.currentConversationPath === oldPath) {
+            this.currentConversationPath = newPath;
+        }
     }
 
 }

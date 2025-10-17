@@ -56,8 +56,8 @@ export class FileSystemService {
         return await this.vaultService.delete(file, undefined, allowAccessToPluginRoot);
     }
 
-    public async moveFile(sourcePath: string, destinationPath: string): Promise<{ success: true } | { success: false, error: string }> {
-        return await this.vaultService.move(sourcePath, destinationPath);
+    public async moveFile(sourcePath: string, destinationPath: string, allowAccessToPluginRoot: boolean = false): Promise<{ success: true } | { success: false, error: string }> {
+        return await this.vaultService.move(sourcePath, destinationPath, allowAccessToPluginRoot);
     }
 
     public async listFilesInDirectory(dirPath: string, recursive: boolean = true, allowAccessToPluginRoot: boolean = false): Promise<TFile[]> {

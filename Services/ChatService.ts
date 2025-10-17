@@ -4,6 +4,7 @@ import { Services } from "./Services";
 import type { IAIClass } from "AIClasses/IAIClass";
 import type { ConversationFileSystemService } from "./ConversationFileSystemService";
 import type { AIFunctionService } from "./AIFunctionService";
+import type { ConversationNamingService } from "./ConversationNamingService";
 import { Conversation } from "Conversations/Conversation";
 import { ConversationContent } from "Conversations/ConversationContent";
 import { Role } from "Enums/Role";
@@ -19,7 +20,8 @@ export class ChatService {
 	private ai: IAIClass | undefined;
 	private conversationService: ConversationFileSystemService;
 	private aiFunctionService: AIFunctionService;
-	
+	private namingService: ConversationNamingService;
+
 	private abortController: AbortController | null = null;
 	private isAborting: boolean = false;
 
@@ -29,6 +31,7 @@ export class ChatService {
 	constructor() {
 		this.conversationService = Resolve<ConversationFileSystemService>(Services.ConversationFileSystemService);
 		this.aiFunctionService = Resolve<AIFunctionService>(Services.AIFunctionService);
+		this.namingService = Resolve<ConversationNamingService>(Services.ConversationNamingService);
 		this.semaphore = new Semaphore(1, false);
 	}
 
@@ -53,6 +56,11 @@ export class ChatService {
 			// Add user message to conversation
 			conversation.contents = [...conversation.contents, new ConversationContent(Role.User, userRequest)];
 			await this.conversationService.saveConversation(conversation);
+
+			// Request conversation name on first user message (fire-and-forget)
+			if (conversation.contents.length === 1) {
+				this.namingService.requestName(conversation, userRequest, this.abortController);
+			}
 
 			// Process AI responses and function calls
 			let response = await this.streamRequestResponse(conversation, allowDestructiveActions, callbacks);

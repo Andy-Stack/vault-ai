@@ -6,6 +6,7 @@ export class Services {
     static WorkSpaceService = Symbol("WorkSpaceService");
     static FileSystemService = Symbol("FileSystemService");
     static ConversationFileSystemService = Symbol("ConversationFileSystemService");
+    static ConversationNamingService = Symbol("ConversationNamingService");
     static StreamingService = Symbol("StreamingService");
     static MarkdownService = Symbol("MarkdownService");
     static StreamingMarkdownService = Symbol("StreamingMarkdownService");
@@ -16,6 +17,7 @@ export class Services {
     // interfaces
     static IAIClass = Symbol("IAIClass");
     static IPrompt = Symbol("IPrompt");
+    static IConversationNamingService = Symbol("IConversationNamingService");
 
     // modals
     static ConversationHistoryModal = Symbol("ConversationHistoryModal");

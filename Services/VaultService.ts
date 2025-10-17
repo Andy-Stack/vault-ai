@@ -78,7 +78,7 @@ export class VaultService {
             return { success: false, error: "Source file is in exclusion list" };
         }
 
-        const file: TAbstractFile | null = this.getAbstractFileByPath(sourcePath);
+        const file: TAbstractFile | null = this.getAbstractFileByPath(sourcePath, allowAccessToPluginRoot);
         if (file === null) {
             return { success: false, error: "Source file not found" };
         }
