@@ -95,12 +95,14 @@
 }
 
 .api-request-aborted {
+  display: inline-block;
   color: var(--color-red);
   border: var(--color-red);
   border-style: solid;
   border-width: var(--border-width);
   border-radius: var(--radius-m);
   padding: var(--size-2-3);
+  margin: var(--size-4-2) 0;
 }
 
 /* ============================== */
