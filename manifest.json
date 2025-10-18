@@ -1,7 +1,7 @@
 {
 	"id": "ai_agent",
 	"name": "AI Agent",
-	"version": "1.0.0",
+	"version": "0.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "AI powered agent assistant.",
 	"author": "Obsidian",
