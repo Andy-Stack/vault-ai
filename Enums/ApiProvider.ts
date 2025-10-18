@@ -5,7 +5,9 @@ export enum AIProvider {
 };
 
 export enum AIProviderModel {
-    Gemini = "gemini-2.5-flash"
+    Claude = "claude-sonnet-4-5",
+    Gemini = "gemini-2.5-flash",
+    OpenAI = ""
 }
 
 export enum AIProviderURL {

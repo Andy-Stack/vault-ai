@@ -22,6 +22,8 @@ import { VaultService } from "./VaultService";
 import type { ITokenService } from "AIClasses/ITokenService";
 import { GeminiTokenService } from "AIClasses/Gemini/GeminiTokenService";
 import { StatusBarService } from "./StatusBarService";
+import { ClaudeTokenService } from "AIClasses/Claude/ClaudeTokenService";
+import { OpenAITokenService } from "AIClasses/OpenAI/OpenAITokenService";
 
 export function RegisterDependencies(plugin: AIAgentPlugin) {
     RegisterSingleton<AIAgentPlugin>(Services.AIAgentPlugin, plugin);
@@ -46,10 +48,19 @@ export function RegisterDependencies(plugin: AIAgentPlugin) {
 }
 
 export function RegisterAiProvider(plugin: AIAgentPlugin) {
-    if (plugin.settings.apiProvider == AIProvider.Gemini) {
+    if (plugin.settings.apiProvider == AIProvider.Claude) {
+        RegisterSingleton<ITokenService>(Services.ITokenService, new ClaudeTokenService());
+    }
+    else if (plugin.settings.apiProvider == AIProvider.Gemini) {
         RegisterSingleton<IAIClass>(Services.IAIClass, new Gemini());
         RegisterSingleton<ITokenService>(Services.ITokenService, new GeminiTokenService());
         RegisterSingleton<IConversationNamingService>(Services.IConversationNamingService, new GeminiConversationNamingService());
+    }
+    else if (plugin.settings.apiProvider == AIProvider.OpenAI) {
+        RegisterSingleton<ITokenService>(Services.ITokenService, new OpenAITokenService());
+    }
+    else { // should be impossible to land here
+        throw new Error("Invalid Provider Selection!");
     }
     Resolve<ChatService>(Services.ChatService).resolveAIProvider();
     Resolve<ConversationNamingService>(Services.ConversationNamingService).resolveNamingProvider();

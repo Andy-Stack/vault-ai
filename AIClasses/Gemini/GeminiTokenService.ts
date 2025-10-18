@@ -11,7 +11,7 @@ export class GeminiTokenService implements ITokenService {
 
     public constructor() {
         this.ai = new GoogleGenAI({ 
-            apiKey: Resolve<AIAgentPlugin>(Services.AIAgentPlugin).settings.apiKey 
+            apiKey: Resolve<AIAgentPlugin>(Services.AIAgentPlugin).settings.apiKey
         });
     }
 
