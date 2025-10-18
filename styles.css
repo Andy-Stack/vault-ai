@@ -103,7 +103,6 @@
   padding: var(--size-2-3);
 }
 
-
 /* ============================== */
 /* CSS Variables for Theming */
 /* ============================== */
@@ -173,14 +172,14 @@ body {
 .hljs-template-variable,
 .hljs-type,
 .hljs-variable.language_ {
-  color: #f97583;
+  color: var(--code-keyword);
 }
 
 .hljs-title,
 .hljs-title.class_,
 .hljs-title.class_.inherited__,
 .hljs-title.function_ {
-  color: #b392f0;
+  color: var(--code-function);
 }
 
 .hljs-attr,
@@ -193,64 +192,64 @@ body {
 .hljs-selector-class,
 .hljs-selector-id,
 .hljs-variable {
-  color: #79b8ff;
+  color: var(--code-property);
 }
 
 .hljs-meta .hljs-string,
 .hljs-regexp,
 .hljs-string {
-  color: #9ecbff;
+  color: var(--code-string);
 }
 
 .hljs-built_in,
 .hljs-symbol {
-  color: #ffab70;
+  color: var(--code-important);
 }
 
 .hljs-code,
 .hljs-comment,
 .hljs-formula {
-  color: #6a737d;
+  color: var(--code-comment);
 }
 
 .hljs-name,
 .hljs-quote,
 .hljs-selector-pseudo,
 .hljs-selector-tag {
-  color: #85e89d;
+  color: var(--code-tag);
 }
 
 .hljs-subst {
-  color: #e1e4e8;
+  color: var(--code-normal);
 }
 
 .hljs-section {
-  color: #79b8ff;
+  color: var(--code-property);
   font-weight: bold;
 }
 
 .hljs-bullet {
-  color: #ffab70;
+  color: var(--code-important);
 }
 
 .hljs-emphasis {
-  color: #e1e4e8;
+  color: var(--code-normal);
   font-style: italic;
 }
 
 .hljs-strong {
-  color: #e1e4e8;
+  color: var(--code-normal);
   font-weight: bold;
 }
 
 .hljs-addition {
-  color: #85e89d;
-  background-color: #144620;
+  color: var(--code-tag);
+  background-color: color-mix(in srgb, var(--color-green) 20%, transparent);
 }
 
 .hljs-deletion {
-  color: #ffdcd7;
-  background-color: #86181d;
+  color: var(--text-error);
+  background-color: color-mix(in srgb, var(--color-red) 20%, transparent);
 }
 
 .hljs-char.escape_,
@@ -259,34 +258,28 @@ body {
 .hljs-property,
 .hljs-punctuation,
 .hljs-tag {
-  color: #e1e4e8;
+  color: var(--code-normal);
 }
 
 /* Additional highlight.js classes for better coverage */
 .hljs-selector-pseudo {
-  color: #79b8ff;
+  color: var(--code-property);
 }
 
 .hljs-selector-tag {
-  color: #85e89d;
+  color: var(--code-tag);
 }
 
 .hljs-template-comment {
-  color: #6a737d;
+  color: var(--code-comment);
 }
 
 .hljs-meta-keyword {
-  color: #f97583;
+  color: var(--code-keyword);
 }
 
 .hljs-meta-string {
-  color: #9ecbff;
-}
-
-/* Alternative dark theme colors if preferred */
-.hljs.github-dark-dimmed {
-  color: #adbac7;
-  background: #22272e;
+  color: var(--code-string);
 }
 
 /* ============================== */
@@ -340,7 +333,7 @@ li.task-list-item {
   content: "✓";
   display: block;
   text-align: center;
-  color: white;
+  color: var(--text-on-accent);
   font-size: 0.75em;
   line-height: 1em;
   font-weight: bold;
@@ -1215,12 +1208,12 @@ body {
 
 /* Links */
 .message-bubble.assistant a {
-  color: var(--link-color);
+  color: var(--link-color-hover);
   text-decoration: none;
 }
 
 .message-bubble.assistant a:hover {
-  text-decoration: underline;
+  text-decoration: var(--link-decoration-hover);
 }
 
 /* Horizontal rules */
@@ -1357,7 +1350,7 @@ body {
   width: 2em;
   text-align: right;
   margin-right: 1em;
-  color: #6a737d;
+  color: var(--text-faint);
   user-select: none;
 }
 
