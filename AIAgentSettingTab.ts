@@ -24,6 +24,7 @@ export class AIAgentSettingTab extends PluginSettingTab {
 			.setDesc("Select the API provider to use.")
 			.addDropdown((dropdown) =>
 				dropdown
+					.addOption(AIProvider.Claude, AIProvider.Claude)
 					.addOption(AIProvider.Gemini, AIProvider.Gemini)
 					.addOption(AIProvider.OpenAI, AIProvider.OpenAI)
 					.setValue(this.plugin.settings.apiProvider)

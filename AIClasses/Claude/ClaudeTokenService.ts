@@ -12,11 +12,16 @@ export class ClaudeTokenService implements ITokenService {
 
     public constructor() {
         this.ai = new Anthropic({
-            apiKey: Resolve<AIAgentPlugin>(Services.AIAgentPlugin).settings.apiKey
+            apiKey: Resolve<AIAgentPlugin>(Services.AIAgentPlugin).settings.apiKey,
+            dangerouslyAllowBrowser: true
         })
     }
 
     public async countTokens(input: string): Promise<number> {
+        if (input.trim() === "") {
+            return 0;
+        }
+
         // to maintain the convenience of the interface we just submit the entire input as one message
         const result = await this.ai.messages.countTokens({
             model: AIProviderModel.Claude,

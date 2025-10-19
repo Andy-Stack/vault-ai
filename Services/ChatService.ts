@@ -70,7 +70,6 @@ export class ChatService {
 				this.onNameChanged?.(conversation.title); // on change for initial conversation name
 				this.namingService.requestName(conversation, userRequest, this.onNameChanged, this.abortController);
 			}
-			this.updateTokenDisplay(conversation);
 
 			// Process AI responses and function calls
 			let response = await this.streamRequestResponse(conversation, allowDestructiveActions, callbacks);
@@ -82,16 +81,14 @@ export class ChatService {
 					}
 
 					conversation.contents = [...conversation.contents, new ConversationContent(
-						Role.Assistant, response.functionCall.toConversationString(), new Date(), true)];
+						Role.Assistant, response.functionCall.toConversationString(), new Date(), true, false, response.functionCall.toolId)];
 					await this.conversationService.saveConversation(conversation);
 
 					const functionResponse = await this.aiFunctionService.performAIFunction(response.functionCall);
 					conversation.contents = [...conversation.contents, new ConversationContent(
-						Role.User, functionResponse.toConversationString(), new Date(), false, true)];
+						Role.User, functionResponse.toConversationString(), new Date(), false, true, functionResponse.toolId)];
 					await this.conversationService.saveConversation(conversation);
 				}
-
-				this.updateTokenDisplay(conversation);
 
 				response = await this.streamRequestResponse(conversation, allowDestructiveActions, callbacks);
 			}
@@ -153,12 +150,13 @@ export class ChatService {
 			return { functionCall: null, shouldContinue: false };;
 		}
 
-		// Create AI message with stable ID
+		// Create AI message with stable timestamp for identification
 		const aiMessage = new ConversationContent(Role.Assistant, "");
 		conversation.contents = [...conversation.contents, aiMessage];
 
-		// Notify that streaming has started
-		callbacks.onStreamingUpdate(conversation, aiMessage.id, true);
+		// Notify that streaming has started - use timestamp as unique identifier
+		const messageId = aiMessage.timestamp.getTime().toString();
+		callbacks.onStreamingUpdate(conversation, messageId, true);
 
 		let accumulatedContent = "";
 		let capturedFunctionCall: AIFunctionCall | null = null;
@@ -168,7 +166,7 @@ export class ChatService {
 			if (chunk.error) {
 				console.error("Streaming error:", chunk.error);
 				conversation.contents = conversation.contents.map((msg) =>
-					msg.id === aiMessage.id
+					msg.timestamp.getTime() === aiMessage.timestamp.getTime()
 						? { ...msg, content: "Error: " + chunk.error }
 						: msg
 				);
@@ -181,11 +179,11 @@ export class ChatService {
 				callbacks.onThoughtUpdate(null);
 				accumulatedContent += chunk.content;
 				conversation.contents = conversation.contents.map((msg) =>
-					msg.id === aiMessage.id
+					msg.timestamp.getTime() === aiMessage.timestamp.getTime()
 						? { ...msg, content: accumulatedContent }
 						: msg
 				);
-				callbacks.onStreamingUpdate(conversation, aiMessage.id, true);
+				callbacks.onStreamingUpdate(conversation, messageId, true);
 			}
 
 			if (chunk.functionCall) {
@@ -202,20 +200,19 @@ export class ChatService {
 				if (accumulatedContent.trim() !== "") {
 					// We have content - always keep the message
 					conversation.contents = conversation.contents.map((msg) =>
-						msg.id === aiMessage.id
+						msg.timestamp.getTime() === aiMessage.timestamp.getTime()
 							? { ...msg, content: accumulatedContent }
 							: msg
 					);
 				} else if (capturedFunctionCall) {
 					// No content but there's a function call - remove the empty placeholder
-					conversation.contents = conversation.contents.filter((msg) => msg.id !== aiMessage.id);
+					conversation.contents = conversation.contents.filter((msg) => msg.timestamp.getTime() !== aiMessage.timestamp.getTime());
 				} else {
 					// No content and no function call - remove empty message
-					conversation.contents = conversation.contents.filter((msg) => msg.id !== aiMessage.id);
+					conversation.contents = conversation.contents.filter((msg) => msg.timestamp.getTime() !== aiMessage.timestamp.getTime());
 				}
 				await this.conversationService.saveConversation(conversation);
 			}
-			this.updateTokenDisplay(conversation);
 		}
 
 		return { functionCall: capturedFunctionCall, shouldContinue: capturedShouldContinue };

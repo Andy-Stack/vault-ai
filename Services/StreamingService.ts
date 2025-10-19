@@ -14,7 +14,8 @@ export class StreamingService {
     url: string,
     requestBody: unknown,
     parseStreamChunk: (chunk: string) => StreamChunk,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
+    additionalHeaders?: Record<string, string>
   ): AsyncGenerator<StreamChunk, void, unknown> {
     try {
       const response = await fetch(
@@ -23,6 +24,7 @@ export class StreamingService {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...additionalHeaders,
           },
           body: JSON.stringify(requestBody),
           signal: abortSignal,

@@ -16,6 +16,10 @@ export class GeminiTokenService implements ITokenService {
     }
 
     public async countTokens(input: string): Promise<number> {
+        if (input.trim() === "") {
+            return 0;
+        }
+
         const result: CountTokensResponse = await this.ai.models.countTokens({
             model: AIProviderModel.Gemini,
             contents: input

@@ -2,17 +2,20 @@
 export class AIFunctionCall {
     public readonly name: string;
     public readonly arguments: Record<string, any>;
+    public readonly toolId?: string;
 
-    constructor(name: string, args: Record<string, any>) {
+    constructor(name: string, args: Record<string, any>, toolId?: string) {
         this.name = name;
         this.arguments = args;
+        this.toolId = toolId;
     }
 
     public toConversationString(): string {
         return JSON.stringify({
             functionCall: {
                 name: this.name,
-                args: this.arguments
+                args: this.arguments,
+                id: this.toolId
             }
         });
     }

@@ -15,30 +15,31 @@ export class AIFunctionService {
     public async performAIFunction(functionCall: AIFunctionCall): Promise<AIFunctionResponse> {
         switch (functionCall.name) {
             case AIFunction.SearchVaultFiles:
-                return new AIFunctionResponse(functionCall.name, await this.searchVaultFiles(functionCall.arguments.search_term));
+                return new AIFunctionResponse(functionCall.name, await this.searchVaultFiles(functionCall.arguments.search_term), functionCall.toolId);
 
             case AIFunction.ReadVaultFiles:
-                return new AIFunctionResponse(functionCall.name, await this.readVaultFiles(functionCall.arguments.file_paths));
+                return new AIFunctionResponse(functionCall.name, await this.readVaultFiles(functionCall.arguments.file_paths), functionCall.toolId);
 
             case AIFunction.WriteVaultFile:
-                return new AIFunctionResponse(functionCall.name, await this.writeVaultFile(functionCall.arguments.file_path, functionCall.arguments.content));
+                return new AIFunctionResponse(functionCall.name, await this.writeVaultFile(functionCall.arguments.file_path, functionCall.arguments.content), functionCall.toolId);
 
             case AIFunction.DeleteVaultFiles:
-                return new AIFunctionResponse(functionCall.name, await this.deleteVaultFiles(functionCall.arguments.file_paths, functionCall.arguments.confirm_deletion));
+                return new AIFunctionResponse(functionCall.name, await this.deleteVaultFiles(functionCall.arguments.file_paths, functionCall.arguments.confirm_deletion), functionCall.toolId);
 
             case AIFunction.MoveVaultFiles:
-                return new AIFunctionResponse(functionCall.name, await this.moveVaultFiles(functionCall.arguments.source_paths, functionCall.arguments.destination_paths));
+                return new AIFunctionResponse(functionCall.name, await this.moveVaultFiles(functionCall.arguments.source_paths, functionCall.arguments.destination_paths), functionCall.toolId);
 
             // this is only used by gemini
             case AIFunction.RequestWebSearch:
-                return new AIFunctionResponse(functionCall.name, {})
+                return new AIFunctionResponse(functionCall.name, {}, functionCall.toolId)
 
             default:
                 const error = `Unknown function request ${functionCall.name}`
                 console.error(error);
                 return new AIFunctionResponse(
                     functionCall.name,
-                    { error: error }
+                    { error: error },
+                    functionCall.toolId
                 );
         }
     }

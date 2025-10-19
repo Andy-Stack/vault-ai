@@ -37,7 +37,9 @@ export class Gemini implements IAIClass {
     this.accumulatedFunctionName = null;
     this.accumulatedFunctionArgs = {};
 
-    const contents = conversation.contents.map(content => ({
+    const contents = conversation.contents
+      .filter(content => content.content.trim() !== "")
+      .map(content => ({
       role: content.role === Role.User ? "user" : "model",
       parts: (content.isFunctionCall || content.isFunctionCallResponse)
         ? [JSON.parse(content.content)] : [{ text: content.content }]

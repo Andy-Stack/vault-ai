@@ -85,15 +85,16 @@
   $: {
     messages.forEach((message) => {
       if (message.role !== Role.User) {
-        const lastContent = lastProcessedContent.get(message.id) || "";
+        const messageId = message.timestamp.getTime().toString();
+        const lastContent = lastProcessedContent.get(messageId) || "";
 
         // Only update if content has changed
         if (message.content !== lastContent) {
           // Check if this specific message is currently streaming
-          const isCurrentlyStreaming = currentStreamingMessageId === message.id;
+          const isCurrentlyStreaming = currentStreamingMessageId === messageId;
 
-          updateMessageContent({ ...message, isCurrentlyStreaming });
-          lastProcessedContent.set(message.id, message.content);
+          updateMessageContent({ ...message, id: messageId, isCurrentlyStreaming });
+          lastProcessedContent.set(messageId, message.content);
         }
       }
     });
@@ -137,7 +138,8 @@
     }
 
     // For assistant messages, check if this specific message is currently streaming
-    const isCurrentlyStreaming = currentStreamingMessageId === message.id;
+    const messageId = message.timestamp.getTime().toString();
+    const isCurrentlyStreaming = currentStreamingMessageId === messageId;
 
     // For assistant messages that aren't streaming, use traditional parsing
     if (!isCurrentlyStreaming) {
@@ -159,7 +161,7 @@
 
   // Make sure to clean up when messages are removed
   $: {
-    const currentMessageIds = new Set(messages.map((msg) => msg.id));
+    const currentMessageIds = new Set(messages.map((message) => message.timestamp.getTime().toString()));
 
     // Remove tracking for messages that no longer exist
     for (const [id] of messageElements) {
@@ -204,7 +206,7 @@
           calculateStreamingThoughtSize() -
           paddingTop);
       }
-      chatContainer.style.paddingBottom = `${messagePadding}px`;
+      chatContainer.style.paddingBottom = messagePadding == 0 ? "" : `${messagePadding}px`;
 
       tick().then(() => {
         chatContainer.scroll({ top: chatContainer.scrollHeight, behavior: "smooth" });
@@ -226,7 +228,7 @@
           calculateStreamingThoughtSize() -
           parseFloat(getComputedStyle(chatContainer).gap) || 0);
 
-        chatContainer.style.paddingBottom = `${messagePadding}px`;
+        chatContainer.style.paddingBottom = messagePadding == 0 ? "" : `${messagePadding}px`;
       });
     });
 
@@ -241,9 +243,10 @@
 
   function calculatePreviousAssistantMessagesHeight(currentElement: HTMLElement): number {
     // Find the index of the current message in the messages array
-    const currentMessageIndex = messages.findIndex((msg) => {
-      const msgElement = messageElements.get(msg.id);
-      return msgElement?.parentElement === currentElement;
+    const currentMessageIndex = messages.findIndex((message) => {
+      const messageId = message.timestamp.getTime().toString();
+      const messageElement = messageElements.get(messageId);
+      return messageElement?.parentElement === currentElement;
     });
 
     if (currentMessageIndex === -1) {
@@ -255,18 +258,19 @@
     const gap = parseFloat(getComputedStyle(chatContainer).gap) || 0;
 
     for (let i = currentMessageIndex - 1; i >= 0; i--) {
-      const msg = messages[i];
+      const message = messages[i];
 
       // Stop when we hit a user message
-      if (msg.role === Role.User) {
+      if (message.role === Role.User) {
         break;
       }
 
       // Sum up heights of all assistant messages before the current one
-      if (msg.role === Role.Assistant && !msg.isFunctionCall && !msg.isFunctionCallResponse && msg.content) {
-        const msgElement = messageElements.get(msg.id);
-        if (msgElement) {
-          const containerElement = msgElement.parentElement;
+      if (message.role === Role.Assistant && !message.isFunctionCall && !message.isFunctionCallResponse && message.content) {
+        const messageId = message.timestamp.getTime().toString();
+        const messageElement = messageElements.get(messageId);
+        if (messageElement) {
+          const containerElement = messageElement.parentElement;
           if (containerElement) {
             totalHeight += containerElement.offsetHeight + gap;
           }
@@ -306,16 +310,17 @@
 </script>
 
 <div class="chat-area" bind:this={chatContainer}>
-  {#each messages as message (message.id)}
+  {#each messages as message (message.timestamp.getTime())}
     {#if !message.isFunctionCall && !message.isFunctionCallResponse && message.content}
       <div class="message-container {message.role === Role.User ? Role.User : Role.Assistant}" use:messageContainerAction>
         <div class="message-bubble {message.role === Role.User ? Role.User : Role.Assistant}">
           {#if message.role === Role.User}
             <div class="message-text-user fade-in-fast">{message.content}</div>
           {:else}
-            <div class="markdown-content fade-in-fast {currentStreamingMessageId === message.id ? "streaming" : ""}">
-              {#if currentStreamingMessageId === message.id}
-                <div use:streamingAction={message.id} class="streaming-content"></div>
+            {@const messageId = message.timestamp.getTime().toString()}
+            <div class="markdown-content fade-in-fast {currentStreamingMessageId === messageId ? "streaming" : ""}">
+              {#if currentStreamingMessageId === messageId}
+                <div use:streamingAction={messageId} class="streaming-content"></div>
               {:else}
                 {@html getStaticHTML(message)}
               {/if}

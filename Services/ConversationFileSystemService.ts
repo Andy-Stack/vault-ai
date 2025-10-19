@@ -30,12 +30,12 @@ export class ConversationFileSystemService {
             contents: conversation.contents
                 .filter(content => content.content !== Copy.ApiRequestAborted)
                 .map(content => ({
-                    id: content.id,
                     role: content.role,
                     content: content.content,
                     timestamp: content.timestamp.toISOString(),
                     isFunctionCall: content.isFunctionCall,
-                    isFunctionCallResponse: content.isFunctionCallResponse
+                    isFunctionCallResponse: content.isFunctionCallResponse,
+                    toolId: content.toolId
                 }))
         };
 
@@ -81,7 +81,7 @@ export class ConversationFileSystemService {
                 conversation.created = new Date(data.created);
                 conversation.contents = data.contents.map(content => {
                     return new ConversationContent(
-                        content.role, content.content, new Date(content.timestamp), content.isFunctionCall, content.isFunctionCallResponse, content.id);
+                        content.role, content.content, new Date(content.timestamp), content.isFunctionCall, content.isFunctionCallResponse, content.toolId);
                 });
                 conversations.push(conversation);
             }

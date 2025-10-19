@@ -25,6 +25,7 @@ import { StatusBarService } from "./StatusBarService";
 import { ClaudeTokenService } from "AIClasses/Claude/ClaudeTokenService";
 import { OpenAITokenService } from "AIClasses/OpenAI/OpenAITokenService";
 import { ClaudeConversationNamingService } from "AIClasses/Claude/ClaudeConversationNamingService";
+import { Claude } from "AIClasses/Claude/Claude";
 
 export function RegisterDependencies(plugin: AIAgentPlugin) {
     RegisterSingleton<AIAgentPlugin>(Services.AIAgentPlugin, plugin);
@@ -50,6 +51,7 @@ export function RegisterDependencies(plugin: AIAgentPlugin) {
 
 export function RegisterAiProvider(plugin: AIAgentPlugin) {
     if (plugin.settings.apiProvider == AIProvider.Claude) {
+        RegisterSingleton<IAIClass>(Services.IAIClass, new Claude());
         RegisterSingleton<ITokenService>(Services.ITokenService, new ClaudeTokenService());
         RegisterSingleton<IConversationNamingService>(Services.IConversationNamingService, new ClaudeConversationNamingService());
     }
