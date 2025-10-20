@@ -1,7 +1,10 @@
 export enum Role {
-    Assistant = "assistant",
     User = "user",
     
-    // used by OpenAI
-    System = "system"
+    // Claude
+    Assistant = "assistant",
+    // OpenAI
+    System = "system",
+    // Gemini
+    Model = "model"
 }

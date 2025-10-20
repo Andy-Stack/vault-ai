@@ -18,7 +18,7 @@ export class OpenAIConversationNamingService implements IConversationNamingServi
 
         const requestBody = {
             model: AIProviderModel.OpenAINamer,
-            max_tokens: 50,
+            max_tokens: 100,
             messages: [
                 {
                     role: Role.System,
@@ -42,7 +42,7 @@ export class OpenAIConversationNamingService implements IConversationNamingServi
         });
 
         if (!response.ok) {
-            throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+            throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${await response.text()}`);
         }
 
         const data = await response.json();

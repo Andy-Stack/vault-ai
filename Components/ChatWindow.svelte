@@ -107,9 +107,9 @@
     autoResize();
     scrollToBottom();
 
-    conversation = await chatService.submit(conversation, editModeActive, currentRequest, {
-      onStreamingUpdate: (updatedConversation, streamingId, streaming) => {
-        conversation = updatedConversation;
+    await chatService.submit(conversation, editModeActive, currentRequest, {
+      onStreamingUpdate: (streamingId) => {
+        conversation = conversation;
         currentStreamingMessageId = streamingId;
       },
       onThoughtUpdate: (thought) => {
@@ -177,8 +177,8 @@
   }
 
   $: if ($conversationStore.shouldDeactivateEditMode) {
-    editModeActive = false;
     conversationStore.clearEditModeFlag();
+    editModeActive = false;
   }
 </script>
 
@@ -234,7 +234,7 @@
   #chat-container {
     height: 100%;
     width: 100%;
-    max-width: 40vw;
+    max-width: 1000px;
     justify-self: center;
     user-select: text;
     grid-row: 1;

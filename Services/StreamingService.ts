@@ -1,4 +1,5 @@
 import type { AIFunctionCall } from "AIClasses/AIFunctionCall";
+import type { IAIClass } from "AIClasses/IAIClass";
 import { Selector } from "Enums/Selector";
 
 export interface StreamChunk {
@@ -11,6 +12,7 @@ export interface StreamChunk {
 
 export class StreamingService {
   public async* streamRequest(
+    aiInstance: IAIClass,
     url: string,
     requestBody: unknown,
     parseStreamChunk: (chunk: string) => StreamChunk,
@@ -33,7 +35,13 @@ export class StreamingService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`API request failed: ${response.status} - ${errorText}`);
+        let errorMessage = `API request failed: ${response.status} - ${errorText}`;
+
+        if (response.status === 429 && aiInstance.apiError429UserInfo) {
+          errorMessage += `\n\n${aiInstance.apiError429UserInfo}`;
+        }
+
+        throw new Error(errorMessage);
       }
 
       const reader = response.body?.getReader();

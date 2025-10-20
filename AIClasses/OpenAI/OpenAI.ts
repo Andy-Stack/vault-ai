@@ -1,0 +1,258 @@
+import { Resolve } from "Services/DependencyService";
+import { Services } from "Services/Services";
+import type { IAIClass } from "AIClasses/IAIClass";
+import type { IPrompt } from "AIClasses/IPrompt";
+import { StreamingService, type StreamChunk } from "Services/StreamingService";
+import type { Conversation } from "Conversations/Conversation";
+import { AIProviderURL, AIProviderModel } from "Enums/ApiProvider";
+import { AIFunctionCall } from "AIClasses/AIFunctionCall";
+import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFunctionDefinition";
+import type AIAgentPlugin from "main";
+import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
+import { Role } from "Enums/Role";
+import { isValidJson } from "Helpers/Helpers";
+
+interface ToolCallAccumulator {
+    id: string | null;
+    name: string | null;
+    arguments: string;
+}
+
+export class OpenAI implements IAIClass {
+    public readonly apiError429UserInfo = "OpenAI implements rate limits based on usage tier. Higher tiers provide increased rate limits. For details and tier requirements, see: https://platform.openai.com/docs/guides/rate-limits";
+
+    private readonly STOP_REASON_TOOL_CALLS: string = "tool_calls";
+
+    private readonly apiKey: string;
+    private readonly aiPrompt: IPrompt = Resolve<IPrompt>(Services.IPrompt);
+    private readonly plugin: AIAgentPlugin = Resolve<AIAgentPlugin>(Services.AIAgentPlugin);
+    private readonly streamingService: StreamingService = Resolve<StreamingService>(Services.StreamingService);
+    private readonly aiFunctionDefinitions: AIFunctionDefinitions = Resolve<AIFunctionDefinitions>(Services.AIFunctionDefinitions);
+
+    // OpenAI can have multiple tool calls, so we track them by index
+    private accumulatedToolCalls: Map<number, ToolCallAccumulator> = new Map();
+
+    public constructor() {
+        this.apiKey = this.plugin.settings.apiKey;
+    }
+
+    public async* streamRequest(
+        conversation: Conversation, allowDestructiveActions: boolean, abortSignal?: AbortSignal
+    ): AsyncGenerator<StreamChunk, void, unknown> {
+        // Reset tool call accumulation state for new request
+        this.accumulatedToolCalls.clear();
+
+        const systemPrompt = [
+            this.aiPrompt.systemInstruction(),
+            await this.aiPrompt.userInstruction()
+        ].filter(s => s).join("\n\n");
+
+        const messages = [
+            {
+                role: Role.System,
+                content: systemPrompt
+            },
+            ...conversation.contents
+                .filter(content => content.content.trim() !== "" || content.functionCall.trim() !== "")
+                .map(content => {
+                // Handle function call
+                if (content.isFunctionCall && content.functionCall.trim() !== "") {
+                    if (isValidJson(content.functionCall)) {
+                        try {
+                            const parsedContent = JSON.parse(content.functionCall);
+                            return {
+                                role: content.role,
+                                content: content.content.trim() !== "" ? content.content : null,
+                                tool_calls: [
+                                    {
+                                        id: parsedContent.functionCall.id,
+                                        type: "function",
+                                        function: {
+                                            name: parsedContent.functionCall.name,
+                                            arguments: JSON.stringify(parsedContent.functionCall.args)
+                                        }
+                                    }
+                                ]
+                            };
+                        } catch (error) {
+                            console.error("Failed to parse function call:", error);
+                            // Fall back to regular message
+                            return {
+                                role: content.role,
+                                content: content.content || "Error parsing function call"
+                            };
+                        }
+                    } else {
+                        console.error("Invalid JSON in functionCall field");
+                        return {
+                            role: content.role,
+                            content: content.content || "Invalid function call"
+                        };
+                    }
+                }
+
+                // Handle function response
+                if (content.isFunctionCallResponse && content.content.trim() !== "") {
+                    if (isValidJson(content.content)) {
+                        try {
+                            const parsedContent = JSON.parse(content.content);
+                            return {
+                                role: "tool",
+                                tool_call_id: parsedContent.id,
+                                content: JSON.stringify(parsedContent.functionResponse.response)
+                            };
+                        } catch (error) {
+                            console.error("Failed to parse function response:", error);
+                            // Fall back to regular message
+                            return {
+                                role: content.role,
+                                content: content.content
+                            };
+                        }
+                    } else {
+                        console.error("Invalid JSON in function response content");
+                        return {
+                            role: content.role,
+                            content: content.content
+                        };
+                    }
+                }
+
+                // Regular text message
+                return {
+                    role: content.role,
+                    content: content.content
+                };
+            })
+        ];
+
+        const tools = this.mapFunctionDefinitions(
+            this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)
+        );
+
+        const requestBody = {
+            model: AIProviderModel.OpenAI,
+            messages: messages,
+            tools: tools,
+            stream: true
+        };
+
+        const headers = {
+            "Authorization": `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json"
+        };
+
+        yield* this.streamingService.streamRequest(
+            this,
+            AIProviderURL.OpenAI,
+            requestBody,
+            this.parseStreamChunk.bind(this),
+            abortSignal,
+            headers
+        );
+    }
+
+    private parseStreamChunk(chunk: string): StreamChunk {
+        try {
+            // OpenAI sends "[DONE]" as the final message, which is not valid JSON
+            if (chunk.trim() === "[DONE]") {
+                return { content: "", isComplete: true };
+            }
+
+            const data = JSON.parse(chunk);
+
+            let text = "";
+            let functionCall: AIFunctionCall | undefined = undefined;
+            let isComplete = false;
+            let shouldContinue = false;
+
+            const choice = data.choices?.[0];
+            if (!choice) {
+                return { content: "", isComplete: false };
+            }
+
+            const delta = choice.delta;
+
+            // Handle text content
+            if (delta?.content) {
+                text = delta.content;
+            }
+
+            // Handle tool calls - OpenAI streams them incrementally with an index
+            if (delta?.tool_calls) {
+                for (const toolCall of delta.tool_calls) {
+                    const index = toolCall.index;
+
+                    // Get or create accumulator for this tool call index
+                    if (!this.accumulatedToolCalls.has(index)) {
+                        this.accumulatedToolCalls.set(index, {
+                            id: null,
+                            name: null,
+                            arguments: ""
+                        });
+                    }
+
+                    const accumulator = this.accumulatedToolCalls.get(index)!;
+
+                    // Accumulate tool call data
+                    if (toolCall.id) {
+                        accumulator.id = toolCall.id;
+                    }
+                    if (toolCall.function?.name) {
+                        accumulator.name = toolCall.function.name;
+                    }
+                    if (toolCall.function?.arguments) {
+                        accumulator.arguments += toolCall.function.arguments;
+                    }
+                }
+            }
+
+            // Check for completion
+            if (choice.finish_reason) {
+                isComplete = true;
+                shouldContinue = choice.finish_reason === this.STOP_REASON_TOOL_CALLS;
+
+                // If we're finishing with a tool call, create the function call object
+                // For now, we'll handle the first tool call (OpenAI can have multiple)
+                if (shouldContinue && this.accumulatedToolCalls.size > 0) {
+                    // Get the first accumulated tool call
+                    const firstToolCall = this.accumulatedToolCalls.get(0);
+                    if (firstToolCall && firstToolCall.name && firstToolCall.arguments) {
+                        try {
+                            const args = JSON.parse(firstToolCall.arguments);
+                            functionCall = new AIFunctionCall(
+                                firstToolCall.name,
+                                args,
+                                firstToolCall.id || undefined
+                            );
+                        } catch (error) {
+                            console.error("Failed to parse accumulated tool call arguments:", error);
+                        }
+                    }
+                }
+            }
+
+            return {
+                content: text,
+                isComplete: isComplete,
+                functionCall: functionCall,
+                shouldContinue: shouldContinue,
+            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown parsing error";
+            console.error("Failed to parse stream chunk:", message, "Chunk:", chunk);
+            return { content: "", isComplete: false, error: `Failed to parse chunk: ${message}` };
+        }
+    }
+
+    private mapFunctionDefinitions(aiFunctionDefinitions: IAIFunctionDefinition[]): object[] {
+        return aiFunctionDefinitions.map((functionDefinition) => ({
+            type: "function",
+            function: {
+                name: functionDefinition.name,
+                description: functionDefinition.description,
+                parameters: functionDefinition.parameters
+            }
+        }));
+    }
+}

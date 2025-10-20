@@ -26,6 +26,8 @@ import { ClaudeTokenService } from "AIClasses/Claude/ClaudeTokenService";
 import { OpenAITokenService } from "AIClasses/OpenAI/OpenAITokenService";
 import { ClaudeConversationNamingService } from "AIClasses/Claude/ClaudeConversationNamingService";
 import { Claude } from "AIClasses/Claude/Claude";
+import { OpenAIConversationNamingService } from "AIClasses/OpenAI/OpenAIConversationNamingService";
+import { OpenAI } from "AIClasses/OpenAI/OpenAI";
 
 export function RegisterDependencies(plugin: AIAgentPlugin) {
     RegisterSingleton<AIAgentPlugin>(Services.AIAgentPlugin, plugin);
@@ -61,7 +63,9 @@ export function RegisterAiProvider(plugin: AIAgentPlugin) {
         RegisterSingleton<IConversationNamingService>(Services.IConversationNamingService, new GeminiConversationNamingService());
     }
     else if (plugin.settings.apiProvider == AIProvider.OpenAI) {
+        RegisterSingleton<IAIClass>(Services.IAIClass, new OpenAI());
         RegisterSingleton<ITokenService>(Services.ITokenService, new OpenAITokenService());
+        RegisterSingleton<IConversationNamingService>(Services.IConversationNamingService, new OpenAIConversationNamingService());
     }
     else { // should be impossible to land here
         throw new Error("Invalid Provider Selection!");

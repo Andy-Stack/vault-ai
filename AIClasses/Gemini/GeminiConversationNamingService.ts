@@ -36,7 +36,7 @@ export class GeminiConversationNamingService implements IConversationNamingServi
         });
 
         if (!response.ok) {
-            throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+            throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${await response.text()}`);
         }
 
         const data = await response.json();

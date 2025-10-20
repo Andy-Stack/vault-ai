@@ -9,8 +9,12 @@ import { AIFunctionCall } from "AIClasses/AIFunctionCall";
 import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFunctionDefinition";
 import type AIAgentPlugin from "main";
 import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
+import { isValidJson } from "Helpers/Helpers";
+import type { ConversationContent } from "Conversations/ConversationContent";
 
 export class Claude implements IAIClass {
+    public readonly apiError429UserInfo = "Claude implements rate limits based on API Tier. Your tier increases as you spend more on the API - E.g. $40 total spend moves you to tier 2 (see: https://anthropic.mintlify.app/en/api/rate-limits#spend-limits)";
+
     private readonly STOP_REASON_TOOL_USE: string = "tool_use";
 
     private readonly apiKey: string;
@@ -39,48 +43,7 @@ export class Claude implements IAIClass {
             await this.aiPrompt.userInstruction()
         ].filter(s => s).join("\n\n");
 
-        const messages = conversation.contents
-            .filter(content => content.content.trim() !== "")
-            .map(content => {
-            if (content.isFunctionCall) {
-                const parsedContent = JSON.parse(content.content);
-                return {
-                    role: content.role,
-                    content: [
-                        {
-                            type: "tool_use",
-                            id: parsedContent.functionCall.id,
-                            name: parsedContent.functionCall.name,
-                            input: parsedContent.functionCall.args
-                        }
-                    ]
-                };
-            }
-
-            if (content.isFunctionCallResponse) {
-                const parsedContent = JSON.parse(content.content);
-                return {
-                    role: content.role,
-                    content: [
-                        {
-                            type: "tool_result",
-                            tool_use_id: parsedContent.id,
-                            content: JSON.stringify(parsedContent.functionResponse.response)
-                        }
-                    ]
-                };
-            }
-
-            return {
-                role: content.role,
-                content: [
-                    {
-                        type: "text",
-                        text: content.content
-                    }
-                ]
-            };
-        });
+        const messages = this.extractContents(conversation.contents);
 
         const tools = this.mapFunctionDefinitions(
             this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)
@@ -88,7 +51,7 @@ export class Claude implements IAIClass {
 
         const requestBody = {
             model: AIProviderModel.Claude,
-            max_tokens: 8192,
+            max_tokens: 16384,
             system: systemPrompt,
             messages: messages,
             tools: tools,
@@ -103,6 +66,7 @@ export class Claude implements IAIClass {
         };
 
         yield* this.streamingService.streamRequest(
+            this,
             AIProviderURL.Claude,
             requestBody,
             this.parseStreamChunk.bind(this),
@@ -185,6 +149,77 @@ export class Claude implements IAIClass {
             console.error("Failed to parse stream chunk:", message, "Chunk:", chunk);
             return { content: "", isComplete: false, error: `Failed to parse chunk: ${message}` };
         }
+    }
+
+    private extractContents(conversationContent: ConversationContent[]) {
+        return conversationContent.filter(content => content.content.trim() !== "" || content.functionCall.trim() !== "")
+            .map(content => {
+                const contentBlocks: any[] = [];
+
+                if (content.content.trim() !== "" && !content.isFunctionCallResponse) {
+                    contentBlocks.push({
+                        type: "text",
+                        text: content.content
+                    });
+                }
+
+                // Add function call if present
+                if (content.isFunctionCall && content.functionCall.trim() !== "") {
+                    if (isValidJson(content.functionCall)) {
+                        try {
+                            const parsedContent = JSON.parse(content.functionCall);
+                            contentBlocks.push({
+                                type: "tool_use",
+                                id: parsedContent.functionCall.id,
+                                name: parsedContent.functionCall.name,
+                                input: parsedContent.functionCall.args
+                            });
+                        } catch (error) {
+                            console.error("Failed to parse function call:", error);
+                            // Fall back to treating as text
+                            if (content.content.trim() === "") {
+                                contentBlocks.push({
+                                    type: "text",
+                                    text: "Error parsing function call"
+                                });
+                            }
+                        }
+                    } else {
+                        console.error("Invalid JSON in functionCall field");
+                    }
+                }
+
+                // Add function response if present
+                if (content.isFunctionCallResponse && content.content.trim() !== "") {
+                    if (isValidJson(content.content)) {
+                        try {
+                            const parsedContent = JSON.parse(content.content);
+                            contentBlocks.push({
+                                type: "tool_result",
+                                tool_use_id: parsedContent.id,
+                                content: JSON.stringify(parsedContent.functionResponse.response)
+                            });
+                        } catch (error) {
+                            console.error("Failed to parse function response:", error);
+                            contentBlocks.push({
+                                type: "text",
+                                text: content.content
+                            });
+                        }
+                    } else {
+                        console.error("Invalid JSON in function response content");
+                        contentBlocks.push({
+                            type: "text",
+                            text: content.content
+                        });
+                    }
+                }
+
+                return {
+                    role: content.role,
+                    content: contentBlocks
+                };
+            });
     }
 
     private mapFunctionDefinitions(aiFunctionDefinitions: IAIFunctionDefinition[]): object[] {

@@ -14,7 +14,7 @@ import { Role } from "Enums/Role";
 import type { AIFunctionCall } from "AIClasses/AIFunctionCall";
 
 export interface ChatServiceCallbacks {
-	onStreamingUpdate: (conversation: Conversation, streamingMessageId: string | null, isStreaming: boolean) => void;
+	onStreamingUpdate: (streamingMessageId: string | null) => void;
 	onThoughtUpdate: (thought: string | null) => void;
 	onComplete: () => void;
 }
@@ -48,23 +48,23 @@ export class ChatService {
 		this.tokenService = Resolve<ITokenService>(Services.ITokenService);
 	}
 
-	public async submit(conversation: Conversation, allowDestructiveActions: boolean, userRequest: string, callbacks: ChatServiceCallbacks): Promise<Conversation> {
+	public async submit(conversation: Conversation, allowDestructiveActions: boolean, userRequest: string, callbacks: ChatServiceCallbacks): Promise<void> {
 		if (!await this.semaphore.wait()) {
-			return conversation;
+			return;
 		}
 
 		this.semaphoreHeld = true;
 
 		try {
 			if (userRequest.trim() === "") {
-				return conversation;
+				return;
 			}
 
 			this.abortController = new AbortController();
 
-			// Add user message to conversation
-			conversation.contents = [...conversation.contents, new ConversationContent(Role.User, userRequest)];
-			await this.conversationService.saveConversation(conversation);
+			conversation.contents.push(new ConversationContent(Role.User, userRequest));
+			this.conversationService.saveConversation(conversation);
+			callbacks.onStreamingUpdate(null);
 
 			if (conversation.contents.length === 1) {
 				this.onNameChanged?.(conversation.title); // on change for initial conversation name
@@ -76,31 +76,27 @@ export class ChatService {
 			while (response.functionCall || response.shouldContinue) {
 
 				if (response.functionCall) {
-					if ('user_message' in response.functionCall.arguments) {
+					if (response.functionCall.arguments.user_message) {
 						callbacks.onThoughtUpdate(response.functionCall.arguments.user_message);
 					}
 
-					conversation.contents = [...conversation.contents, new ConversationContent(
-						Role.Assistant, response.functionCall.toConversationString(), new Date(), true, false, response.functionCall.toolId)];
-					await this.conversationService.saveConversation(conversation);
-
 					const functionResponse = await this.aiFunctionService.performAIFunction(response.functionCall);
-					conversation.contents = [...conversation.contents, new ConversationContent(
-						Role.User, functionResponse.toConversationString(), new Date(), false, true, functionResponse.toolId)];
-					await this.conversationService.saveConversation(conversation);
+
+					conversation.contents.push(new ConversationContent(
+						Role.User, functionResponse.toConversationString(), "", new Date(), false, true, functionResponse.toolId
+					));
 				}
 
 				response = await this.streamRequestResponse(conversation, allowDestructiveActions, callbacks);
 			}
-
-			return conversation;
 		} finally {
-			callbacks.onThoughtUpdate(null);
+			this.conversationService.saveConversation(conversation);
 			this.abortController = null;
 			if (this.semaphoreHeld) {
 				this.semaphoreHeld = false;
 				this.semaphore.release();	
 			}
+			callbacks.onThoughtUpdate(null);
 			callbacks.onComplete();
 		}
 	}
@@ -122,13 +118,13 @@ export class ChatService {
 		const userInstruction = await this.prompt.userInstruction();
 
 		const inputMessages = conversation.contents
-			.filter(msg => msg.role === Role.User && !msg.isFunctionCallResponse)
-			.map(msg => msg.content)
+			.filter(message => message.role === Role.User && !message.isFunctionCallResponse)
+			.map(message => message.content)
 			.join("\n");
 
 		const outputMessages = conversation.contents
-			.filter(msg => msg.role === Role.Assistant && !msg.isFunctionCall)
-			.map(msg => msg.content)
+			.filter(message => message.role === Role.Assistant && !message.isFunctionCall)
+			.map(message => message.content)
 			.join("\n");
 
 		const inputText = systemInstruction + "\n" + userInstruction + "\n" + inputMessages;
@@ -150,13 +146,9 @@ export class ChatService {
 			return { functionCall: null, shouldContinue: false };;
 		}
 
-		// Create AI message with stable timestamp for identification
-		const aiMessage = new ConversationContent(Role.Assistant, "");
-		conversation.contents = [...conversation.contents, aiMessage];
-
-		// Notify that streaming has started - use timestamp as unique identifier
-		const messageId = aiMessage.timestamp.getTime().toString();
-		callbacks.onStreamingUpdate(conversation, messageId, true);
+		const aiMessage = new ConversationContent(Role.Assistant);
+		conversation.contents.push(aiMessage);
+		callbacks.onStreamingUpdate(aiMessage.timestamp.getTime().toString());
 
 		let accumulatedContent = "";
 		let capturedFunctionCall: AIFunctionCall | null = null;
@@ -165,25 +157,9 @@ export class ChatService {
 		for await (const chunk of this.ai.streamRequest(conversation, allowDestructiveActions, this.abortController?.signal)) {
 			if (chunk.error) {
 				console.error("Streaming error:", chunk.error);
-				conversation.contents = conversation.contents.map((msg) =>
-					msg.timestamp.getTime() === aiMessage.timestamp.getTime()
-						? { ...msg, content: "Error: " + chunk.error }
-						: msg
-				);
-				callbacks.onStreamingUpdate(conversation, null, false);
-				await this.conversationService.saveConversation(conversation);
+				conversation.setMostRecentContent(`Error: ${chunk.error}`);
+				callbacks.onStreamingUpdate(aiMessage.timestamp.getTime().toString());
 				break;
-			}
-
-			if (chunk.content) {
-				callbacks.onThoughtUpdate(null);
-				accumulatedContent += chunk.content;
-				conversation.contents = conversation.contents.map((msg) =>
-					msg.timestamp.getTime() === aiMessage.timestamp.getTime()
-						? { ...msg, content: accumulatedContent }
-						: msg
-				);
-				callbacks.onStreamingUpdate(conversation, messageId, true);
 			}
 
 			if (chunk.functionCall) {
@@ -194,25 +170,24 @@ export class ChatService {
 				capturedShouldContinue = true;
 			}
 
-			if (chunk.isComplete) {
-				callbacks.onStreamingUpdate(conversation, null, false);
-
-				if (accumulatedContent.trim() !== "") {
-					// We have content - always keep the message
-					conversation.contents = conversation.contents.map((msg) =>
-						msg.timestamp.getTime() === aiMessage.timestamp.getTime()
-							? { ...msg, content: accumulatedContent }
-							: msg
-					);
-				} else if (capturedFunctionCall) {
-					// No content but there's a function call - remove the empty placeholder
-					conversation.contents = conversation.contents.filter((msg) => msg.timestamp.getTime() !== aiMessage.timestamp.getTime());
-				} else {
-					// No content and no function call - remove empty message
-					conversation.contents = conversation.contents.filter((msg) => msg.timestamp.getTime() !== aiMessage.timestamp.getTime());
-				}
-				await this.conversationService.saveConversation(conversation);
+			if (chunk.content) {
+				accumulatedContent += chunk.content;
+				conversation.setMostRecentContent(accumulatedContent);
+				callbacks.onThoughtUpdate(null);
 			}
+
+			if (chunk.isComplete) {
+				// No content and no function call - remove empty message
+				if (accumulatedContent.trim() == "" && !capturedFunctionCall) {
+					conversation.contents.pop();
+				}
+
+				conversation.setMostRecentContent(accumulatedContent);
+				if (capturedFunctionCall) {
+					conversation.setMostRecentFunctionCall(capturedFunctionCall?.toConversationString());
+				}
+			}
+			callbacks.onStreamingUpdate(aiMessage.timestamp.getTime().toString());
 		}
 
 		return { functionCall: capturedFunctionCall, shouldContinue: capturedShouldContinue };

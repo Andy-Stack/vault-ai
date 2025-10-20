@@ -10,8 +10,12 @@ import { AIFunctionCall } from "AIClasses/AIFunctionCall";
 import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFunctionDefinition";
 import type AIAgentPlugin from "main";
 import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
+import { isValidJson } from "Helpers/Helpers";
+import type { ConversationContent } from "Conversations/ConversationContent";
 
 export class Gemini implements IAIClass {
+  public readonly apiError429UserInfo = "";
+
   private readonly REQUEST_WEB_SEARCH: string = "request_web_search";
   private readonly STOP_REASON_STOP: string = "STOP";
 
@@ -33,30 +37,23 @@ export class Gemini implements IAIClass {
     // next request should use web search only (gemini api doesn't support custom tooling and grounding at the same time)
     const requestWebSearch = this.accumulatedFunctionName == this.REQUEST_WEB_SEARCH;
 
-    // Reset function call accumulation state for new request
     this.accumulatedFunctionName = null;
     this.accumulatedFunctionArgs = {};
 
-    const contents = conversation.contents
-      .filter(content => content.content.trim() !== "")
-      .map(content => ({
-      role: content.role === Role.User ? "user" : "model",
-      parts: (content.isFunctionCall || content.isFunctionCallResponse)
-        ? [JSON.parse(content.content)] : [{ text: content.content }]
-    }));
+    const contents = this.extractContents(conversation.contents);
 
     const tools = requestWebSearch ? { google_search: {} } :
-    {
-      functionDeclarations: [
-        {
-          name: "request_web_search",
-          description: `Use this function when you need to search the web for current
+      {
+        functionDeclarations: [
+          {
+            name: "request_web_search",
+            description: `Use this function when you need to search the web for current
                         information, recent events, news, or facts that may have changed.
                         After calling this, you will be able to perform web searches.`,
-        },
-        ...this.mapFunctionDefinitions(this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)),
-      ]
-    }
+          },
+          ...this.mapFunctionDefinitions(this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)),
+        ]
+      }
 
     const requestBody = {
       system_instruction: {
@@ -89,6 +86,7 @@ export class Gemini implements IAIClass {
     };
 
     yield* this.streamingService.streamRequest(
+      this,
       AIProviderURL.Gemini.replace("API_KEY", this.apiKey),
       requestBody,
       this.parseStreamChunk.bind(this),
@@ -157,6 +155,48 @@ export class Gemini implements IAIClass {
       console.error("Failed to parse stream chunk:", message, "Chunk:", chunk);
       return { content: "", isComplete: false, error: `Failed to parse chunk: ${message}` };
     }
+  }
+
+  private extractContents(conversationContent: ConversationContent[]): { role: Role, parts: any[] }[] {
+    return conversationContent.filter(content => content.content.trim() !== "" || content.functionCall.trim() !== "")
+      .map(content => {
+        const parts: any[] = [];
+
+        if (content.content.trim() !== "") {
+          if (content.isFunctionCallResponse) {
+            if (isValidJson(content.content)) {
+              try {
+                parts.push(JSON.parse(content.content));
+              } catch (error) {
+                console.error("Failed to parse function response:", error);
+                parts.push({ text: content.content });
+              }
+            } else {
+              console.error("Invalid JSON in function response content");
+              parts.push({ text: content.content });
+            }
+          } else {
+            parts.push({ text: content.content });
+          }
+        }
+
+        if (content.isFunctionCall && content.functionCall.trim() !== "") {
+          if (isValidJson(content.functionCall)) {
+            try {
+              parts.push(JSON.parse(content.functionCall));
+            } catch (error) {
+              console.error("Failed to parse function call:", error);
+            }
+          } else {
+            console.error("Invalid JSON in functionCall field");
+          }
+        }
+
+        return {
+          role: content.role === Role.User ? Role.User : Role.Model,
+          parts: parts.length > 0 ? parts : [{ text: "" }]
+        };
+      });
   }
 
   private mapFunctionDefinitions(aiFunctionDefinitions: IAIFunctionDefinition[]): object[] {

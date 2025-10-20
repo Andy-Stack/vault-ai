@@ -18,7 +18,7 @@ export class ClaudeConversationNamingService implements IConversationNamingServi
 
         const requestBody = {
             model: AIProviderModel.ClaudeNamer,
-            max_tokens: 50,
+            max_tokens: 100,
             system: NamePrompt,
             messages: [{
                 role: Role.User,
@@ -39,7 +39,7 @@ export class ClaudeConversationNamingService implements IConversationNamingServi
         });
 
         if (!response.ok) {
-            throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
+            throw new Error(`Claude API error: ${response.status} ${response.statusText} - ${await response.text()}`);
         }
 
         const data = await response.json();
