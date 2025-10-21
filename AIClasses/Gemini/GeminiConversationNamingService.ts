@@ -2,7 +2,7 @@ import { Resolve } from "Services/DependencyService";
 import { Services } from "Services/Services";
 import type { IConversationNamingService } from "AIClasses/IConversationNamingService";
 import type AIAgentPlugin from "main";
-import { AIProviderURL } from "Enums/ApiProvider";
+import { AIProviderURL, AIProviderModel } from "Enums/ApiProvider";
 import { Role } from "Enums/Role";
 import { NamePrompt } from "AIClasses/NamePrompt";
 
@@ -26,7 +26,7 @@ export class GeminiConversationNamingService implements IConversationNamingServi
             }]
         };
 
-        const response = await fetch(AIProviderURL.GeminiNamer.replace("API_KEY", this.apiKey), {
+        const response = await fetch(`${AIProviderURL.Gemini}/${AIProviderModel.GeminiNamer}:generateContent?key=${this.apiKey}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

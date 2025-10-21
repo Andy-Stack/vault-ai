@@ -26,7 +26,7 @@ export class ClaudeConversationNamingService implements IConversationNamingServi
             }]
         };
 
-        const response = await fetch(AIProviderURL.ClaudeNamer, {
+        const response = await fetch(AIProviderURL.Claude, {
             method: 'POST',
             headers: {
                 'x-api-key': this.apiKey,

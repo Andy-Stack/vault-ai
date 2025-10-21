@@ -52,24 +52,24 @@ export function RegisterDependencies(plugin: AIAgentPlugin) {
 }
 
 export function RegisterAiProvider(plugin: AIAgentPlugin) {
-    if (plugin.settings.apiProvider == AIProvider.Claude) {
+    const provider = AIProvider.fromModel(plugin.settings.model);
+
+    if (provider == AIProvider.Claude) {
         RegisterSingleton<IAIClass>(Services.IAIClass, new Claude());
         RegisterSingleton<ITokenService>(Services.ITokenService, new ClaudeTokenService());
         RegisterSingleton<IConversationNamingService>(Services.IConversationNamingService, new ClaudeConversationNamingService());
     }
-    else if (plugin.settings.apiProvider == AIProvider.Gemini) {
+    else if (provider == AIProvider.Gemini) {
         RegisterSingleton<IAIClass>(Services.IAIClass, new Gemini());
         RegisterSingleton<ITokenService>(Services.ITokenService, new GeminiTokenService());
         RegisterSingleton<IConversationNamingService>(Services.IConversationNamingService, new GeminiConversationNamingService());
     }
-    else if (plugin.settings.apiProvider == AIProvider.OpenAI) {
+    else if (provider == AIProvider.OpenAI) {
         RegisterSingleton<IAIClass>(Services.IAIClass, new OpenAI());
         RegisterSingleton<ITokenService>(Services.ITokenService, new OpenAITokenService());
         RegisterSingleton<IConversationNamingService>(Services.IConversationNamingService, new OpenAIConversationNamingService());
     }
-    else { // should be impossible to land here
-        throw new Error("Invalid Provider Selection!");
-    }
+
     Resolve<ChatService>(Services.ChatService).resolveAIProvider();
     Resolve<ConversationNamingService>(Services.ConversationNamingService).resolveNamingProvider();
 }

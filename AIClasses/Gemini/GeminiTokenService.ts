@@ -3,16 +3,18 @@ import { CountTokensResponse, GoogleGenAI } from '@google/genai'
 import type AIAgentPlugin from "main";
 import { Resolve } from "Services/DependencyService";
 import { Services } from "Services/Services";
-import { AIProviderModel } from "Enums/ApiProvider";
 
 export class GeminiTokenService implements ITokenService {
 
     private readonly ai: GoogleGenAI;
+    private model: string;
 
     public constructor() {
-        this.ai = new GoogleGenAI({ 
-            apiKey: Resolve<AIAgentPlugin>(Services.AIAgentPlugin).settings.apiKey
+        const plugin: AIAgentPlugin = Resolve<AIAgentPlugin>(Services.AIAgentPlugin);
+        this.ai = new GoogleGenAI({
+            apiKey: plugin.settings.apiKey
         });
+        this.model = plugin.settings.model;
     }
 
     public async countTokens(input: string): Promise<number> {
@@ -21,7 +23,7 @@ export class GeminiTokenService implements ITokenService {
         }
 
         const result: CountTokensResponse = await this.ai.models.countTokens({
-            model: AIProviderModel.Gemini,
+            model: this.model,
             contents: input
         });
         return result.totalTokens ?? -1;

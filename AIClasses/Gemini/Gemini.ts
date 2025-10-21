@@ -85,7 +85,7 @@ export class Gemini implements IAIClass {
     };
 
     yield* this.streamingService.streamRequest(
-      AIProviderURL.Gemini.replace("API_KEY", this.apiKey),
+      `${AIProviderURL.Gemini}/${this.plugin.settings.model}:streamGenerateContent?key=${this.apiKey}&alt=sse`,
       requestBody,
       this.parseStreamChunk.bind(this),
       abortSignal

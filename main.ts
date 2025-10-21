@@ -1,5 +1,5 @@
 import { WorkspaceLeaf, Plugin } from 'obsidian';
-import { AIProvider } from './Enums/ApiProvider';
+import { AIProviderModel } from './Enums/ApiProvider';
 import { MainView, VIEW_TYPE_MAIN } from 'Views/MainView';
 import { RegisterAiProvider, RegisterDependencies } from 'Services/ServiceRegistration';
 import { AIAgentSettingTab } from 'AIAgentSettingTab';
@@ -8,13 +8,13 @@ import type { StatusBarService } from 'Services/StatusBarService';
 import { Resolve } from 'Services/DependencyService';
 
 interface IAIAgentSettings {
-	apiProvider: string;
+	model: string;
 	apiKey: string;
 	exclusions: string[];
 }
 
 const DEFAULT_SETTINGS: IAIAgentSettings = {
-	apiProvider: AIProvider.Gemini,
+	model: AIProviderModel.ClaudeSonnet_4_5,
 	apiKey: "",
 	exclusions: []
 }

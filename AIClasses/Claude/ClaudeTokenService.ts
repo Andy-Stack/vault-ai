@@ -3,18 +3,20 @@ import Anthropic from '@anthropic-ai/sdk'
 import type AIAgentPlugin from "main";
 import { Resolve } from "Services/DependencyService";
 import { Services } from "Services/Services";
-import { AIProviderModel } from "Enums/ApiProvider";
 import { Role } from "Enums/Role";
 
 export class ClaudeTokenService implements ITokenService {
 
     private ai: Anthropic;
+    private model: string;
 
     public constructor() {
+        const plugin: AIAgentPlugin = Resolve<AIAgentPlugin>(Services.AIAgentPlugin);
         this.ai = new Anthropic({
-            apiKey: Resolve<AIAgentPlugin>(Services.AIAgentPlugin).settings.apiKey,
+            apiKey: plugin.settings.apiKey,
             dangerouslyAllowBrowser: true
-        })
+        });
+        this.model = plugin.settings.model;
     }
 
     public async countTokens(input: string): Promise<number> {
@@ -24,7 +26,7 @@ export class ClaudeTokenService implements ITokenService {
 
         // to maintain the convenience of the interface we just submit the entire input as one message
         const result = await this.ai.messages.countTokens({
-            model: AIProviderModel.Claude,
+            model: this.model,
             messages: [
                 { role: Role.User, content: input }
             ]

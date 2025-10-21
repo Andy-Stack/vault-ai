@@ -4,7 +4,7 @@ import type { IAIClass } from "AIClasses/IAIClass";
 import type { IPrompt } from "AIClasses/IPrompt";
 import { StreamingService, type StreamChunk } from "Services/StreamingService";
 import type { Conversation } from "Conversations/Conversation";
-import { AIProviderURL, AIProviderModel } from "Enums/ApiProvider";
+import { AIProviderURL } from "Enums/ApiProvider";
 import { AIFunctionCall } from "AIClasses/AIFunctionCall";
 import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFunctionDefinition";
 import type AIAgentPlugin from "main";
@@ -49,7 +49,7 @@ export class Claude implements IAIClass {
         );
 
         const requestBody = {
-            model: AIProviderModel.Claude,
+            model: this.plugin.settings.model,
             max_tokens: 16384,
             system: systemPrompt,
             messages: messages,

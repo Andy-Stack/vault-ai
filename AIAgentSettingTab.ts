@@ -1,4 +1,5 @@
-import { AIProvider } from "Enums/ApiProvider";
+import { AIProviderModel } from "Enums/ApiProvider";
+import { Copy } from "Enums/Copy";
 import { Path } from "Enums/Path";
 import { Selector } from "Enums/Selector";
 import type AIAgentPlugin from "main";
@@ -18,21 +19,100 @@ export class AIAgentSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		/* API Provider Setting */
+		/* Model Selection Setting */
 		new Setting(containerEl)
-			.setName("API Provider")
-			.setDesc("Select the API provider to use.")
-			.addDropdown((dropdown) =>
-				dropdown
-					.addOption(AIProvider.Claude, AIProvider.Claude)
-					.addOption(AIProvider.Gemini, AIProvider.Gemini)
-					.addOption(AIProvider.OpenAI, AIProvider.OpenAI)
-					.setValue(this.plugin.settings.apiProvider)
-					.onChange(async (value) => {
-						this.plugin.settings.apiProvider = value;
-						await this.plugin.saveSettings();
-					})
-				);
+			.setName("Model")
+			.setDesc("Select the AI model to use.")
+			.addDropdown((dropdown) => {
+				const select = dropdown.selectEl;
+
+				// Claude models group
+				const claudeGroup = select.createEl("optgroup", { attr: { label: "Claude" } });
+				claudeGroup.createEl("option", {
+					value: AIProviderModel.ClaudeSonnet_4_5,
+					text: Copy.ClaudeSonnet_4_5
+				});
+				claudeGroup.createEl("option", {
+					value: AIProviderModel.ClaudeSonnet_4,
+					text: Copy.ClaudeSonnet_4
+				});
+				claudeGroup.createEl("option", {
+					value: AIProviderModel.ClaudeSonnet_3_7,
+					text: Copy.ClaudeSonnet_3_7
+				});
+				claudeGroup.createEl("option", {
+					value: AIProviderModel.ClaudeOpus_4_1,
+					text: Copy.ClaudeOpus_4_1
+				});
+				claudeGroup.createEl("option", {
+					value: AIProviderModel.ClaudeOpus_4,
+					text: Copy.ClaudeOpus_4
+				});
+				claudeGroup.createEl("option", {
+					value: AIProviderModel.ClaudeHaiku_4_5,
+					text: Copy.ClaudeHaiku_4_5
+				});
+
+				// OpenAI models group
+				const openaiGroup = select.createEl("optgroup", { attr: { label: "OpenAI" } });
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_5,
+					text: Copy.GPT_5
+				});
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_5_Mini,
+					text: Copy.GPT_5_Mini
+				});
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_5_Nano,
+					text: Copy.GPT_5_Nano
+				});
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_5_Pro,
+					text: Copy.GPT_5_Pro
+				});
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_4o,
+					text: Copy.GPT_4o
+				});
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_4o_Mini,
+					text: Copy.GPT_4o_Mini
+				});
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_4_1,
+					text: Copy.GPT_4_1
+				});
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_4_1_Mini,
+					text: Copy.GPT_4_1_Mini
+				});
+				openaiGroup.createEl("option", {
+					value: AIProviderModel.GPT_4_1_Nano,
+					text: Copy.GPT_4_1_Nano
+				});
+
+				// Gemini models group
+				const geminiGroup = select.createEl("optgroup", { attr: { label: "Gemini" } });
+				geminiGroup.createEl("option", {
+					value: AIProviderModel.GeminiFlash_2_5_Lite,
+					text: Copy.GeminiFlash_2_5_Lite
+				});
+				geminiGroup.createEl("option", {
+					value: AIProviderModel.GeminiFlash_2_5,
+					text: Copy.GeminiFlash_2_5
+				});
+				geminiGroup.createEl("option", {
+					value: AIProviderModel.GeminiPro_2_5,
+					text: Copy.GeminiPro_2_5
+				});
+
+				dropdown.setValue(this.plugin.settings.model);
+				dropdown.onChange(async (value) => {
+					this.plugin.settings.model = value;
+					await this.plugin.saveSettings();
+				});
+			});
 
 		/* API Key Setting */
 		let apiKeyInputEl: HTMLInputElement;
@@ -57,11 +137,11 @@ export class AIAgentSettingTab extends PluginSettingTab {
 						if (apiKeyInputEl.type === "password") {
 							apiKeyInputEl.type = "text";
 							setIcon(button.extraSettingsEl, "eye-off");
-                            setTooltip(button.extraSettingsEl, "Hide API Key");
+							setTooltip(button.extraSettingsEl, "Hide API Key");
 						} else {
 							apiKeyInputEl.type = "password";
 							setIcon(button.extraSettingsEl, "eye");
-                            setTooltip(button.extraSettingsEl, "Show API Key");
+							setTooltip(button.extraSettingsEl, "Show API Key");
 						}
 					});
 				setIcon(button.extraSettingsEl, "eye");
@@ -85,13 +165,13 @@ export class AIAgentSettingTab extends PluginSettingTab {
 
 	private highlightApiKey(): void {
 		if (this.apiKeySetting) {
-            if (this.plugin.settings.apiKey.trim() === "") {
-                this.apiKeySetting.settingEl.removeClass(Selector.ApiKeySettingOk);
-                this.apiKeySetting.settingEl.addClass(Selector.ApiKeySettingError);
-            } else {
-                this.apiKeySetting.settingEl.removeClass(Selector.ApiKeySettingError);
-                this.apiKeySetting.settingEl.addClass(Selector.ApiKeySettingOk);
-            }
+			if (this.plugin.settings.apiKey.trim() === "") {
+				this.apiKeySetting.settingEl.removeClass(Selector.ApiKeySettingOk);
+				this.apiKeySetting.settingEl.addClass(Selector.ApiKeySettingError);
+			} else {
+				this.apiKeySetting.settingEl.removeClass(Selector.ApiKeySettingError);
+				this.apiKeySetting.settingEl.addClass(Selector.ApiKeySettingOk);
+			}
 		}
 	}
 }

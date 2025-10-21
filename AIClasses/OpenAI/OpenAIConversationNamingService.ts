@@ -31,7 +31,7 @@ export class OpenAIConversationNamingService implements IConversationNamingServi
             ]
         };
 
-        const response = await fetch(AIProviderURL.OpenAINamer, {
+        const response = await fetch(AIProviderURL.OpenAI, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this.apiKey}`,
