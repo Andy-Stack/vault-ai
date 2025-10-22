@@ -2,7 +2,7 @@
 	import { setIcon } from "obsidian";
 	import { fade } from "svelte/transition";
 
-    export let items: Array<{id: string, date: string, title: string, selected: boolean}>;
+    export let items: Array<{id: string, date: string, updated: Date, title: string, selected: boolean}>;
     export let onClose: () => void;
     export let onDelete: (itemIds: string[]) => void;
     export let onSelect: (itemId: string) => void;
@@ -22,7 +22,7 @@
 
     $: filteredItems = items.filter(item =>
       item.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    ).sort((a, b) => b.updated.getTime() - a.updated.getTime());
 
     function toggleSelection(itemId: string) {
       if (selectedItems.has(itemId)) {

@@ -14,6 +14,7 @@ import type { ChatService } from 'Services/ChatService';
 interface ListItem {
     id: string;
     date: string;
+    updated: Date;
     title: string;
     selected: boolean;
     filePath: string;
@@ -38,14 +39,18 @@ export class ConversationHistoryModal extends Modal {
         this.conversations = await this.conversationFileSystemService.getAllConversations();
 
         this.items = this.conversations
-        .sort((a, b) => b.created.getTime() - a.created.getTime())
-        .map((conversation, index) => ({
-            id: index.toString(),
-            date: dateToString(conversation.created, false),
-            title: conversation.title,
-            selected: false,
-            filePath: this.conversationFileSystemService.generateConversationPath(conversation)
-        }));
+        .sort((a, b) => b.updated.getTime() - a.updated.getTime())
+        .map((conversation) => {
+            const filePath = this.conversationFileSystemService.generateConversationPath(conversation);
+            return {
+                id: filePath,
+                date: dateToString(conversation.created, false),
+                updated: conversation.updated,
+                title: conversation.title,
+                selected: false,
+                filePath: filePath
+            };
+        });
 
         super.open();
     }
@@ -68,12 +73,13 @@ export class ConversationHistoryModal extends Modal {
     }
 
     handleSelect(itemId: string) {
-        const index = parseInt(itemId);
-        const selectedConversation = this.conversations[index];
-        const filePath = this.items[index].filePath;
+        const item = this.items.find(i => i.id === itemId);
+        const conversation = this.conversations.find(c =>
+            this.conversationFileSystemService.generateConversationPath(c) === itemId
+        );
 
-        if (selectedConversation) {
-            conversationStore.loadConversation(selectedConversation, filePath);
+        if (conversation && item) {
+            conversationStore.loadConversation(conversation, item.filePath);
             this.close();
         }
     }

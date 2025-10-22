@@ -24,9 +24,12 @@ export class ConversationFileSystemService {
             this.currentConversationPath = this.generateConversationPath(conversation);
         }
 
+        conversation.updated = new Date();
+        
         const conversationData = {
             title: conversation.title,
             created: conversation.created.toISOString(),
+            updated: conversation.updated.toISOString(),
             contents: conversation.contents
                 .filter(content => content.content !== Copy.ApiRequestAborted)
                 .map(content => ({
@@ -80,6 +83,7 @@ export class ConversationFileSystemService {
                 const conversation: Conversation = new Conversation();
                 conversation.title = data.title;
                 conversation.created = new Date(data.created);
+                conversation.updated = new Date(data.updated);
                 conversation.contents = data.contents.map(content => {
                     return new ConversationContent(
                         content.role, content.content, content.functionCall, new Date(content.timestamp), content.isFunctionCall, content.isFunctionCallResponse, content.toolId);
