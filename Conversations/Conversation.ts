@@ -33,14 +33,14 @@ export class Conversation {
     }
 
     public setMostRecentContent(content: string) {
-        const conversationContent: ConversationContent | undefined = this.contents.last();
+        const conversationContent: ConversationContent | undefined = this.contents[this.contents.length - 1];
         if (conversationContent) {
             conversationContent.content = content;
         }
     }
 
     public setMostRecentFunctionCall(functionCall: string) {
-        const conversationContent: ConversationContent | undefined = this.contents.last();
+        const conversationContent: ConversationContent | undefined = this.contents[this.contents.length - 1];
         if (conversationContent) {
             conversationContent.functionCall = functionCall;
             conversationContent.isFunctionCall = true;

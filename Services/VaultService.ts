@@ -293,10 +293,12 @@ export class VaultService {
                 return true;
             }
 
+            // First, temporarily replace wildcards to protect them from escaping
             let regexPattern = pattern
-                .replace(/[.+?^${}()|[\]\\]/g, '\\$&') // Escape special chars
                 .replace(/\*\*/g, '::DOUBLESTAR::')    // Temporarily replace **
-                .replace(/\*/g, '[^/]*')               // * matches anything except /
+                .replace(/\*/g, '::SINGLESTAR::')      // Temporarily replace *
+                .replace(/[.+?^${}()|[\]\\]/g, '\\$&') // Escape special regex chars
+                .replace(/::SINGLESTAR::/g, '[^/]*')   // * matches anything except /
                 .replace(/::DOUBLESTAR::/g, '.*');     // ** matches anything including /
 
             // If pattern ends with /, match the directory and all its contents

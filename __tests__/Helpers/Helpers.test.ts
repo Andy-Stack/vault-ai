@@ -1,0 +1,371 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { dateToString, isValidJson, randomSample, escapeRegex, openPluginSettings } from '../../Helpers/Helpers';
+
+describe('Helpers', () => {
+	describe('dateToString', () => {
+		it('should format date with time by default', () => {
+			const date = new Date('2024-01-15T14:30:45');
+			const result = dateToString(date);
+
+			// Format should be YYYY-MM-DD-HH-MM-SS (sv-SE locale with colons and spaces replaced)
+			expect(result).toMatch(/^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$/);
+			expect(result).toContain('2024');
+			expect(result).toContain('01');
+			expect(result).toContain('15');
+		});
+
+		it('should format date without time when includeTime is false', () => {
+			const date = new Date('2024-01-15T14:30:45');
+			const result = dateToString(date, false);
+
+			// Format should be YYYY-MM-DD
+			expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+			expect(result).toContain('2024');
+			expect(result).toContain('01');
+			expect(result).toContain('15');
+			expect(result).not.toContain('14'); // Should not include time
+		});
+
+		it('should use sv-SE locale for consistent formatting', () => {
+			const date = new Date('2024-03-05T09:08:07');
+			const result = dateToString(date);
+
+			// sv-SE uses YYYY-MM-DD format with leading zeros
+			expect(result.startsWith('2024-03-05')).toBe(true);
+		});
+
+		it('should replace colons and spaces with hyphens', () => {
+			const date = new Date('2024-01-15T14:30:45');
+			const result = dateToString(date);
+
+			// Should not contain colons or spaces
+			expect(result).not.toContain(':');
+			expect(result).not.toContain(' ');
+			// Should be all hyphens and digits
+			expect(result).toMatch(/^[\d-]+$/);
+		});
+
+		it('should handle midnight correctly', () => {
+			const date = new Date('2024-01-15T00:00:00');
+			const result = dateToString(date);
+
+			expect(result).toContain('00-00-00');
+		});
+
+		it('should handle end of day correctly', () => {
+			const date = new Date('2024-01-15T23:59:59');
+			const result = dateToString(date);
+
+			expect(result).toContain('23-59-59');
+		});
+
+		it('should pad single-digit months and days', () => {
+			const date = new Date('2024-03-05T09:08:07');
+			const result = dateToString(date);
+
+			// Should have leading zeros
+			expect(result).toContain('03');
+			expect(result).toContain('05');
+			expect(result).toContain('09');
+			expect(result).toContain('08');
+			expect(result).toContain('07');
+		});
+
+		it('should handle different years', () => {
+			const date1 = new Date('2020-01-01T00:00:00');
+			const date2 = new Date('2030-12-31T23:59:59');
+
+			expect(dateToString(date1, false)).toContain('2020');
+			expect(dateToString(date2, false)).toContain('2030');
+		});
+	});
+
+	describe('isValidJson', () => {
+		it('should return true for valid JSON object', () => {
+			expect(isValidJson('{"key": "value"}')).toBe(true);
+		});
+
+		it('should return true for valid JSON array', () => {
+			expect(isValidJson('[1, 2, 3]')).toBe(true);
+		});
+
+		it('should return true for valid JSON string', () => {
+			expect(isValidJson('"hello"')).toBe(true);
+		});
+
+		it('should return true for valid JSON number', () => {
+			expect(isValidJson('123')).toBe(true);
+		});
+
+		it('should return true for valid JSON boolean', () => {
+			expect(isValidJson('true')).toBe(true);
+			expect(isValidJson('false')).toBe(true);
+		});
+
+		it('should return true for valid JSON null', () => {
+			expect(isValidJson('null')).toBe(true);
+		});
+
+		it('should return true for complex nested JSON', () => {
+			const json = '{"a":{"b":{"c":[1,2,3]}}}';
+			expect(isValidJson(json)).toBe(true);
+		});
+
+		it('should return false for invalid JSON with syntax error', () => {
+			expect(isValidJson('{"key": value}')).toBe(false); // Missing quotes
+		});
+
+		it('should return false for invalid JSON with trailing comma', () => {
+			expect(isValidJson('{"key": "value",}')).toBe(false);
+		});
+
+		it('should return false for unclosed braces', () => {
+			expect(isValidJson('{"key": "value"')).toBe(false);
+		});
+
+		it('should return false for single quotes instead of double quotes', () => {
+			expect(isValidJson("{'key': 'value'}")).toBe(false);
+		});
+
+		it('should return false for empty string', () => {
+			expect(isValidJson('')).toBe(false);
+		});
+
+		it('should return false for random text', () => {
+			expect(isValidJson('not json at all')).toBe(false);
+		});
+
+		it('should return false for undefined keywords', () => {
+			expect(isValidJson('undefined')).toBe(false);
+		});
+
+		it('should handle whitespace in valid JSON', () => {
+			expect(isValidJson('  {"key": "value"}  ')).toBe(true);
+		});
+
+		it('should handle newlines in valid JSON', () => {
+			expect(isValidJson('{\n  "key": "value"\n}')).toBe(true);
+		});
+	});
+
+	describe('randomSample', () => {
+		it('should return n elements when array has more than n elements', () => {
+			const array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+			const result = randomSample(array, 5);
+
+			expect(result).toHaveLength(5);
+		});
+
+		it('should return all elements when n is greater than array length', () => {
+			const array = [1, 2, 3];
+			const result = randomSample(array, 10);
+
+			expect(result).toHaveLength(3);
+			expect(result.sort()).toEqual([1, 2, 3]);
+		});
+
+		it('should return all elements when n equals array length', () => {
+			const array = [1, 2, 3, 4, 5];
+			const result = randomSample(array, 5);
+
+			expect(result).toHaveLength(5);
+		});
+
+		it('should return unique elements (no duplicates)', () => {
+			const array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+			const result = randomSample(array, 5);
+
+			const uniqueResult = [...new Set(result)];
+			expect(uniqueResult).toHaveLength(result.length);
+		});
+
+		it('should only return elements from the original array', () => {
+			const array = ['a', 'b', 'c', 'd', 'e'];
+			const result = randomSample(array, 3);
+
+			result.forEach(item => {
+				expect(array).toContain(item);
+			});
+		});
+
+		it('should return empty array when n is 0', () => {
+			const array = [1, 2, 3, 4, 5];
+			const result = randomSample(array, 0);
+
+			expect(result).toHaveLength(0);
+		});
+
+		it('should return empty array when input array is empty', () => {
+			const array: number[] = [];
+			const result = randomSample(array, 5);
+
+			expect(result).toHaveLength(0);
+		});
+
+		it('should work with different data types', () => {
+			const stringArray = ['a', 'b', 'c', 'd', 'e'];
+			const objectArray = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+			expect(randomSample(stringArray, 2)).toHaveLength(2);
+			expect(randomSample(objectArray, 2)).toHaveLength(2);
+		});
+
+		it('should produce different samples on multiple calls (probabilistic)', () => {
+			const array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+			const samples = new Set<string>();
+
+			// Run multiple times and check we get different results
+			for (let i = 0; i < 10; i++) {
+				const result = randomSample(array, 5);
+				samples.add(JSON.stringify(result.sort()));
+			}
+
+			// It's extremely unlikely to get the same sample 10 times
+			// (Though theoretically possible, so this is a probabilistic test)
+			expect(samples.size).toBeGreaterThan(1);
+		});
+
+		it('should handle negative n gracefully', () => {
+			const array = [1, 2, 3, 4, 5];
+			const result = randomSample(array, -5);
+
+			expect(result).toHaveLength(0);
+		});
+	});
+
+	describe('escapeRegex', () => {
+		it('should escape dot', () => {
+			expect(escapeRegex('.')).toBe('\\.');
+		});
+
+		it('should escape asterisk', () => {
+			expect(escapeRegex('*')).toBe('\\*');
+		});
+
+		it('should escape plus', () => {
+			expect(escapeRegex('+')).toBe('\\+');
+		});
+
+		it('should escape question mark', () => {
+			expect(escapeRegex('?')).toBe('\\?');
+		});
+
+		it('should escape caret', () => {
+			expect(escapeRegex('^')).toBe('\\^');
+		});
+
+		it('should escape dollar sign', () => {
+			expect(escapeRegex('$')).toBe('\\$');
+		});
+
+		it('should escape curly braces', () => {
+			expect(escapeRegex('{}')).toBe('\\{\\}');
+		});
+
+		it('should escape parentheses', () => {
+			expect(escapeRegex('()')).toBe('\\(\\)');
+		});
+
+		it('should escape pipe', () => {
+			expect(escapeRegex('|')).toBe('\\|');
+		});
+
+		it('should escape square brackets', () => {
+			expect(escapeRegex('[]')).toBe('\\[\\]');
+		});
+
+		it('should escape backslash', () => {
+			expect(escapeRegex('\\')).toBe('\\\\');
+		});
+
+		it('should escape all special regex characters at once', () => {
+			const input = '.*+?^${}()|[]\\';
+			const escaped = escapeRegex(input);
+
+			// Should be able to use in RegExp without error
+			expect(() => new RegExp(escaped)).not.toThrow();
+
+			// Should match the literal string, not use regex features
+			const regex = new RegExp(escaped);
+			expect(regex.test(input)).toBe(true);
+		});
+
+		it('should not escape normal characters', () => {
+			expect(escapeRegex('abc123')).toBe('abc123');
+		});
+
+		it('should handle mixed text with special characters', () => {
+			const input = 'file.*.txt';
+			const escaped = escapeRegex(input);
+
+			expect(escaped).toBe('file\\.\\*\\.txt');
+
+			const regex = new RegExp(escaped);
+			expect(regex.test('file.*.txt')).toBe(true);
+			expect(regex.test('fileXXX.txt')).toBe(false); // Should not match as wildcard
+		});
+
+		it('should handle empty string', () => {
+			expect(escapeRegex('')).toBe('');
+		});
+
+		it('should handle string with only special characters', () => {
+			const input = '???***';
+			const escaped = escapeRegex(input);
+
+			expect(escaped).toBe('\\?\\?\\?\\*\\*\\*');
+		});
+
+		it('should make regex patterns literal', () => {
+			const patterns = ['.*', 'a+', 'b?', '^start', 'end$', '(group)'];
+
+			patterns.forEach(pattern => {
+				const escaped = escapeRegex(pattern);
+				const regex = new RegExp(escaped);
+
+				// Should match the literal pattern string, not behave as regex
+				expect(regex.test(pattern)).toBe(true);
+			});
+		});
+	});
+
+	describe('openPluginSettings', () => {
+		it('should call app.setting.open and openTabById', () => {
+			const mockPlugin = {
+				app: {
+					setting: {
+						open: vi.fn(),
+						openTabById: vi.fn()
+					}
+				},
+				manifest: {
+					id: 'test-plugin-id'
+				}
+			} as any;
+
+			openPluginSettings(mockPlugin);
+
+			expect(mockPlugin.app.setting.open).toHaveBeenCalledOnce();
+			expect(mockPlugin.app.setting.openTabById).toHaveBeenCalledWith('test-plugin-id');
+		});
+
+		it('should open settings tab with correct plugin id', () => {
+			const pluginId = 'ai-agent-plugin';
+			const mockPlugin = {
+				app: {
+					setting: {
+						open: vi.fn(),
+						openTabById: vi.fn()
+					}
+				},
+				manifest: {
+					id: pluginId
+				}
+			} as any;
+
+			openPluginSettings(mockPlugin);
+
+			expect(mockPlugin.app.setting.openTabById).toHaveBeenCalledWith(pluginId);
+		});
+	});
+});

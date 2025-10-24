@@ -23,5 +23,9 @@
   "include": [
     "**/*.ts",
     "**/*.svelte"
+  ],
+  "exclude": [
+    "node_modules",
+    "__tests__"
   ]
 }
