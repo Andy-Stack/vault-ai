@@ -7,6 +7,8 @@ import type { VaultService } from "./VaultService";
 import { Path } from "Enums/Path";
 
 export class ConversationNamingService {
+    private readonly stackLimit: number = 1000;
+
     private namingProvider: IConversationNamingService | undefined;
     private conversationService: ConversationFileSystemService;
     private vaultService: VaultService;
@@ -60,6 +62,10 @@ export class ConversationNamingService {
         while (this.vaultService.exists(`${Path.Conversations}/${availableTitle}.json`, true)) {
             availableTitle = `${cleanedTitle}(${index})`;
             index++;
+
+            if (index > this.stackLimit) {
+                throw new Error(`Stack limit reached when trying to generate conversation name for "${cleanedTitle}"`);
+            }
         }
         return availableTitle;
     }

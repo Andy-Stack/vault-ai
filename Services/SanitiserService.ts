@@ -11,7 +11,7 @@ export class SanitiserService {
   private readonly windowsReservedRe = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
   private readonly windowsTrailingRe = /[\. ]+$/;
 
-  constructor() {}
+  constructor() { }
 
   /**
    * Sanitizes a file path with directories, removing illegal characters and ensuring cross-platform compatibility
@@ -37,7 +37,8 @@ export class SanitiserService {
     const driveLetter = driveMatch ? driveMatch[1] : '';
 
     // Split by both forward and back slashes
-    // This handles mixed separators like: /home/user\docs/file.txt
+    // Note: Forward slashes and backslashes are treated as path separators,
+    // not as illegal characters within segments. This is intentional for cross-platform compatibility.
     let segments = input.split(/[\\\/]+/);
 
     // Remove empty segments (from leading/trailing slashes or multiple consecutive slashes)
@@ -92,6 +93,9 @@ export class SanitiserService {
 
   /**
    * Sanitizes a single path segment (filename or directory name)
+   * @param segment - The path segment to sanitize
+   * @param replacement - Character to replace illegal characters with
+   * @returns Sanitized segment, or a fallback value if the result would be empty
    */
   private sanitizeSegment(segment: string, replacement: string): string {
     if (!segment || segment === '') {
@@ -105,26 +109,48 @@ export class SanitiserService {
       .replace(this.windowsReservedRe, replacement)
       .replace(this.windowsTrailingRe, replacement);
 
+    // Handle case where sanitization results in an empty string
+    // This can happen with names like "...", "CON", or strings containing only illegal characters
+    if (sanitized === '') {
+      sanitized = 'unnamed';
+    }
+
     return sanitized;
   }
 
   /**
    * Truncates a string to a maximum byte length while preserving UTF-8 character integrity
+   * This method ensures that multi-byte UTF-8 characters are not cut in the middle,
+   * which would result in invalid UTF-8 sequences.
+   * 
    * @param str - String to truncate
    * @param maxBytes - Maximum byte length
-   * @returns Truncated string
+   * @returns Truncated string with valid UTF-8 encoding
    */
   private truncateToByteLength(str: string, maxBytes: number): string {
     const encoder = new TextEncoder();
-    const decoder = new TextDecoder('utf-8');
-
     const encoded = encoder.encode(str);
 
     if (encoded.length <= maxBytes) {
       return str;
     }
 
-    const truncated = encoded.slice(0, maxBytes);
-    return decoder.decode(truncated);
+    // Truncate at maxBytes, then work backwards to find a valid UTF-8 boundary
+    // UTF-8 continuation bytes start with 10xxxxxx (0x80-0xBF)
+    let truncateAt = maxBytes;
+    while (truncateAt > 0 && (encoded[truncateAt] & 0xC0) === 0x80) {
+      truncateAt--;
+    }
+
+    // Decode with fatal mode to ensure we get a valid UTF-8 string
+    // If decoding fails (which shouldn't happen with our boundary logic), fall back to safe decode
+    try {
+      const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+      return decoder.decode(encoded.slice(0, truncateAt));
+    } catch {
+      // Fallback: use non-fatal mode if something unexpected happens
+      const decoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
+      return decoder.decode(encoded.slice(0, truncateAt));
+    }
   }
 }

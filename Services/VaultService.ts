@@ -44,7 +44,7 @@ export class VaultService {
             console.error(`Plugin attempted to access a file that is in the exclusions list: ${filePath}`);
             return false;
         }
-        return this.vault.getAbstractFileByPath(filePath) instanceof TFile;
+        return this.getAbstractFileByPath(filePath, allowAccessToPluginRoot) instanceof TFile;
     }
 
     public async read(file: TFile, allowAccessToPluginRoot: boolean = false): Promise<string> {

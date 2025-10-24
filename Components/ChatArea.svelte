@@ -18,13 +18,10 @@
   export let currentStreamingMessageId: string | null = null;
   export let editModeActive: boolean = false;
 
-  let conversationKey = 0;
-
   export function resetChatArea() {
     messageElements = [];
     lastProcessedContent.clear();
     currentStreamFinalized = false;
-    conversationKey++; // Force complete re-render
     if (chatAreaPaddingElement) {
       chatAreaPaddingElement.style.padding = "0px";
     }
@@ -35,13 +32,13 @@
     tick().then(() => {
       settled = false;
 
-      const lastMessage = messageElements.sort((a, b) => a.index - b.index).last();
-      if (!lastMessage || !chatAreaPaddingElement) {
+      if (messageElements.length === 0 || !chatAreaPaddingElement) {
         if (chatAreaPaddingElement) {
           chatAreaPaddingElement.style.padding = "0px";
         }
         return;
       }
+      messageElements.sort((a, b) => a.index - b.index)[messageElements.length - 1];
 
       const gap = parseFloat(getComputedStyle(chatContainer).gap) || 0;
       const paddingTop = parseFloat(getComputedStyle(chatContainer).paddingTop) || 0;
