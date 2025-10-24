@@ -89,7 +89,7 @@
     chatService.stop();
     currentThought = null;
     isSubmitting = false;
-    chatArea.scrollChatArea();
+    chatArea.scrollChatArea("smooth");
   }
 
   async function handleSubmit() {
@@ -111,7 +111,7 @@
 
     await chatService.submit(conversation, editModeActive, currentRequest, {
       onSubmit: () => {
-        chatArea.scrollChatArea();
+        chatArea.scrollChatArea("smooth");
         isSubmitting = true;
       },
       onStreamingUpdate: (streamingId) => {
@@ -123,7 +123,7 @@
       },
       onComplete: () => {
         isSubmitting = false;
-        chatArea.scrollChatArea();
+        chatArea.scrollChatArea(undefined);
         chatService.updateTokenDisplay(conversation);
       }
     });
@@ -164,7 +164,7 @@
   $: if ($conversationStore.conversationToLoad) {
     conversation.contents = [];
     chatArea.resetChatArea();
-    
+
     tick().then(() => {
       if ($conversationStore.conversationToLoad) {
         const { conversation: loadedConversation, filePath } = $conversationStore.conversationToLoad;
@@ -173,7 +173,7 @@
         chatService.onNameChanged?.(loadedConversation.title);
         chatService.updateTokenDisplay(loadedConversation);
         conversationStore.clearLoadFlag();
-        chatArea.scrollChatArea();
+        chatArea.scrollChatArea("instant");
       }
     });
   }

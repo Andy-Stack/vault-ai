@@ -28,7 +28,7 @@
     chatContainer.scroll({ top: 0, behavior: "instant" });
   }
 
-  export function scrollChatArea() {
+  export function scrollChatArea(behavior: ScrollBehavior | undefined) {
     tick().then(() => {
       settled = false;
 
@@ -57,7 +57,9 @@
       chatAreaPaddingElement.style.padding = `${Math.max(0, padding / 2)}px`;
 
       tick().then(() => {
-        chatContainer.scroll({ top: chatContainer.scrollHeight, behavior: "smooth" })
+        if (behavior) {
+          chatContainer.scroll({ top: chatContainer.scrollHeight, behavior: behavior })
+        }
         tick().then(() => settled = true);
       });
     });
