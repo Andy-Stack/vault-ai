@@ -18,7 +18,7 @@
   let workSpaceService: WorkSpaceService = Resolve<WorkSpaceService>(Services.WorkSpaceService);
   let conversationService: ConversationFileSystemService = Resolve<ConversationFileSystemService>(Services.ConversationFileSystemService);
 
-  let textareaElement: HTMLTextAreaElement;
+  let textareaElement: HTMLDivElement;
   let chatContainer: HTMLDivElement;
   let submitButton: HTMLButtonElement;
   let editModeButton: HTMLButtonElement;
@@ -105,7 +105,7 @@
 
     const currentRequest = userRequest;
 
-    textareaElement.value = "";
+    textareaElement.textContent = "";
     userRequest = "";
     autoResize();
 
@@ -140,10 +140,22 @@
     }
   }
 
+  function handleInput() {
+    if (textareaElement) {
+      userRequest = textareaElement.textContent || "";
+      if (userRequest.trim() === "") {
+        textareaElement.textContent = "";
+      }
+      autoResize();
+    }
+  }
+
   function autoResize() {
     if (textareaElement) {
-      textareaElement.style.height = 'auto';
-      textareaElement.style.height = textareaElement.scrollHeight + 'px';
+      // For contenteditable divs, reset height and set to scrollHeight
+      textareaElement.style.height = "auto";
+      const newHeight = Math.min(textareaElement.scrollHeight, window.innerHeight * 0.3);
+      textareaElement.style.height = `${newHeight}px`;
     }
   }
 
@@ -191,17 +203,19 @@
   </div>
   
   <div id="input-container" class:edit-mode={editModeActive}>
-    <textarea
+    <div
       id="input-field"
       class:error={hasNoApiKey}
       class:edit-mode={editModeActive && !hasNoApiKey}
       bind:this={textareaElement}
-      bind:value={userRequest}
+      contenteditable="true"
       on:keydown={handleKeydown}
-      on:input={autoResize}
-      placeholder="Type a message..."
-      rows="1">
-    </textarea>
+      on:input={handleInput}
+      data-placeholder="Type a message..."
+      role="textbox"
+      aria-multiline="true"
+      tabindex="0">
+    </div>
   
     <button
       id="edit-mode-button"
@@ -262,16 +276,23 @@
   #input-field {
     grid-row: 2;
     grid-column: 2;
-    min-height: var(--input-height);
     max-height: 30vh;
     border-radius: var(--input-radius);
     font-weight: var(--input-font-weight);
     border-width: var(--input-border-width);
+    border-style: solid;
+    border-color: var(--background-modifier-border);
+    padding: var(--size-2-1) var(--size-2-3);
+    background-color: var(--background-primary);
+    font-family: var(--font-interface-theme);
     resize: none;
     overflow-y: auto;
+    overflow-x: hidden;
     scroll-behavior: smooth;
     color: var(--font-interface-theme);
     transition: border-color 0.5s ease-out;
+    word-wrap: break-word;
+    white-space: pre-wrap;
   }
 
   #input-field:focus {
@@ -297,9 +318,21 @@
     display: none;
   }
 
+  #input-field:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  #input-field[contenteditable]:focus {
+    outline: none;
+  }
+
   #edit-mode-button {
     grid-row: 2;
     grid-column: 4;
+    height: 100%;
     border-radius: var(--button-radius);
     align-self: end;
     transition-duration: 0.5s;
@@ -308,6 +341,7 @@
   #submit-button {
     grid-row: 2;
     grid-column: 6;
+    height: 100%;
     border-radius: var(--button-radius);
     padding-left: var(--size-4-5);
     padding-right: var(--size-4-5);
