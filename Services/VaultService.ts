@@ -15,7 +15,8 @@ interface IFileEventArgs {
 /* This service protects the users vault through their exclusions. The plugin root is excluded by default */
 export class VaultService {
 
-    private readonly AGENT_ROOT = `${Path.AIAgentDir}/**`;
+    private readonly AGENT_ROOT_DIR = Path.AIAgentDir;
+    private readonly AGENT_ROOT_CONTENTS = `${Path.AIAgentDir}/**`;
     private readonly USER_INSTRUCTION = Path.UserInstruction;
 
     private readonly vault: Vault;
@@ -143,7 +144,7 @@ export class VaultService {
     }
 
     public async listFilesInDirectory(dirPath: string, recursive: boolean = true, allowAccessToPluginRoot: boolean = false): Promise<TFile[]> {
-        const dir: TAbstractFile | null = this.getAbstractFileByPath(this.sanitiserService.sanitize(dirPath), true);
+        const dir: TAbstractFile | null = this.getAbstractFileByPath(this.sanitiserService.sanitize(dirPath), allowAccessToPluginRoot);
 
         if (dir == null || !(dir instanceof TFolder)) {
             return [];
@@ -308,7 +309,7 @@ export class VaultService {
         // the ai should never be able to edit the user instruction
         const exclusions = allowAccessToPluginRoot
             ? [this.USER_INSTRUCTION, ...this.plugin.settings.exclusions]
-            : [this.AGENT_ROOT, ...this.plugin.settings.exclusions];
+            : [this.AGENT_ROOT_DIR, this.AGENT_ROOT_CONTENTS, ...this.plugin.settings.exclusions];
 
         return exclusions.some(pattern => {
             if (filePath === pattern) {

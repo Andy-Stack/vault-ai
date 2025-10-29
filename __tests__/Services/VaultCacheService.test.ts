@@ -119,7 +119,12 @@ describe('VaultCacheService - Integration Tests', () => {
 			registerFileEvents: vi.fn((handler: any) => {
 				fileEventHandler = handler;
 			}),
-			listVaultContents: vi.fn(() => [])
+			listVaultContents: vi.fn(() => []),
+			getAbstractFileByPath: vi.fn((path: string) => {
+				// By default, allow all folders (return a mock folder)
+				// This maintains existing test behavior
+				return createMockFolder(path);
+			})
 		};
 
 		// Register dependencies
@@ -591,6 +596,145 @@ describe('VaultCacheService - Integration Tests', () => {
 			expect(() => {
 				fileEventHandler(FileEvent.Rename, mockFile, { oldPath: 'old.md' });
 			}).not.toThrow();
+		});
+	});
+
+	describe('folder event handling - exclusions', () => {
+		it('should not cache excluded folders on create (AI Agent directory)', () => {
+			// Mock VaultService to return null for excluded paths
+			const mockVaultServiceWithExclusions = {
+				registerFileEvents: vi.fn((handler: any) => {
+					fileEventHandler = handler;
+				}),
+				listVaultContents: vi.fn(() => []),
+				getAbstractFileByPath: vi.fn((path: string) => {
+					// Return null for excluded paths (simulating VaultService exclusion logic)
+					if (path.startsWith('AI Agent')) {
+						return null;
+					}
+					// Return a folder for allowed paths
+					return createMockFolder(path);
+				})
+			};
+
+			RegisterSingleton(Services.VaultService, mockVaultServiceWithExclusions as any);
+			vaultCacheService = new VaultCacheService();
+
+			const excludedFolder = createMockFolder('AI Agent/subfolder');
+			fileEventHandler(FileEvent.Create, excludedFolder, { oldPath: '' });
+
+			const results = vaultCacheService.matchFolder('subfolder');
+			expect(results).toHaveLength(0);
+		});
+
+		it('should not cache user-excluded folders on create', () => {
+			// Create plugin with user exclusions
+			const mockPluginWithExclusions = {
+				app: {
+					vault: mockVault,
+					metadataCache: mockMetadataCache
+				},
+				settings: {
+					exclusions: ['private/**']
+				},
+				registerEvent: vi.fn()
+			};
+
+			// Mock VaultService to return null for excluded paths
+			const mockVaultServiceWithExclusions = {
+				registerFileEvents: vi.fn((handler: any) => {
+					fileEventHandler = handler;
+				}),
+				listVaultContents: vi.fn(() => []),
+				getAbstractFileByPath: vi.fn((path: string) => {
+					// Return null for excluded paths
+					if (path.startsWith('private/')) {
+						return null;
+					}
+					return createMockFolder(path);
+				})
+			};
+
+			RegisterSingleton(Services.AIAgentPlugin, mockPluginWithExclusions as any);
+			RegisterSingleton(Services.VaultService, mockVaultServiceWithExclusions as any);
+			vaultCacheService = new VaultCacheService();
+
+			const excludedFolder = createMockFolder('private/secrets');
+			fileEventHandler(FileEvent.Create, excludedFolder, { oldPath: '' });
+
+			const results = vaultCacheService.matchFolder('secrets');
+			expect(results).toHaveLength(0);
+		});
+
+		it('should remove folder from cache when renamed to excluded path', () => {
+			// Mock VaultService for rename scenario
+			const mockVaultServiceWithExclusions = {
+				registerFileEvents: vi.fn((handler: any) => {
+					fileEventHandler = handler;
+				}),
+				listVaultContents: vi.fn(() => []),
+				getAbstractFileByPath: vi.fn((path: string, allowAccessToPluginRoot: boolean) => {
+					// First call (public-folder) should succeed
+					if (path === 'public-folder') {
+						return createMockFolder(path);
+					}
+					// Second call (AI Agent/renamed) should fail
+					if (path.startsWith('AI Agent')) {
+						return null;
+					}
+					return createMockFolder(path);
+				})
+			};
+
+			RegisterSingleton(Services.VaultService, mockVaultServiceWithExclusions as any);
+			vaultCacheService = new VaultCacheService();
+
+			// Create a folder first
+			const folder = createMockFolder('public-folder');
+			fileEventHandler(FileEvent.Create, folder, { oldPath: '' });
+
+			// Verify it's in the cache
+			let results = vaultCacheService.matchFolder('public-folder');
+			expect(results.length).toBeGreaterThan(0);
+
+			// Rename to excluded path
+			const renamedFolder = createMockFolder('AI Agent/renamed');
+			fileEventHandler(FileEvent.Rename, renamedFolder, { oldPath: folder.path });
+
+			// Should not be in cache under new name
+			results = vaultCacheService.matchFolder('renamed');
+			expect(results).toHaveLength(0);
+
+			// Old name should also be removed
+			results = vaultCacheService.matchFolder('public-folder');
+			expect(results).toHaveLength(0);
+		});
+
+		it('should cache allowed folders even when exclusions are configured', () => {
+			// Mock VaultService with exclusions
+			const mockVaultServiceWithExclusions = {
+				registerFileEvents: vi.fn((handler: any) => {
+					fileEventHandler = handler;
+				}),
+				listVaultContents: vi.fn(() => []),
+				getAbstractFileByPath: vi.fn((path: string) => {
+					if (path.startsWith('AI Agent')) {
+						return null;
+					}
+					return createMockFolder(path);
+				})
+			};
+
+			RegisterSingleton(Services.VaultService, mockVaultServiceWithExclusions as any);
+			vaultCacheService = new VaultCacheService();
+
+			// Create an allowed folder
+			const allowedFolder = createMockFolder('allowed-folder');
+			fileEventHandler(FileEvent.Create, allowedFolder, { oldPath: '' });
+
+			// Should be in cache
+			const results = vaultCacheService.matchFolder('allowed-folder');
+			expect(results.length).toBeGreaterThan(0);
 		});
 	});
 

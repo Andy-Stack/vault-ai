@@ -33,7 +33,7 @@ describe('UserInputService', () => {
 		mockSearchStateStore = {
 			searchState: mockSearchState,
 			setResults: vi.fn((results: string[]) => {
-				mockSearchState.update(state => ({ ...state, results }));
+				mockSearchState.update((state: any) => ({ ...state, results }));
 			})
 		};
 
@@ -77,7 +77,7 @@ describe('UserInputService', () => {
 
 		it('should return a writable store', () => {
 			const searchState = userInputService.searchState;
-			const currentState = get(searchState);
+			const currentState = get(searchState) as ISearchState;
 			expect(currentState).toHaveProperty('active');
 			expect(currentState).toHaveProperty('trigger');
 			expect(currentState).toHaveProperty('query');
@@ -636,7 +636,7 @@ describe('UserInputService', () => {
 			expect(mockSearchStateStore.setResults).toHaveBeenCalledWith(['#test1', '#test2']);
 
 			// Verify state can be updated
-			const currentState = get(mockSearchState);
+			const currentState = get(mockSearchState) as ISearchState;
 			expect(currentState.results).toEqual(['#test1', '#test2']);
 		});
 
@@ -663,7 +663,7 @@ describe('UserInputService', () => {
 
 		it('should complete search workflow from start to finish', () => {
 			// Initial state - inactive
-			const initialState = get(mockSearchState);
+			const initialState = get(mockSearchState) as ISearchState;
 			expect(initialState.active).toBe(false);
 
 			// Activate search
@@ -692,7 +692,7 @@ describe('UserInputService', () => {
 			]);
 
 			// Verify state updated
-			const finalState = get(mockSearchState);
+			const finalState = get(mockSearchState) as ISearchState;
 			expect(finalState.results).toEqual(['important-doc.md', 'very-important.md']);
 		});
 	});

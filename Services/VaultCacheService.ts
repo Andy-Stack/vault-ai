@@ -90,12 +90,18 @@ export class VaultCacheService {
       } else if (file instanceof TFolder) {
         switch (event) {
           case FileEvent.Create:
-            this.folders.set(file.path, file);
+            // Check if folder should be excluded before caching
+            if (this.vaultService.getAbstractFileByPath(file.path, false) !== null) {
+              this.folders.set(file.path, file);
+            }
             break;
 
           case FileEvent.Rename:
             this.folders.delete(args.oldPath);
-            this.folders.set(file.path, file);
+            // Check if folder should be excluded before caching
+            if (this.vaultService.getAbstractFileByPath(file.path, false) !== null) {
+              this.folders.set(file.path, file);
+            }
             break;
 
           case FileEvent.Delete:
