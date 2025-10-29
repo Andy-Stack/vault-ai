@@ -8,6 +8,7 @@ describe('ConversationContent', () => {
 			const content = new ConversationContent(
 				'user',
 				'Hello',
+				'promptContent',
 				'functionCall',
 				timestamp,
 				true,
@@ -17,6 +18,7 @@ describe('ConversationContent', () => {
 
 			expect(content.role).toBe('user');
 			expect(content.content).toBe('Hello');
+			expect(content.promptContent).toBe('promptContent');
 			expect(content.functionCall).toBe('functionCall');
 			expect(content.timestamp).toBe(timestamp);
 			expect(content.isFunctionCall).toBe(true);
@@ -29,6 +31,7 @@ describe('ConversationContent', () => {
 
 			expect(content.role).toBe('assistant');
 			expect(content.content).toBe('');
+			expect(content.promptContent).toBe('');
 			expect(content.functionCall).toBe('');
 			expect(content.timestamp).toBeInstanceOf(Date);
 			expect(content.isFunctionCall).toBe(false);
@@ -46,10 +49,11 @@ describe('ConversationContent', () => {
 		});
 
 		it('should accept partial optional parameters', () => {
-			const content = new ConversationContent('user', 'Hello', 'someFunction');
+			const content = new ConversationContent('user', 'Hello', '', 'someFunction');
 
 			expect(content.role).toBe('user');
 			expect(content.content).toBe('Hello');
+			expect(content.promptContent).toBe('');
 			expect(content.functionCall).toBe('someFunction');
 			expect(content.timestamp).toBeInstanceOf(Date);
 			expect(content.isFunctionCall).toBe(false);
@@ -76,6 +80,7 @@ describe('ConversationContent', () => {
 			const content = new ConversationContent(
 				'assistant',
 				'',
+				'',
 				'readFile',
 				new Date(),
 				true,
@@ -94,6 +99,7 @@ describe('ConversationContent', () => {
 			const content = new ConversationContent(
 				'user',
 				'File contents here',
+				'',
 				'',
 				new Date(),
 				false,
@@ -114,6 +120,7 @@ describe('ConversationContent', () => {
 			const validData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
@@ -127,6 +134,7 @@ describe('ConversationContent', () => {
 			const validData = {
 				role: 'assistant',
 				content: '',
+				promptContent: '',
 				functionCall: 'readFile',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: true,
@@ -151,6 +159,7 @@ describe('ConversationContent', () => {
 		it('should return false when role is missing', () => {
 			const invalidData = {
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
@@ -164,6 +173,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 123,
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
@@ -176,6 +186,7 @@ describe('ConversationContent', () => {
 		it('should return false when content is missing', () => {
 			const invalidData = {
 				role: 'user',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
@@ -189,6 +200,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 123,
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
@@ -202,6 +214,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
 				isFunctionCallResponse: false
@@ -214,6 +227,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: null,
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
@@ -227,6 +241,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				isFunctionCall: false,
 				isFunctionCallResponse: false
@@ -239,6 +254,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: new Date(),
 				isFunctionCall: false,
@@ -252,6 +268,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCallResponse: false
@@ -264,6 +281,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: 'false',
@@ -277,6 +295,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false
@@ -289,6 +308,7 @@ describe('ConversationContent', () => {
 			const invalidData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
@@ -302,6 +322,7 @@ describe('ConversationContent', () => {
 			const validData = {
 				role: 'user',
 				content: 'Hello',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '2024-01-01T00:00:00.000Z',
 				isFunctionCall: false,
@@ -315,6 +336,7 @@ describe('ConversationContent', () => {
 			const validData = {
 				role: '',
 				content: '',
+				promptContent: '',
 				functionCall: '',
 				timestamp: '',
 				isFunctionCall: false,
@@ -407,7 +429,7 @@ describe('ConversationContent', () => {
 		});
 
 		it('should handle both function call and response flags true', () => {
-			const content = new ConversationContent('user', 'test', 'func', new Date(), true, true);
+			const content = new ConversationContent('user', 'test', '', 'func', new Date(), true, true);
 
 			expect(content.isFunctionCall).toBe(true);
 			expect(content.isFunctionCallResponse).toBe(true);
@@ -415,14 +437,14 @@ describe('ConversationContent', () => {
 
 		it('should handle very old timestamps', () => {
 			const oldDate = new Date('1970-01-01T00:00:00.000Z');
-			const content = new ConversationContent('user', 'Hello', '', oldDate);
+			const content = new ConversationContent('user', 'Hello', '', '', oldDate);
 
 			expect(content.timestamp).toBe(oldDate);
 		});
 
 		it('should handle future timestamps', () => {
 			const futureDate = new Date('2099-12-31T23:59:59.999Z');
-			const content = new ConversationContent('user', 'Hello', '', futureDate);
+			const content = new ConversationContent('user', 'Hello', '', '', futureDate);
 
 			expect(content.timestamp).toBe(futureDate);
 		});

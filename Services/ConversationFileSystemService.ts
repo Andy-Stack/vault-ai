@@ -35,6 +35,7 @@ export class ConversationFileSystemService {
                 .map(content => ({
                     role: content.role,
                     content: content.content,
+                    promptContent: content.promptContent,
                     functionCall: content.functionCall,
                     timestamp: content.timestamp.toISOString(),
                     isFunctionCall: content.isFunctionCall,
@@ -86,7 +87,7 @@ export class ConversationFileSystemService {
                 conversation.updated = new Date(data.updated);
                 conversation.contents = data.contents.map(content => {
                     return new ConversationContent(
-                        content.role, content.content, content.functionCall, new Date(content.timestamp), content.isFunctionCall, content.isFunctionCallResponse, content.toolId);
+                        content.role, content.content, content.promptContent, content.functionCall, new Date(content.timestamp), content.isFunctionCall, content.isFunctionCallResponse, content.toolId);
                 });
                 conversations.push(conversation);
             }

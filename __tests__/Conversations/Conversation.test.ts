@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { Conversation } from '../../Conversations/Conversation';
 import { ConversationContent } from '../../Conversations/ConversationContent';
 
@@ -62,6 +62,7 @@ describe('Conversation', () => {
 					{
 						role: 'user',
 						content: 'Hello',
+						promptContent: '',
 						functionCall: '',
 						timestamp: '2024-01-01T00:00:00.000Z',
 						isFunctionCall: false,
@@ -190,6 +191,7 @@ describe('Conversation', () => {
 					{
 						role: 'user',
 						content: 'Hello',
+						promptContent: '',
 						functionCall: '',
 						timestamp: '2024-01-01T00:00:00.000Z',
 						isFunctionCall: false,
@@ -312,7 +314,7 @@ describe('Conversation', () => {
 
 		it('should overwrite existing function call', () => {
 			const conversation = new Conversation();
-			const content = new ConversationContent('assistant', '', 'oldFunction', new Date(), true);
+			const content = new ConversationContent('assistant', '', '', 'oldFunction', new Date(), true);
 			conversation.contents.push(content);
 
 			conversation.setMostRecentFunctionCall('newFunction');

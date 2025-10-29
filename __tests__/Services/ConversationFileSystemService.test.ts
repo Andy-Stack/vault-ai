@@ -67,8 +67,8 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 		conversation.updated = new Date('2024-01-01T10:30:00Z');
 
 		conversation.contents.push(
-			new ConversationContent(Role.User, 'Hello', undefined, new Date('2024-01-01T10:00:00Z')),
-			new ConversationContent(Role.Assistant, 'Hi there!', undefined, new Date('2024-01-01T10:01:00Z'))
+			new ConversationContent(Role.User, 'Hello', '', '', new Date('2024-01-01T10:00:00Z')),
+			new ConversationContent(Role.Assistant, 'Hi there!', '', '', new Date('2024-01-01T10:01:00Z'))
 		);
 
 		return conversation;
@@ -139,7 +139,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 		it('should filter out aborted request messages', async () => {
 			const conversation = createTestConversation('Test Filter');
 			conversation.contents.push(
-				new ConversationContent(Role.Assistant, Copy.ApiRequestAborted, undefined, new Date())
+				new ConversationContent(Role.Assistant, Copy.ApiRequestAborted, '', '', new Date())
 			);
 
 			await service.saveConversation(conversation);
@@ -190,6 +190,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 				new ConversationContent(
 					Role.Assistant,
 					'Function call',
+					'',
 					JSON.stringify(functionCall),
 					new Date('2024-01-01T10:02:00Z'),
 					true,
@@ -206,6 +207,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 			expect(functionCallContent).toEqual({
 				role: Role.Assistant,
 				content: 'Function call',
+				promptContent: '',
 				functionCall: JSON.stringify(functionCall),
 				timestamp: '2024-01-01T10:02:00.000Z',
 				isFunctionCall: true,
@@ -221,7 +223,8 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 				new ConversationContent(
 					Role.User,
 					'Function response',
-					undefined,
+					'',
+					'',
 					new Date('2024-01-01T10:03:00Z'),
 					false,
 					true,
@@ -365,6 +368,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 						{
 							role: Role.User,
 							content: 'Message 1',
+							promptContent: '',
 							functionCall: '',
 							timestamp: '2024-01-01T10:00:00.000Z',
 							isFunctionCall: false,
@@ -380,6 +384,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 						{
 							role: Role.User,
 							content: 'Message 2',
+							promptContent: '',
 							functionCall: '',
 							timestamp: '2024-01-02T10:00:00.000Z',
 							isFunctionCall: false,
@@ -412,6 +417,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 					{
 						role: Role.User,
 						content: 'Hello',
+						promptContent: '',
 						functionCall: '',
 						timestamp: '2024-01-01T10:00:00.000Z',
 						isFunctionCall: false,
@@ -420,6 +426,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 					{
 						role: Role.Assistant,
 						content: 'Hi!',
+						promptContent: '',
 						functionCall: '',
 						timestamp: '2024-01-01T10:01:00.000Z',
 						isFunctionCall: false,
@@ -485,6 +492,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 					{
 						role: Role.Assistant,
 						content: 'Calling function',
+						promptContent: '',
 						functionCall: JSON.stringify({ name: 'test_func', arguments: {} }),
 						timestamp: '2024-01-01T10:00:00.000Z',
 						isFunctionCall: true,
@@ -494,6 +502,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 					{
 						role: Role.User,
 						content: 'Function result',
+						promptContent: '',
 						functionCall: '',
 						timestamp: '2024-01-01T10:01:00.000Z',
 						isFunctionCall: false,
@@ -627,6 +636,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 				new ConversationContent(
 					Role.Assistant,
 					'Function',
+					'',
 					JSON.stringify({ name: 'test', arguments: { arg: 'val' } }),
 					new Date('2024-01-01T10:05:00Z'),
 					true,
@@ -636,6 +646,7 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 				new ConversationContent(
 					Role.User,
 					'Response',
+					'',
 					'',
 					new Date('2024-01-01T10:06:00Z'),
 					false,
