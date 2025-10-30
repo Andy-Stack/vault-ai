@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VaultCacheService } from '../../Services/VaultCacheService';
 import { VaultService } from '../../Services/VaultService';
 import { TFile, TFolder, MetadataCache } from 'obsidian';
-import { RegisterSingleton } from '../../Services/DependencyService';
+import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { FileEvent } from '../../Enums/FileEvent';
 
@@ -108,6 +108,8 @@ describe('VaultCacheService - Integration Tests', () => {
 	let fileEventHandler: any;
 
 	beforeEach(() => {
+		// Clear singleton registry to prevent memory leaks
+		DeregisterAllServices();
 		// Reset all mocks
 		vi.clearAllMocks();
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VaultService } from '../../Services/VaultService';
 import { TFile, TFolder, TAbstractFile, FileManager } from 'obsidian';
 import { Path } from '../../Enums/Path';
-import { RegisterSingleton } from '../../Services/DependencyService';
+import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { SanitiserService } from '../../Services/SanitiserService';
 
@@ -99,6 +99,8 @@ describe('VaultService - Integration Tests', () => {
 	});
 
 	afterEach(() => {
+		// Clear singleton registry to prevent memory leaks
+		DeregisterAllServices();
 		consoleErrorSpy.mockRestore();
 	});
 

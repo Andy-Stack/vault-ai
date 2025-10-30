@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AIFunctionService } from '../../Services/AIFunctionService';
 import { FileSystemService } from '../../Services/FileSystemService';
-import { RegisterSingleton } from '../../Services/DependencyService';
+import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { AIFunction } from '../../Enums/AIFunction';
 import { TFile, TFolder } from 'obsidian';
@@ -44,6 +44,8 @@ describe('AIFunctionService - Integration Tests', () => {
 	});
 
 	afterEach(() => {
+		// Clear singleton registry to prevent memory leaks
+		DeregisterAllServices();
 		vi.restoreAllMocks();
 	});
 

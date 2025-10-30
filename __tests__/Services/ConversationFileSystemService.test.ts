@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConversationFileSystemService } from '../../Services/ConversationFileSystemService';
 import { FileSystemService } from '../../Services/FileSystemService';
-import { RegisterSingleton } from '../../Services/DependencyService';
+import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { Conversation } from '../../Conversations/Conversation';
 import { ConversationContent } from '../../Conversations/ConversationContent';
@@ -45,6 +45,8 @@ describe('ConversationFileSystemService - Integration Tests', () => {
 	});
 
 	afterEach(() => {
+		// Clear singleton registry to prevent memory leaks
+		DeregisterAllServices();
 		vi.restoreAllMocks();
 	});
 

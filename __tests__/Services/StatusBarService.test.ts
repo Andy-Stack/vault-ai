@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { StatusBarService } from '../../Services/StatusBarService';
-import { RegisterSingleton } from '../../Services/DependencyService';
+import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 
 describe('StatusBarService', () => {
@@ -49,6 +49,16 @@ describe('StatusBarService', () => {
     });
 
     afterEach(() => {
+        // Clean up service resources (cancel animations, remove DOM elements)
+        service.removeStatusBarMessage();
+
+        // Clear singleton registry to prevent memory leaks
+        DeregisterAllServices();
+
+        // Clear RAF callback references
+        rafCallbacks = [];
+
+        // Restore all mocks
         vi.restoreAllMocks();
     });
 
@@ -77,7 +87,8 @@ describe('StatusBarService', () => {
 
             // Should only create once
             expect(mockPlugin.addStatusBarItem).toHaveBeenCalledTimes(1);
-            expect(mockStatusBarItem.empty).toHaveBeenCalledTimes(2);
+            // empty() is called: createStatusBarMessage(1) + setStatusBarMessage first call(2) + second call(3) = 3 times
+            expect(mockStatusBarItem.empty).toHaveBeenCalledTimes(3);
             expect(mockStatusBarItem.createEl).toHaveBeenCalledTimes(2);
         });
 
@@ -156,19 +167,25 @@ describe('StatusBarService', () => {
         it('should complete animation after 1000ms', () => {
             service.animateTokens(100, 200);
 
-            // Advance through animation
+            // Simulate animation frames until completion
             currentTime = 0;
-            let frameIndex = 0;
-            while (frameIndex < rafCallbacks.length && currentTime <= 1000) {
-                rafCallbacks[frameIndex](currentTime);
-                frameIndex++;
+            let iterations = 0;
+            const maxIterations = 100; // Safety limit
+
+            while (currentTime < 1000 && iterations < maxIterations) {
+                const callbackIndex = rafCallbacks.length - 1; // Get most recent callback
+                if (callbackIndex >= 0) {
+                    rafCallbacks[callbackIndex](currentTime);
+                }
                 currentTime += 16; // ~60fps
+                iterations++;
             }
 
-            // Run final frame at exactly 1000ms
+            // Run final frame at exactly 1000ms to ensure completion
             currentTime = 1000;
-            if (frameIndex < rafCallbacks.length) {
-                rafCallbacks[frameIndex](currentTime);
+            const finalCallbackIndex = rafCallbacks.length - 1;
+            if (finalCallbackIndex >= 0) {
+                rafCallbacks[finalCallbackIndex](currentTime);
             }
 
             // Should reach target values
@@ -272,15 +289,11 @@ describe('StatusBarService', () => {
             // Should cancel previous animations
             expect(global.cancelAnimationFrame).toHaveBeenCalled();
 
-            // Should have latest animation running
+            // Run the latest animation to completion
             currentTime = 1000;
-            const lastIndex = rafCallbacks.length - 1;
-            let frameIndex = 0;
-            while (frameIndex <= lastIndex && currentTime >= 0) {
-                if (rafCallbacks[frameIndex]) {
-                    rafCallbacks[frameIndex](currentTime);
-                }
-                frameIndex++;
+            const latestCallback = rafCallbacks[rafCallbacks.length - 1];
+            if (latestCallback) {
+                latestCallback(currentTime);
             }
 
             const lastCall = mockStatusBarItem.createEl.mock.calls[mockStatusBarItem.createEl.mock.calls.length - 1];
@@ -289,24 +302,51 @@ describe('StatusBarService', () => {
         });
 
         it('should maintain state between animations', () => {
-            // First animation
+            // First animation - run to completion
             service.animateTokens(100, 200);
-            currentTime = 1000;
-            let frameIndex = 0;
-            while (frameIndex < rafCallbacks.length) {
-                rafCallbacks[frameIndex](currentTime);
-                frameIndex++;
+
+            // Simulate animation to completion
+            currentTime = 0;
+            const startTime = currentTime;
+            let iterations = 0;
+            while (currentTime - startTime < 1000 && iterations < 100) {
+                const callbackIndex = rafCallbacks.length - 1;
+                if (callbackIndex >= 0) {
+                    rafCallbacks[callbackIndex](currentTime);
+                }
+                currentTime += 16;
+                iterations++;
+            }
+
+            // Final frame at exactly 1000ms
+            currentTime = startTime + 1000;
+            const finalIndex = rafCallbacks.length - 1;
+            if (finalIndex >= 0) {
+                rafCallbacks[finalIndex](currentTime);
             }
 
             // Second animation should start from previous end values
             rafCallbacks = []; // Reset RAF tracking
             service.animateTokens(200, 400);
 
-            currentTime = 1000;
-            frameIndex = 0;
-            while (frameIndex < rafCallbacks.length) {
-                rafCallbacks[frameIndex](currentTime);
-                frameIndex++;
+            // Simulate second animation to completion
+            currentTime = performance.now();
+            const secondStartTime = currentTime;
+            iterations = 0;
+            while (currentTime - secondStartTime < 1000 && iterations < 100) {
+                const callbackIndex = rafCallbacks.length - 1;
+                if (callbackIndex >= 0) {
+                    rafCallbacks[callbackIndex](currentTime);
+                }
+                currentTime += 16;
+                iterations++;
+            }
+
+            // Final frame at exactly 1000ms
+            currentTime = secondStartTime + 1000;
+            const secondFinalIndex = rafCallbacks.length - 1;
+            if (secondFinalIndex >= 0) {
+                rafCallbacks[secondFinalIndex](currentTime);
             }
 
             const lastCall = mockStatusBarItem.createEl.mock.calls[mockStatusBarItem.createEl.mock.calls.length - 1];

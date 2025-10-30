@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ClaudeConversationNamingService } from '../../AIClasses/Claude/ClaudeConversationNamingService';
-import { RegisterSingleton, ClearAll } from '../../Services/DependencyService';
+import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { AIProviderModel } from '../../Enums/ApiProvider';
 import { Role } from '../../Enums/Role';
@@ -11,8 +11,6 @@ describe('ClaudeConversationNamingService', () => {
     let fetchMock: any;
 
     beforeEach(() => {
-
-
         mockPlugin = {
             settings: {
                 apiKey: 'test-claude-key'
@@ -28,6 +26,8 @@ describe('ClaudeConversationNamingService', () => {
     });
 
     afterEach(() => {
+        // Clear singleton registry to prevent memory leaks
+        DeregisterAllServices();
         vi.restoreAllMocks();
     });
 

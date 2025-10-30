@@ -22,3 +22,7 @@ export function Resolve<T>(type: symbol): T {
     // It's a singleton, return the existing instance
     return service as T;
 }
+
+export function DeregisterAllServices(): void {
+    services.clear();
+}

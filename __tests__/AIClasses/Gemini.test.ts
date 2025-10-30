@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Gemini } from '../../AIClasses/Gemini/Gemini';
-import { RegisterSingleton, Resolve } from '../../Services/DependencyService';
+import { RegisterSingleton, Resolve, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { StreamingService } from '../../Services/StreamingService';
 import type { IPrompt } from '../../AIClasses/IPrompt';
@@ -18,8 +18,6 @@ describe('Gemini', () => {
     let mockFunctionDefinitions: any;
 
     beforeEach(() => {
-
-
         // Mock IPrompt
         mockPrompt = {
             systemInstruction: vi.fn().mockReturnValue('System instruction'),
@@ -60,6 +58,11 @@ describe('Gemini', () => {
         RegisterSingleton(Services.AIFunctionDefinitions, mockFunctionDefinitions);
 
         gemini = new Gemini();
+    });
+
+    afterEach(() => {
+        // Clear singleton registry to prevent memory leaks
+        DeregisterAllServices();
     });
 
     describe('Constructor and Dependencies', () => {

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ConversationNamingService } from '../../Services/ConversationNamingService';
-import { RegisterSingleton } from '../../Services/DependencyService';
+import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { Conversation } from '../../Conversations/Conversation';
 import { Path } from '../../Enums/Path';
@@ -12,7 +12,6 @@ describe('ConversationNamingService', () => {
     let mockVaultService: any;
 
     beforeEach(() => {
-
         // Mock IConversationNamingService
         mockNamingProvider = {
             generateName: vi.fn().mockResolvedValue('Generated Title')
@@ -33,6 +32,11 @@ describe('ConversationNamingService', () => {
         RegisterSingleton(Services.VaultService, mockVaultService);
 
         service = new ConversationNamingService();
+    });
+
+    afterEach(() => {
+        // Clear singleton registry to prevent memory leaks
+        DeregisterAllServices();
     });
 
     describe('Constructor and Dependencies', () => {

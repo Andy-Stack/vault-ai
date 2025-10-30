@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { UserInputService } from '../../Services/UserInputService';
 import { SearchTrigger } from '../../Enums/SearchTrigger';
-import { RegisterSingleton } from '../../Services/DependencyService';
+import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { writable, get } from 'svelte/store';
 import type { ISearchState } from '../../Stores/SearchStateStore';
@@ -53,6 +53,8 @@ describe('UserInputService', () => {
 	});
 
 	afterEach(() => {
+		// Clear singleton registry to prevent memory leaks
+		DeregisterAllServices();
 		vi.restoreAllMocks();
 	});
 
