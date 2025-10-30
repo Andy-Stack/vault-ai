@@ -59,34 +59,50 @@ export class VaultCacheService {
 
   private registerFileEvents() {
     this.vaultService.registerFileEvents((event, file, args) => {
-      if (!this.shouldBeCached(file.path) || (args.oldPath && !this.shouldBeCached(args.oldPath))) {
+      const shouldCacheNewPath = this.shouldBeCached(file.path);
+      const shouldCacheOldPath = args.oldPath ? this.shouldBeCached(args.oldPath) : false;
+
+      if (!shouldCacheNewPath && !shouldCacheOldPath) {
         return;
       }
 
       if (file instanceof TFile) {
         switch (event) {
           case FileEvent.Create:
-            this.files.set(file.path, file);
-            this.cacheTags(file);
+            if (shouldCacheNewPath) {
+              this.files.set(file.path, file);
+              this.cacheTags(file);
+            }
             break;
 
           case FileEvent.Modify:
-            const newTags = this.getTags(file);
-            const removedTags = this.mapping.updateMapping(file.path, newTags);
-            removedTags.forEach(tag => this.tags.delete(tag));
-            this.cacheTags(file, newTags);
+            if (shouldCacheNewPath) {
+              const newTags = this.getTags(file);
+              const removedTags = this.mapping.updateMapping(file.path, newTags);
+              removedTags.forEach(tag => this.tags.delete(tag));
+              this.cacheTags(file, newTags);
+            }
             break;
 
           case FileEvent.Rename:
-            this.mapping.renameKey(args.oldPath, file.path);
-            this.files.delete(args.oldPath);
-            this.files.set(file.path, file);
+            if (shouldCacheOldPath) {
+              this.files.delete(args.oldPath);
+              const orphanedTags = this.mapping.deleteFromMapping(args.oldPath);
+              orphanedTags.forEach(tag => this.tags.delete(tag));
+            }
+            if (shouldCacheNewPath) {
+              this.mapping.renameKey(args.oldPath, file.path);
+              this.files.set(file.path, file);
+              this.cacheTags(file);
+            }
             break;
 
           case FileEvent.Delete:
-            this.files.delete(args.oldPath);
-            const orphanedTags = this.mapping.deleteFromMapping(args.oldPath);
-            orphanedTags.forEach(tag => this.tags.delete(tag));
+            if (shouldCacheOldPath) {
+              this.files.delete(args.oldPath);
+              const orphanedTags = this.mapping.deleteFromMapping(args.oldPath);
+              orphanedTags.forEach(tag => this.tags.delete(tag));
+            }
             break;
         }
         this.fuzzySortPrepareTags();
@@ -94,16 +110,24 @@ export class VaultCacheService {
       } else if (file instanceof TFolder) {
         switch (event) {
           case FileEvent.Create:
-            this.folders.set(file.path, file);
+            if (shouldCacheNewPath) {
+              this.folders.set(file.path, file);
+            }
             break;
 
           case FileEvent.Rename:
-            this.folders.delete(args.oldPath);
-            this.folders.set(file.path, file);
+            if (shouldCacheOldPath) {
+              this.folders.delete(args.oldPath);
+            }
+            if (shouldCacheNewPath) {
+              this.folders.set(file.path, file);
+            }
             break;
 
           case FileEvent.Delete:
-            this.folders.delete(args.oldPath);
+            if (shouldCacheOldPath) {
+              this.folders.delete(args.oldPath);
+            }
             break;
         }
         this.fuzzySortPrepareFolders();

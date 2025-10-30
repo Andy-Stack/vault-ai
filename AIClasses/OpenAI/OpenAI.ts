@@ -85,7 +85,7 @@ export class OpenAI implements IAIClass {
                         console.error("Invalid JSON in functionCall field");
                         return {
                             role: content.role,
-                            content: content.content || "Invalid function call"
+                            content: content.content || "Error parsing function call"
                         };
                     }
                 }

@@ -184,6 +184,13 @@ export class Claude implements IAIClass {
                         }
                     } else {
                         console.error("Invalid JSON in functionCall field");
+                        // Fall back to treating as text
+                        if (content.content.trim() === "") {
+                            contentBlocks.push({
+                                type: "text",
+                                text: "Error parsing function call"
+                            });
+                        }
                     }
                 }
 

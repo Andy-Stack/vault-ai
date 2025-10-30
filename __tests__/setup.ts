@@ -2,7 +2,7 @@
  * Test setup file - runs before all tests
  */
 
-import { vi } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
 // Mock global window if needed
 if (typeof global.window === 'undefined') {
