@@ -132,204 +132,6 @@ describe('InputService', () => {
 		});
 	});
 
-	describe('getCharacterAtPosition', () => {
-		let element: HTMLDivElement;
-
-		beforeEach(() => {
-			element = document.createElement('div');
-		});
-
-		it('should return character at valid position', () => {
-			element.textContent = 'Hello World';
-
-			expect(service.getCharacterAtPosition(0, element)).toBe('H');
-			expect(service.getCharacterAtPosition(1, element)).toBe('e');
-			expect(service.getCharacterAtPosition(6, element)).toBe('W');
-			expect(service.getCharacterAtPosition(10, element)).toBe('d');
-		});
-
-		it('should return empty string for position beyond text length', () => {
-			element.textContent = 'Hello';
-
-			expect(service.getCharacterAtPosition(5, element)).toBe('');
-			expect(service.getCharacterAtPosition(10, element)).toBe('');
-			expect(service.getCharacterAtPosition(100, element)).toBe('');
-		});
-
-		it('should return empty string for negative position', () => {
-			element.textContent = 'Hello';
-
-			expect(service.getCharacterAtPosition(-1, element)).toBe('');
-			expect(service.getCharacterAtPosition(-10, element)).toBe('');
-		});
-
-		it('should return empty string for empty element', () => {
-			element.textContent = '';
-
-			expect(service.getCharacterAtPosition(0, element)).toBe('');
-			expect(service.getCharacterAtPosition(1, element)).toBe('');
-		});
-
-		it('should handle element with null textContent', () => {
-			// Explicitly set to null (though DOM usually gives empty string)
-			Object.defineProperty(element, 'textContent', { value: null, writable: true });
-
-			expect(service.getCharacterAtPosition(0, element)).toBe('');
-		});
-
-		it('should handle single character text', () => {
-			element.textContent = 'A';
-
-			expect(service.getCharacterAtPosition(0, element)).toBe('A');
-			expect(service.getCharacterAtPosition(1, element)).toBe('');
-		});
-
-		it('should handle spaces and special characters', () => {
-			element.textContent = '  @#$  ';
-
-			expect(service.getCharacterAtPosition(0, element)).toBe(' ');
-			expect(service.getCharacterAtPosition(2, element)).toBe('@');
-			expect(service.getCharacterAtPosition(3, element)).toBe('#');
-			expect(service.getCharacterAtPosition(4, element)).toBe('$');
-		});
-
-		it('should handle unicode characters', () => {
-			element.textContent = 'café';
-
-			expect(service.getCharacterAtPosition(0, element)).toBe('c');
-			expect(service.getCharacterAtPosition(3, element)).toBe('é');
-			// Note: Emoji like 🎉 are surrogate pairs (2 JS characters), so we test simpler unicode
-		});
-
-		it('should handle newlines', () => {
-			element.textContent = 'line1\nline2';
-
-			expect(service.getCharacterAtPosition(5, element)).toBe('\n');
-			expect(service.getCharacterAtPosition(6, element)).toBe('l');
-		});
-
-		it('should handle tabs', () => {
-			element.textContent = 'before\tafter';
-
-			expect(service.getCharacterAtPosition(6, element)).toBe('\t');
-		});
-
-		it('should work with nested elements', () => {
-			// Even with nested elements, textContent flattens to a single string
-			const span = document.createElement('span');
-			span.textContent = 'World';
-			element.textContent = 'Hello ';
-			element.appendChild(span);
-
-			// textContent should now be "Hello World"
-			expect(service.getCharacterAtPosition(0, element)).toBe('H');
-			expect(service.getCharacterAtPosition(6, element)).toBe('W');
-		});
-	});
-
-	describe('stripHtml', () => {
-		it('should remove simple HTML tags', () => {
-			expect(service.stripHtml('<p>Hello</p>')).toBe('Hello');
-			expect(service.stripHtml('<div>World</div>')).toBe('World');
-			expect(service.stripHtml('<span>Test</span>')).toBe('Test');
-		});
-
-		it('should remove nested HTML tags', () => {
-			expect(service.stripHtml('<div><p>Hello</p></div>')).toBe('Hello');
-			expect(service.stripHtml('<div><span><b>Bold</b></span></div>')).toBe('Bold');
-		});
-
-		it('should preserve text content', () => {
-			expect(service.stripHtml('<p>Hello <strong>World</strong></p>')).toBe('Hello World');
-			expect(service.stripHtml('<div>Line 1<br>Line 2</div>')).toBe('Line 1Line 2');
-		});
-
-		it('should handle empty string', () => {
-			expect(service.stripHtml('')).toBe('');
-		});
-
-		it('should handle plain text without HTML', () => {
-			expect(service.stripHtml('Plain text')).toBe('Plain text');
-			expect(service.stripHtml('No tags here!')).toBe('No tags here!');
-		});
-
-		it('should handle HTML with attributes', () => {
-			expect(service.stripHtml('<p class="test" id="para">Content</p>')).toBe('Content');
-			expect(service.stripHtml('<a href="http://example.com">Link</a>')).toBe('Link');
-		});
-
-		it('should handle self-closing tags', () => {
-			expect(service.stripHtml('Before<br/>After')).toBe('BeforeAfter');
-			expect(service.stripHtml('Text<img src="image.png"/>More')).toBe('TextMore');
-		});
-
-		it('should handle multiple paragraphs', () => {
-			const html = '<p>Paragraph 1</p><p>Paragraph 2</p><p>Paragraph 3</p>';
-			expect(service.stripHtml(html)).toBe('Paragraph 1Paragraph 2Paragraph 3');
-		});
-
-		it('should handle HTML entities', () => {
-			// Note: innerHTML parsing automatically converts entities
-			expect(service.stripHtml('&lt;div&gt;')).toBe('<div>');
-			expect(service.stripHtml('&amp;')).toBe('&');
-			expect(service.stripHtml('&quot;')).toBe('"');
-		});
-
-		it('should handle special characters', () => {
-			expect(service.stripHtml('<p>Special: @#$%</p>')).toBe('Special: @#$%');
-			expect(service.stripHtml('<div>Math: 1 + 1 = 2</div>')).toBe('Math: 1 + 1 = 2');
-		});
-
-		it('should handle unicode characters', () => {
-			expect(service.stripHtml('<p>café</p>')).toBe('café');
-			expect(service.stripHtml('<div>🎉 Party!</div>')).toBe('🎉 Party!');
-		});
-
-		it('should handle malformed HTML gracefully', () => {
-			expect(service.stripHtml('<p>Unclosed tag')).toBe('Unclosed tag');
-			expect(service.stripHtml('<div><p>Nested unclosed')).toBe('Nested unclosed');
-		});
-
-		it('should handle script and style tags', () => {
-			// Browser behavior: script/style content is typically included in textContent
-			const withScript = '<div>Text<script>alert("test")</script>More</div>';
-			const result = service.stripHtml(withScript);
-			// Script content might be included depending on browser implementation
-			expect(result).toContain('Text');
-			expect(result).toContain('More');
-		});
-
-		it('should handle whitespace preservation', () => {
-			expect(service.stripHtml('<p>  Spaces  </p>')).toBe('  Spaces  ');
-			expect(service.stripHtml('<div>\n\tTabs\n</div>')).toContain('Tabs');
-		});
-
-		it('should handle complex nested structures', () => {
-			const html = `
-				<div class="container">
-					<header>
-						<h1>Title</h1>
-					</header>
-					<main>
-						<p>Paragraph with <strong>bold</strong> and <em>italic</em> text.</p>
-					</main>
-				</div>
-			`;
-			const result = service.stripHtml(html);
-			expect(result).toContain('Title');
-			expect(result).toContain('Paragraph with bold and italic text.');
-		});
-
-		it('should handle empty tags', () => {
-			expect(service.stripHtml('<p></p>')).toBe('');
-			expect(service.stripHtml('<div><span></span></div>')).toBe('');
-		});
-
-		it('should handle mixed content', () => {
-			const html = 'Text before<p>Inside tag</p>Text after';
-			expect(service.stripHtml(html)).toBe('Text beforeInside tagText after');
-		});
-	});
 
 	describe('getPlainTextFromClipboard', () => {
 		it('should extract text/plain from DataTransfer', () => {
@@ -838,62 +640,12 @@ describe('InputService', () => {
 			});
 		});
 
-		describe('getPreviousNode', () => {
+		describe('getElementBeforeCursor', () => {
 			it('should return null when no selection exists', () => {
 				const selection = window.getSelection();
 				selection?.removeAllRanges();
 
-				const result = service.getPreviousNode();
-				expect(result).toBeNull();
-			});
-
-			it('should return null when cursor is at start', () => {
-				service.setCursorPosition(element, 0);
-				const result = service.getPreviousNode();
-				expect(result).toBeNull();
-			});
-
-			it('should return null when cursor is in text node', () => {
-				service.setCursorPosition(element, 5);
-				const result = service.getPreviousNode();
-				expect(result).toBeNull();
-			});
-
-			it('should return search trigger element when cursor is after it', () => {
-				element.innerHTML = 'Text ';
-				const trigger = document.createElement('span');
-				trigger.className = 'search-trigger';
-				trigger.textContent = '#tag';
-				element.appendChild(trigger);
-				element.appendChild(document.createTextNode(' more'));
-
-				// Position cursor right after the trigger element
-				const range = document.createRange();
-				const selection = window.getSelection();
-				range.setStart(element, 2); // After text node and trigger
-				range.setEnd(element, 2);
-				selection?.removeAllRanges();
-				selection?.addRange(range);
-
-				const result = service.getPreviousNode();
-				expect(result).toBe(trigger);
-			});
-
-			it('should return null when previous element is not a search trigger', () => {
-				element.innerHTML = 'Text ';
-				const span = document.createElement('span');
-				span.textContent = 'regular span';
-				element.appendChild(span);
-				element.appendChild(document.createTextNode(' more'));
-
-				const range = document.createRange();
-				const selection = window.getSelection();
-				range.setStart(element, 2); // After text node and span
-				range.setEnd(element, 2);
-				selection?.removeAllRanges();
-				selection?.addRange(range);
-
-				const result = service.getPreviousNode();
+				const result = service.getElementBeforeCursor(element);
 				expect(result).toBeNull();
 			});
 
@@ -907,49 +659,144 @@ describe('InputService', () => {
 				selection?.removeAllRanges();
 				selection?.addRange(range);
 
-				const result = service.getPreviousNode();
+				const result = service.getElementBeforeCursor(element);
 				expect(result).toBeNull();
 			});
-		});
 
-		describe('getNodeAtCursorPosition', () => {
-			it('should return node at cursor position', () => {
-				service.setCursorPosition(element, 5);
-				const node = service.getNodeAtCursorPosition();
-
-				// Should return the parent element or text node
-				expect(node).toBeTruthy();
+			it('should return null when cursor is in middle of text node', () => {
+				service.setCursorPosition(element, 5); // Middle of "Hello World"
+				const result = service.getElementBeforeCursor(element);
+				expect(result).toBeNull();
 			});
 
-			it('should return null when no selection exists', () => {
-				const selection = window.getSelection();
-				selection?.removeAllRanges();
-
-				const node = service.getNodeAtCursorPosition();
-				// JSDOM may return an empty Selection, so node might be null or a node
-				// We just verify it doesn't crash
-				expect(node === null || node instanceof Node).toBe(true);
-			});
-
-			it('should return parent node for text nodes', () => {
-				service.setCursorPosition(element, 5);
-				const node = service.getNodeAtCursorPosition();
-
-				// Since cursor is in text, it should return the parent (element)
-				expect(node?.nodeType).toBe(Node.ELEMENT_NODE);
-			});
-
-			it('should handle nested elements', () => {
+			it('should return element when cursor is at start of text node after an element', () => {
 				element.innerHTML = '';
-				element.appendChild(document.createTextNode('Hello '));
 				const span = document.createElement('span');
-				span.textContent = 'World';
+				span.className = 'test-element';
+				span.textContent = 'Element';
 				element.appendChild(span);
+				element.appendChild(document.createTextNode(' text'));
 
-				service.setCursorPosition(element, 8); // Inside span
-				const node = service.getNodeAtCursorPosition();
+				// Position cursor at start of the text node after span
+				const range = document.createRange();
+				const selection = window.getSelection();
+				const textNode = element.childNodes[1] as Text;
+				range.setStart(textNode, 0);
+				range.setEnd(textNode, 0);
+				selection?.removeAllRanges();
+				selection?.addRange(range);
 
-				expect(node).toBeTruthy();
+				const result = service.getElementBeforeCursor(element);
+				expect(result).toBe(span);
+			});
+
+			it('should return element when cursor is positioned after element node', () => {
+				element.innerHTML = 'Text ';
+				const span = document.createElement('span');
+				span.className = 'test-element';
+				span.textContent = 'Element';
+				element.appendChild(span);
+				element.appendChild(document.createTextNode(' more'));
+
+				// Position cursor right after the span element
+				const range = document.createRange();
+				const selection = window.getSelection();
+				range.setStart(element, 2); // After text node and span
+				range.setEnd(element, 2);
+				selection?.removeAllRanges();
+				selection?.addRange(range);
+
+				const result = service.getElementBeforeCursor(element);
+				expect(result).toBe(span);
+			});
+
+			it('should work with search trigger elements', () => {
+				element.innerHTML = 'Text ';
+				const trigger = document.createElement('span');
+				trigger.className = 'search-trigger';
+				trigger.textContent = '#tag';
+				element.appendChild(trigger);
+				element.appendChild(document.createTextNode(' more'));
+
+				// Position cursor right after the trigger
+				const range = document.createRange();
+				const selection = window.getSelection();
+				const textNode = element.childNodes[2] as Text;
+				range.setStart(textNode, 0);
+				range.setEnd(textNode, 0);
+				selection?.removeAllRanges();
+				selection?.addRange(range);
+
+				const result = service.getElementBeforeCursor(element);
+				expect(result).toBe(trigger);
+			});
+
+			it('should return deepest rightmost element for nested structures', () => {
+				element.innerHTML = '';
+				const outer = document.createElement('div');
+				const inner = document.createElement('span');
+				inner.className = 'inner';
+				inner.textContent = 'Nested';
+				outer.appendChild(inner);
+				element.appendChild(document.createTextNode('Before '));
+				element.appendChild(outer);
+				element.appendChild(document.createTextNode(' After'));
+
+				// Position cursor right after the outer div (which contains inner span)
+				const range = document.createRange();
+				const selection = window.getSelection();
+				range.setStart(element, 2); // After text node and outer div
+				range.setEnd(element, 2);
+				selection?.removeAllRanges();
+				selection?.addRange(range);
+
+				const result = service.getElementBeforeCursor(element);
+				// Should return the deepest rightmost element (inner span)
+				expect(result).toBe(inner);
+			});
+
+			it('should return null when cursor is at start of element', () => {
+				service.setCursorPosition(element, 0);
+				const result = service.getElementBeforeCursor(element);
+				expect(result).toBeNull();
+			});
+
+			it('should handle cursor positioned in element node with child before', () => {
+				element.innerHTML = '';
+				element.appendChild(document.createTextNode('Text'));
+				const span = document.createElement('span');
+				span.textContent = 'Element';
+				element.appendChild(span);
+				element.appendChild(document.createTextNode('After'));
+
+				// Position cursor in the element node itself, after the span
+				const range = document.createRange();
+				const selection = window.getSelection();
+				range.setStart(element, 2); // After text and span
+				range.setEnd(element, 2);
+				selection?.removeAllRanges();
+				selection?.addRange(range);
+
+				const result = service.getElementBeforeCursor(element);
+				expect(result).toBe(span);
+			});
+
+			it('should return null when previous sibling is a text node', () => {
+				element.innerHTML = '';
+				element.appendChild(document.createTextNode('First'));
+				element.appendChild(document.createTextNode('Second'));
+
+				// Position cursor at start of second text node
+				const range = document.createRange();
+				const selection = window.getSelection();
+				const secondText = element.childNodes[1] as Text;
+				range.setStart(secondText, 0);
+				range.setEnd(secondText, 0);
+				selection?.removeAllRanges();
+				selection?.addRange(range);
+
+				const result = service.getElementBeforeCursor(element);
+				expect(result).toBeNull();
 			});
 		});
 

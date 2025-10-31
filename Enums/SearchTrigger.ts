@@ -1,3 +1,4 @@
+import { disabled } from "happy-dom/lib/PropertySymbol";
 import { basename, extname } from "path";
 
 export enum SearchTrigger {
@@ -56,7 +57,7 @@ export namespace SearchTrigger {
             text: text,
             cls: "search-trigger",
             attr: {
-                contenteditable: "false"
+                contenteditable: false
             }
         });
 

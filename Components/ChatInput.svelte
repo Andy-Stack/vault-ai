@@ -9,6 +9,7 @@
 	import ChatSearchResults from "./ChatSearchResults.svelte";
 	import type { Writable } from "svelte/store";
 	import type { InputService } from "Services/InputService";
+	import { textAreaNode } from "happy-dom/lib/PropertySymbol";
 
   export let hasNoApiKey: boolean;
   export let isSubmitting: boolean;
@@ -80,13 +81,14 @@
 
       e.preventDefault();
       
-      const node = inputService.getNodeAtCursorPosition();
-      if (node && SearchTrigger.isSearchTriggerElement(node)) {
-        (node as HTMLElement).remove();
-      } else {
-        inputService.deleteTextRange(position -1, position, textareaElement);
-        inputService.setCursorPosition(textareaElement, position - 1);
+      const elementBeforeCursor = inputService.getElementBeforeCursor(textareaElement);
+      if (elementBeforeCursor && SearchTrigger.isSearchTriggerElement(elementBeforeCursor)) {
+          elementBeforeCursor.remove();
+          return;
       }
+    
+      inputService.deleteTextRange(position - 1, position, textareaElement);
+      
       return;
     }
 

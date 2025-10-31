@@ -2,6 +2,57 @@ import { SearchTrigger } from "../Enums/SearchTrigger";
 
 export class InputService {
 
+    public getPlainTextFromClipboard(clipboardData: DataTransfer | null): string {
+        if (!clipboardData) {
+            return "";
+        }
+        return clipboardData.getData("text/plain") || "";
+    }
+
+    public sanitizeToPlainText(element: HTMLElement): void {
+        const plainText = element.textContent || "";
+        const cursorPos = this.getCursorPosition(element);
+
+        element.textContent = plainText;
+
+        // Restore cursor position after sanitization
+        this.setCursorPosition(element, cursorPos);
+    }
+
+    public hasUnauthorizedHTML(element: HTMLElement): boolean {
+        const checkNode = (node: Node): boolean => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                return false;
+            }
+
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const el = node as HTMLElement;
+
+                if (SearchTrigger.isSearchTriggerElement(node)) {
+                    return false;
+                }
+
+                // Allow BR tags (browsers auto-insert these in contentEditable)
+                if (el.tagName === "BR") {
+                    return false;
+                }
+
+                // Allow DIV tags (browsers wrap content in divs) - but check their children recursively
+                if (el.tagName === "DIV") {
+                    // Recursively check all children of the div
+                    return Array.from(el.childNodes).some(checkNode);
+                }
+            }
+            return true;
+        };
+
+        return Array.from(element.childNodes).some(checkNode);
+    }
+
+    public isInSearchZone(currentPosition: number, triggerPosition: number): boolean {
+        return currentPosition > triggerPosition;
+    }
+
     public isPrintableKey(key: string, ctrlKey: boolean = false, metaKey: boolean = false): boolean {
         // Control or meta keys are not printable
         if (ctrlKey || metaKey) {
@@ -16,16 +67,6 @@ export class InputService {
         // Special printable keys
         return key === "Enter" || key === "Tab";
     }
-
-    public isInSearchZone(currentPosition: number, triggerPosition: number): boolean {
-        return currentPosition > triggerPosition;
-    }
-
-    public getNodeAtCursorPosition(): Node | null {
-        const selection = window.getSelection() ?? new Selection();
-        const node = selection.anchorNode;
-        return node ? node.nodeType == 3 ? node.parentNode : node : null;
-     }
 
     public getCursorPosition(element: HTMLElement): number {
         const selection = window.getSelection() || new Selection();
@@ -90,65 +131,56 @@ export class InputService {
             return false;
         }
     }
-    
-    public getCharacterAtPosition(position: number, element: HTMLElement): string {
-        const text = element.textContent || "";
-        if (position < 0 || position > text.length) {
-            return "";
-        }
-        return text.charAt(position);
-    }
 
-    public deleteTextRange(startPos: number, endPos: number, element: HTMLElement): void {
-        if (!element.isContentEditable) {
-            console.warn("Element must be contenteditable");
-            return;
-        }
-
+    public getElementBeforeCursor(element: HTMLElement): HTMLElement | null {
         const selection = window.getSelection();
-        if (!selection) {
-            return;
+        if (!selection || selection.rangeCount === 0) {
+            return null;
         }
-
-        try {
-            const range = document.createRange();
-
-            // Find the text nodes and offsets for start and end positions
-            const startResult = this.findTextNodeAndOffset(element, startPos);
-            const endResult = this.findTextNodeAndOffset(element, endPos);
-
-            if (!startResult.node || !endResult.node) {
-                console.warn("Could not find text nodes for range deletion");
-                return;
+        
+        const range = selection.getRangeAt(0);
+        if (!range.collapsed) {
+            return null; // Selection is not collapsed, not at a single cursor position
+        }
+        
+        let node = range.startContainer;
+        let offset = range.startOffset;
+        
+        // If we're in a text node and not at the start, we're not next to an element
+        if (node.nodeType === Node.TEXT_NODE && offset > 0) {
+            return null;
+        }
+        
+        // If we're at the start of a text node, check the previous sibling
+        if (node.nodeType === Node.TEXT_NODE && offset === 0) {
+            const previousSibling = node.previousSibling;
+            if (previousSibling && previousSibling.nodeType === Node.ELEMENT_NODE) {
+                return previousSibling as HTMLElement;
             }
-
-            // Set the range to span from start to end position
-            range.setStart(startResult.node, startResult.offset);
-            range.setEnd(endResult.node, endResult.offset);
-
-            // Delete the range contents
-            range.deleteContents();
-
-            // Set cursor to where deletion occurred
-            this.setCursorPosition(element, startPos);
-        } catch (error) {
-            console.error("Error deleting text range:", error);
+            // Check if we need to traverse up to find a previous element
+            let parent = node.parentNode;
+            while (parent && parent !== element) {
+                const prevSibling = parent.previousSibling;
+                if (prevSibling && prevSibling.nodeType === Node.ELEMENT_NODE) {
+                    return prevSibling as HTMLElement;
+                }
+                parent = parent.parentNode;
+            }
+            return null;
         }
+        
+        // If we're in an element node, check the child before the offset
+        if (node.nodeType === Node.ELEMENT_NODE && offset > 0) {
+            const childBefore = node.childNodes[offset - 1];
+            if (childBefore && childBefore.nodeType === Node.ELEMENT_NODE) {
+                // Return the deepest rightmost element
+                return this.getDeepestRightmostElement(childBefore as HTMLElement);
+            }
+        }
+        
+        return null;
     }
 
-    public getPlainTextFromClipboard(clipboardData: DataTransfer | null): string {
-        if (!clipboardData) {
-            return "";
-        }
-        return clipboardData.getData("text/plain") || "";
-    }
-    
-    public stripHtml(html: string): string {
-        const temp = document.createElement("div");
-        temp.innerHTML = html;
-        return temp.textContent || temp.innerText || "";
-    }
-    
     public insertTextAtCursor(text: string, element?: HTMLElement): void {
         if (element && !element.isContentEditable) {
             console.warn("Element must be contenteditable");
@@ -195,32 +227,121 @@ export class InputService {
         selection.removeAllRanges();
         selection.addRange(range);
     }
+    
+    public deleteTextRange(startPos: number, endPos: number, element: HTMLElement): void {
+        if (!element.isContentEditable) {
+            console.warn("Element must be contenteditable");
+            return;
+        }
+        
+        const selection = window.getSelection();
+        if (!selection) {
+            return;
+        }
+        
+        try {
+            const range = document.createRange();
+            
+            // Find the text nodes and offsets for start and end positions
+            const startResult = this.findTextNodeAndOffset(element, startPos);
+            const endResult = this.findTextNodeAndOffset(element, endPos);
+            
+            if (!startResult.node || !endResult.node) {
+                console.warn("Could not find text nodes for range deletion");
+                return;
+            }
+            
+            // Set the range to span from start to end position
+            range.setStart(startResult.node, startResult.offset);
+            range.setEnd(endResult.node, endResult.offset);
+            
+            // Delete the range contents
+            range.deleteContents();
+            
+            // Set cursor to where deletion occurred
+            this.setCursorPosition(element, startPos);
+            
+            // Validate and fix cursor position if it ended up in a non-editable element
+            this.ensureCursorNotInNonEditableElement(element);
+            
+        } catch (error) {
+            console.error("Error deleting text range:", error);
+        }
+    }
+    
+    /**
+     * Gets the deepest rightmost element in a tree, which is what the cursor
+     * would be "after" when positioned after this element.
+     */
+    private getDeepestRightmostElement(element: HTMLElement): HTMLElement {
+        let current = element;
+        while (current.lastChild && current.lastChild.nodeType === Node.ELEMENT_NODE) {
+            current = current.lastChild as HTMLElement;
+        }
+        return current;
+    }
 
-    public getPreviousNode(): Node | null {
+    /**
+     * Ensures the cursor is not positioned inside a contentEditable="false" element.
+     * If it is, repositions the cursor to a valid location.
+     */
+    private ensureCursorNotInNonEditableElement(element: HTMLElement): void {
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) {
-            return null;
+            return;
         }
-
+        
         const range = selection.getRangeAt(0);
-
-        if (!range.collapsed) {
-            return null;
-        }
-
-        let nodeBefore: Node | null = null;
-
-        if (range.startContainer.nodeType !== Node.TEXT_NODE) {
-            if (range.startOffset > 0) {
-                nodeBefore = range.startContainer.childNodes[range.startOffset - 1];
+        let node: Node | null = range.startContainer;
+        
+        // Walk up the tree to check if we're inside a non-editable element
+        while (node && node !== element) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const elem = node as HTMLElement;
+                if (elem.contentEditable === "false" || elem.getAttribute("contenteditable") === "false") {
+                    // Found a non-editable ancestor - reposition cursor after it
+                    this.positionCursorAfterElement(elem, element);
+                    return;
+                }
             }
+            node = node.parentNode;
         }
-
-        if (nodeBefore  && SearchTrigger.isSearchTriggerElement(nodeBefore)) {
-            return nodeBefore;
+    }
+    
+    /**
+     * Positions the cursor immediately after the given element.
+     */
+    private positionCursorAfterElement(targetElement: HTMLElement, container: HTMLElement): void {
+        const selection = window.getSelection();
+        if (!selection) {
+            return;
         }
-
-        return null;
+        
+        try {
+            const range = document.createRange();
+            
+            // Try to position cursor in the next text node or after the element
+            const nextSibling = targetElement.nextSibling;
+            if (nextSibling) {
+                if (nextSibling.nodeType === Node.TEXT_NODE) {
+                    range.setStart(nextSibling, 0);
+                    range.setEnd(nextSibling, 0);
+                } else {
+                    range.setStartBefore(nextSibling);
+                    range.setEndBefore(nextSibling);
+                }
+            } else {
+                // No next sibling, position after the element
+                range.setStartAfter(targetElement);
+                range.setEndAfter(targetElement);
+            }
+            
+            selection.removeAllRanges();
+            selection.addRange(range);
+            container.focus();
+        } catch (error) {
+            console.error("Error positioning cursor:", error);
+        }
     }
 
     private findTextNodeAndOffset(element: HTMLElement, targetPosition: number): { node: Node | null; offset: number } {
@@ -252,46 +373,6 @@ export class InputService {
         }
 
         return traverse(element);
-    }
-
-    public hasUnauthorizedHTML(element: HTMLElement): boolean {
-        const checkNode = (node: Node): boolean => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                return false;
-            }
-
-            if (node.nodeType === Node.ELEMENT_NODE) {
-                const el = node as HTMLElement;
-
-                if (SearchTrigger.isSearchTriggerElement(node)) {
-                    return false;
-                }
-
-                // Allow BR tags (browsers auto-insert these in contentEditable)
-                if (el.tagName === "BR") {
-                    return false;
-                }
-
-                // Allow DIV tags (browsers wrap content in divs) - but check their children recursively
-                if (el.tagName === "DIV") {
-                    // Recursively check all children of the div
-                    return Array.from(el.childNodes).some(checkNode);
-                }
-            }
-            return true;
-        };
-
-        return Array.from(element.childNodes).some(checkNode);
-    }
-
-    public sanitizeToPlainText(element: HTMLElement): void {
-        const plainText = element.textContent || "";
-        const cursorPos = this.getCursorPosition(element);
-
-        element.textContent = plainText;
-
-        // Restore cursor position after sanitization
-        this.setCursorPosition(element, cursorPos);
     }
 
 }
