@@ -54,7 +54,10 @@ export namespace SearchTrigger {
 
         const node = createEl("span", {
             text: text,
-            cls: "search-trigger"
+            cls: "search-trigger",
+            attr: {
+                contenteditable: "false"
+            }
         });
 
         node.dataset.trigger = trigger;
