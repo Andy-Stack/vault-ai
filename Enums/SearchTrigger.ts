@@ -1,5 +1,5 @@
-import { disabled } from "happy-dom/lib/PropertySymbol";
 import { basename, extname } from "path";
+import { setTooltip } from "obsidian";
 
 export enum SearchTrigger {
     Tag = "#",
@@ -63,6 +63,8 @@ export namespace SearchTrigger {
 
         node.dataset.trigger = trigger;
         node.dataset.content = content;
+
+        setTooltip(node, content, { placement: "top" });
 
         return node;
     }

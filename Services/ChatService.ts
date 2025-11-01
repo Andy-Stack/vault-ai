@@ -84,8 +84,9 @@ export class ChatService {
 
 					const functionResponse = await this.aiFunctionService.performAIFunction(response.functionCall);
 
+					const functionResponseString = functionResponse.toConversationString();
 					conversation.contents.push(new ConversationContent(
-						Role.User, functionResponse.toConversationString(), "", "", new Date(), false, true, functionResponse.toolId
+						Role.User, functionResponseString, functionResponseString, "", new Date(), false, true, functionResponse.toolId
 					));
 				}
 

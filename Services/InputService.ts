@@ -137,47 +137,116 @@ export class InputService {
         if (!selection || selection.rangeCount === 0) {
             return null;
         }
-        
+
         const range = selection.getRangeAt(0);
         if (!range.collapsed) {
             return null; // Selection is not collapsed, not at a single cursor position
         }
-        
+
         let node = range.startContainer;
         let offset = range.startOffset;
-        
-        // If we're in a text node and not at the start, we're not next to an element
-        if (node.nodeType === Node.TEXT_NODE && offset > 0) {
-            return null;
-        }
-        
-        // If we're at the start of a text node, check the previous sibling
-        if (node.nodeType === Node.TEXT_NODE && offset === 0) {
-            const previousSibling = node.previousSibling;
-            if (previousSibling && previousSibling.nodeType === Node.ELEMENT_NODE) {
-                return previousSibling as HTMLElement;
-            }
-            // Check if we need to traverse up to find a previous element
-            let parent = node.parentNode;
-            while (parent && parent !== element) {
-                const prevSibling = parent.previousSibling;
-                if (prevSibling && prevSibling.nodeType === Node.ELEMENT_NODE) {
-                    return prevSibling as HTMLElement;
+
+        // If we're in a text node
+        if (node.nodeType === Node.TEXT_NODE) {
+            const textNode = node as Text;
+            const textContent = textNode.textContent || "";
+
+            // Check if we're at the start of a text node (offset === 0)
+            if (offset === 0) {
+                const previousSibling = node.previousSibling;
+                if (previousSibling && previousSibling.nodeType === Node.ELEMENT_NODE) {
+                    return previousSibling as HTMLElement;
                 }
-                parent = parent.parentNode;
+
+                // If no previous sibling, the text node might be the first child
+                // We need to check if the parent has any element children before this text node
+                const parent = node.parentNode;
+                if (parent && parent !== element) {
+                    const siblings = Array.from(parent.childNodes);
+                    const myIndex = siblings.findIndex(n => n === node);
+
+                    // Check if there's an element before us in the parent
+                    if (myIndex > 0) {
+                        const prevChild = siblings[myIndex - 1];
+                        if (prevChild.nodeType === Node.ELEMENT_NODE) {
+                            return prevChild as HTMLElement;
+                        }
+                    }
+
+                    // If still nothing, check parent's previous sibling
+                    let currentParent: Node | null = parent;
+                    while (currentParent && currentParent !== element) {
+                        const prevSibling = currentParent.previousSibling;
+                        if (prevSibling && prevSibling.nodeType === Node.ELEMENT_NODE) {
+                            return prevSibling as HTMLElement;
+                        }
+                        currentParent = currentParent.parentNode;
+                    }
+                }
+                return null;
             }
+
+            // Special case: Browser may insert empty or whitespace-only text nodes around
+            // contenteditable="false" elements when navigating with arrow keys.
+            // If we're in such a node (very short, mostly whitespace), and the previous
+            // sibling is an element, we might be logically positioned right after it.
+            if (textContent.trim().length === 0 && textContent.length <= 2) {
+                const previousSibling = node.previousSibling;
+                if (previousSibling && previousSibling.nodeType === Node.ELEMENT_NODE) {
+                    const prevElement = previousSibling as HTMLElement;
+                    // Check if it's a non-editable element (like our search triggers)
+                    if (prevElement.contentEditable === "false" ||
+                        prevElement.getAttribute("contenteditable") === "false") {
+                        return prevElement;
+                    }
+                }
+            }
+
+            // If we're in a text node with offset > 0 and not in a special case,
+            // we're not next to an element
             return null;
         }
-        
+
         // If we're in an element node, check the child before the offset
-        if (node.nodeType === Node.ELEMENT_NODE && offset > 0) {
-            const childBefore = node.childNodes[offset - 1];
-            if (childBefore && childBefore.nodeType === Node.ELEMENT_NODE) {
-                // Return the deepest rightmost element
-                return this.getDeepestRightmostElement(childBefore as HTMLElement);
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (offset > 0) {
+                // Search backwards from offset to find the nearest non-editable element.
+                // This handles the case where arrow key navigation positions the cursor
+                // after a contenteditable="false" element with text nodes in between.
+                for (let i = offset - 1; i >= 0; i--) {
+                    const child = node.childNodes[i];
+
+                    if (child.nodeType === Node.ELEMENT_NODE) {
+                        const childElement = child as HTMLElement;
+
+                        // Check if this element is a non-editable search trigger
+                        if (childElement.contentEditable === "false" ||
+                            childElement.getAttribute("contenteditable") === "false") {
+                            return childElement;
+                        }
+
+                        // If we found an editable element immediately before the cursor,
+                        // return its deepest rightmost child
+                        if (i === offset - 1) {
+                            return this.getDeepestRightmostElement(childElement);
+                        }
+
+                        // Otherwise, stop searching - we found an editable element in between
+                        break;
+                    }
+                }
+            }
+
+            // Also check if we're at the start (offset === 0) of an element
+            // and there's a previous sibling element
+            if (offset === 0) {
+                const previousSibling = node.previousSibling;
+                if (previousSibling && previousSibling.nodeType === Node.ELEMENT_NODE) {
+                    return previousSibling as HTMLElement;
+                }
             }
         }
-        
+
         return null;
     }
 

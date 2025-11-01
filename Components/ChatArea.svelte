@@ -179,7 +179,7 @@
       <div class="message-container {message.role === Role.User ? Role.User : Role.Assistant}" use:trackingAction={index}>
         <div class="message-bubble {message.role === Role.User ? Role.User : Role.Assistant}">
           {#if message.role === Role.User}
-            <div class="message-text-user fade-in-fast">{message.content}</div>
+            <div class="message-text-user fade-in-fast" contenteditable="false" bind:innerHTML={message.content}></div>
           {:else}
             {@const messageId = message.timestamp.getTime().toString()}
             <div class="markdown-content fade-in-fast {currentStreamingMessageId === messageId ? "streaming" : ""}">

@@ -57,7 +57,6 @@
     textareaElement.textContent = "";
     userRequest = "";
 
-    console.log(request);
     onsubmit(request, formattedRequest);
   }
 
