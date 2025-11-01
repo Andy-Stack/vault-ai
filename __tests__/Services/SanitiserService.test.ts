@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { SanitiserService, type SanitizeOptions } from '../../Services/SanitiserService';
+import { SanitiserService } from '../../Services/SanitiserService';
 
 describe('SanitiserService', () => {
 	let service: SanitiserService;

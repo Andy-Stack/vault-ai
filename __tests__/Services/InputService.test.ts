@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { InputService } from '../../Services/InputService';
-import { SearchTrigger } from '../../Enums/SearchTrigger';
 
 /**
  * UNIT TESTS

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { StreamingService, StreamChunk } from '../../Services/StreamingService';
+import { StreamingService, IStreamChunk } from '../../Services/StreamingService';
 import { Selector } from '../../Enums/Selector';
 
 /**
@@ -44,7 +44,7 @@ describe('StreamingService', () => {
 	}
 
 	// Helper to create a simple parser
-	const simpleParser = (chunk: string): StreamChunk => {
+	const simpleParser = (chunk: string): IStreamChunk => {
 		try {
 			const data = JSON.parse(chunk);
 			return {
@@ -70,7 +70,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{ prompt: 'test' },
@@ -155,7 +155,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -184,7 +184,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -210,7 +210,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -239,7 +239,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -263,7 +263,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -289,7 +289,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -317,7 +317,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -341,7 +341,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -367,7 +367,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const customParser = (chunk: string): StreamChunk => {
+			const customParser = (chunk: string): IStreamChunk => {
 				const trimmedChunk = chunk.trim();
 				return {
 					content: `Parsed: ${trimmedChunk}`,
@@ -375,7 +375,7 @@ describe('StreamingService', () => {
 				};
 			};
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -400,7 +400,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const parserWithFunctionCall = (chunk: string): StreamChunk => {
+			const parserWithFunctionCall = (chunk: string): IStreamChunk => {
 				const data = JSON.parse(chunk);
 				return {
 					content: data.content || '',
@@ -409,7 +409,7 @@ describe('StreamingService', () => {
 				};
 			};
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -453,7 +453,7 @@ describe('StreamingService', () => {
 			abortError.name = 'AbortError';
 			mockFetch.mockRejectedValue(abortError);
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -480,7 +480,7 @@ describe('StreamingService', () => {
 				text: async () => 'Resource not found'
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -501,7 +501,7 @@ describe('StreamingService', () => {
 				body: null
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -518,7 +518,7 @@ describe('StreamingService', () => {
 		it('should handle network error', async () => {
 			mockFetch.mockRejectedValue(new Error('Network connection failed'));
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -535,7 +535,7 @@ describe('StreamingService', () => {
 		it('should handle unknown error type', async () => {
 			mockFetch.mockRejectedValue('String error');
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -557,7 +557,7 @@ describe('StreamingService', () => {
 				body: createMockStream([])
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -576,7 +576,7 @@ describe('StreamingService', () => {
 				body: createMockStream(['   \n\n  \n'])
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -595,7 +595,7 @@ describe('StreamingService', () => {
 				body: createMockStream(['data: {"content":"test","done":true}'])
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},
@@ -621,7 +621,7 @@ describe('StreamingService', () => {
 				body: createMockStream(chunks)
 			});
 
-			const results: StreamChunk[] = [];
+			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
 				'https://api.example.com/stream',
 				{},

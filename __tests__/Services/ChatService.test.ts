@@ -168,7 +168,7 @@ describe('ChatService - Integration Tests (Sync Methods Only)', () => {
 			const conversation = new Conversation();
 			conversation.contents.push(new ConversationContent(Role.User, 'Regular message'));
 			conversation.contents.push(
-				new ConversationContent(Role.User, 'Function result', '', new Date(), false, true, 'tool-id')
+				new ConversationContent(Role.User, 'Function result', '', '', new Date(), false, true, 'tool-id')
 			);
 
 			await service.updateTokenDisplay(conversation);

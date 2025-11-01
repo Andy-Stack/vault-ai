@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VaultCacheService } from '../../Services/VaultCacheService';
 import { VaultService } from '../../Services/VaultService';
-import { TFile, TFolder, MetadataCache } from 'obsidian';
+import { TFile, TFolder } from 'obsidian';
 import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { FileEvent } from '../../Enums/FileEvent';

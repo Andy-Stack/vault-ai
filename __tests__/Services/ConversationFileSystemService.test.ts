@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConversationFileSystemService } from '../../Services/ConversationFileSystemService';
-import { FileSystemService } from '../../Services/FileSystemService';
 import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { Conversation } from '../../Conversations/Conversation';

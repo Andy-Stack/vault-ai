@@ -1,10 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AIFunctionService } from '../../Services/AIFunctionService';
-import { FileSystemService } from '../../Services/FileSystemService';
 import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { AIFunction } from '../../Enums/AIFunction';
-import { TFile, TFolder } from 'obsidian';
+import { TFile } from 'obsidian';
 
 /**
  * INTEGRATION TESTS - AIFunctionService

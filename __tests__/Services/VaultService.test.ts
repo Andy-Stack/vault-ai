@@ -32,7 +32,9 @@ const mockVault = {
 
 const mockFileManager = {
 	renameFile: vi.fn()
-} as unknown as FileManager;
+} as unknown as FileManager & {
+	renameFile: ReturnType<typeof vi.fn>;
+};
 
 // Create a mutable plugin settings object that tests can modify
 const mockPluginSettings = {
