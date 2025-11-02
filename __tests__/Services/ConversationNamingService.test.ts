@@ -60,31 +60,31 @@ describe('ConversationNamingService', () => {
     });
 
     describe('validateName', () => {
-        it('should trim whitespace from name', () => {
-            const result = (service as any).validateName('  Test Title  ');
+        it('should trim whitespace from name', async () => {
+            const result = await (service as any).validateName('  Test Title  ');
             expect(result).toBe('Test Title');
         });
 
-        it('should remove leading and trailing quotes', () => {
-            const result1 = (service as any).validateName('"Test Title"');
+        it('should remove leading and trailing quotes', async () => {
+            const result1 = await (service as any).validateName('"Test Title"');
             expect(result1).toBe('Test Title');
 
-            const result2 = (service as any).validateName("'Test Title'");
+            const result2 = await (service as any).validateName("'Test Title'");
             expect(result2).toBe('Test Title');
         });
 
-        it('should limit to 6 words', () => {
-            const result = (service as any).validateName('One Two Three Four Five Six Seven Eight');
+        it('should limit to 6 words', async () => {
+            const result = await (service as any).validateName('One Two Three Four Five Six Seven Eight');
             expect(result).toBe('One Two Three Four Five Six');
         });
 
-        it('should handle duplicate names with incrementing index', () => {
-            mockVaultService.exists.mockImplementation((path: string) => {
+        it('should handle duplicate names with incrementing index', async () => {
+            mockVaultService.exists.mockImplementation(async (path: string) => {
                 return path === `${Path.Conversations}/Test Title.json` ||
                        path === `${Path.Conversations}/Test Title(1).json`;
             });
 
-            const result = (service as any).validateName('Test Title');
+            const result = await (service as any).validateName('Test Title');
 
             expect(result).toBe('Test Title(2)');
             expect(mockVaultService.exists).toHaveBeenCalledWith(`${Path.Conversations}/Test Title.json`, true);
@@ -92,24 +92,24 @@ describe('ConversationNamingService', () => {
             expect(mockVaultService.exists).toHaveBeenCalledWith(`${Path.Conversations}/Test Title(2).json`, true);
         });
 
-        it('should throw error when stack limit is reached', () => {
+        it('should throw error when stack limit is reached', async () => {
             // Make exists always return true to simulate infinite duplicates
-            mockVaultService.exists.mockReturnValue(true);
+            mockVaultService.exists.mockResolvedValue(true);
 
-            expect(() => {
-                (service as any).validateName('Test Title');
-            }).toThrow('Stack limit reached');
+            await expect(async () => {
+                await (service as any).validateName('Test Title');
+            }).rejects.toThrow('Stack limit reached');
         });
 
-        it('should handle names with multiple spaces correctly', () => {
-            const result = (service as any).validateName('Test    Title    With    Spaces');
+        it('should handle names with multiple spaces correctly', async () => {
+            const result = await (service as any).validateName('Test    Title    With    Spaces');
             expect(result).toBe('Test Title With Spaces');
         });
 
-        it('should return unique name when no duplicates exist', () => {
-            mockVaultService.exists.mockReturnValue(false);
+        it('should return unique name when no duplicates exist', async () => {
+            mockVaultService.exists.mockResolvedValue(false);
 
-            const result = (service as any).validateName('Unique Title');
+            const result = await (service as any).validateName('Unique Title');
 
             expect(result).toBe('Unique Title');
             expect(mockVaultService.exists).toHaveBeenCalledWith(`${Path.Conversations}/Unique Title.json`, true);

@@ -6,17 +6,28 @@ import { AIAgentSettingTab } from 'AIAgentSettingTab';
 import { Services } from 'Services/Services';
 import type { StatusBarService } from 'Services/StatusBarService';
 import { DeregisterAllServices, Resolve } from 'Services/DependencyService';
+import type { VaultService } from 'Services/VaultService';
+import { Path } from 'Enums/Path';
+import { Copy } from 'Enums/Copy';
 
 interface IAIAgentSettings {
+	firstTimeStart: boolean;
+
 	model: string;
 	apiKey: string;
 	exclusions: string[];
+
+	userInstruction: string;
 }
 
 const DEFAULT_SETTINGS: IAIAgentSettings = {
+	firstTimeStart: true,
+
 	model: AIProviderModel.ClaudeSonnet_4_5,
 	apiKey: "",
-	exclusions: []
+	exclusions: [],
+
+	userInstruction: ""
 }
 
 export default class AIAgentPlugin extends Plugin {
@@ -50,6 +61,10 @@ export default class AIAgentPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new AIAgentSettingTab(this.app, this));
+
+		this.app.workspace.onLayoutReady(async () => {
+			await this.setup(this);
+		});
 	}
 
 	public async onunload() {
@@ -82,5 +97,18 @@ export default class AIAgentPlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 		RegisterAiProvider(this);
+	}
+
+	// create example user instruction (on first launch only)
+	private async setup(plugin: AIAgentPlugin) {
+		if (!plugin.settings.firstTimeStart) {
+			return;
+		}
+		plugin.settings.firstTimeStart = false;
+		await plugin.saveSettings();
+
+		const vaultService: VaultService = Resolve<VaultService>(Services.VaultService);
+
+		await vaultService.create(Path.ExampleUserInstructions, Copy.EXAMPLE_USER_INSTRUCTION, true);
 	}
 }

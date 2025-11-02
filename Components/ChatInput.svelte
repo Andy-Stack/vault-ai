@@ -9,6 +9,7 @@
 	import ChatSearchResults from "./ChatSearchResults.svelte";
 	import type { Writable } from "svelte/store";
 	import type { InputService } from "Services/InputService";
+	import UserInstruction from "./UserInstruction.svelte";
 
   export let hasNoApiKey: boolean;
   export let isSubmitting: boolean;
@@ -24,14 +25,21 @@
   const searchState: Writable<ISearchState> = searchStateStore.searchState;
 
   let textareaElement: HTMLDivElement;
+  let userInstructionButton: HTMLButtonElement;
   let submitButton: HTMLButtonElement;
   let editModeButton: HTMLButtonElement;
+
+  let userInstructionActive = false;
   let userRequest = "";
 
   export function focusInput() {
     tick().then(() => {
       textareaElement?.focus();
     });
+  }
+
+  $: if (userInstructionButton) {
+    setIcon(userInstructionButton, "user-round-pen");
   }
 
   $: if (submitButton) {
@@ -65,6 +73,7 @@
   }
 
   async function handleKeydown(e: KeyboardEvent) {
+    userInstructionActive = false;
     if ($searchState.active) {
       await continueSearch(e);
       return;
@@ -124,13 +133,7 @@
 
     if (e.key === "Enter") {
       e.preventDefault();
-      if ($searchState.selectedResult !== "" && $searchState.position != null) {
-        const node = SearchTrigger.toNode($searchState.trigger, $searchState.selectedResult);
-        
-        inputService.deleteTextRange($searchState.position, inputService.getCursorPosition(textareaElement), textareaElement);
-        inputService.insertElementAtCursor(node, textareaElement);
-      }
-      searchStateStore.resetSearch();
+      handleSearchResultAcceptance();
       return;
     }
 
@@ -155,6 +158,16 @@
       searchStateStore.appendToQuery(e.key);
       userInputService.performSearch();
     }
+  }
+
+  function handleSearchResultAcceptance() {
+    if ($searchState.selectedResult !== "" && $searchState.position != null && $searchState.trigger != null) {
+      const node = SearchTrigger.toNode($searchState.trigger, $searchState.selectedResult);
+
+      inputService.deleteTextRange($searchState.position, inputService.getCursorPosition(textareaElement), textareaElement);
+      inputService.insertElementAtCursor(node, textareaElement);
+    }
+    searchStateStore.resetSearch();
   }
 
   function handleInput() {
@@ -242,8 +255,19 @@
 
 <div id="input-container" class:edit-mode={editModeActive}>
   <div id="input-search-results-container" style:padding-top={$searchState.results.length > 0 ? "var(--size-4-2)" : 0}>
-    <ChatSearchResults searchState={$searchState}/>
+    <ChatSearchResults searchState={$searchState} onResultAccept={handleSearchResultAcceptance}/>
   </div>
+
+  <div id="user-instruction-container" style:padding-top={userInstructionActive ? "var(--size-4-2)" : 0}>
+    <UserInstruction bind:userInstructionActive={userInstructionActive}/>
+  </div>
+
+  <button
+    id="user-instruction-button"
+    bind:this={userInstructionButton}
+    on:click={() => { userInstructionActive = !userInstructionActive; searchStateStore.resetSearch() }}
+    aria-label="User Instruction">
+  </button>
 
   <div
     id="input-field"
@@ -289,7 +313,7 @@
     grid-column: 1;
     display: grid;
     grid-template-rows: auto var(--size-4-3) 1fr var(--size-4-3);
-    grid-template-columns: var(--size-4-3) 1fr var(--size-4-2) auto var(--size-4-2) auto var(--size-4-3);
+    grid-template-columns: var(--size-4-3) auto var(--size-4-2) 1fr var(--size-4-2) auto var(--size-4-2) auto var(--size-4-3);
     border-radius: var(--modal-radius);
     background-color: var(--background-primary);
   }
@@ -301,12 +325,25 @@
 
   #input-search-results-container {
     grid-row: 1;
-    grid-column: 2 / 7;
+    grid-column: 2 / 9;
+  }
+
+  #user-instruction-container {
+    grid-row: 1;
+    grid-column: 2 / 9;
+  }
+
+  #user-instruction-button {
+    grid-row: 3;
+    grid-column: 2;
+    border-radius: var(--button-radius);
+    align-self: end;
+    transition-duration: 0.5s;
   }
 
   #input-field {
     grid-row: 3;
-    grid-column: 2;
+    grid-column: 4;
     height: 100%;
     max-height: 30vh;
     border-radius: var(--input-radius);
@@ -363,7 +400,7 @@
 
   #edit-mode-button {
     grid-row: 3;
-    grid-column: 4;
+    grid-column: 6;
     border-radius: var(--button-radius);
     align-self: end;
     transition-duration: 0.5s;
@@ -371,7 +408,7 @@
 
   #submit-button {
     grid-row: 3;
-    grid-column: 6;
+    grid-column: 8;
     border-radius: var(--button-radius);
     padding-left: var(--size-4-5);
     padding-right: var(--size-4-5);

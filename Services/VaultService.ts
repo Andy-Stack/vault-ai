@@ -17,7 +17,6 @@ export class VaultService {
 
     private readonly AGENT_ROOT_DIR = Path.AIAgentDir;
     private readonly AGENT_ROOT_CONTENTS = `${Path.AIAgentDir}/**`;
-    private readonly USER_INSTRUCTION = Path.UserInstruction;
 
     private readonly vault: Vault;
     private readonly plugin: AIAgentPlugin;
@@ -52,12 +51,15 @@ export class VaultService {
         return this.vault.getAbstractFileByPath(filePath);
     }
 
-    public exists(filePath: string, allowAccessToPluginRoot: boolean = false): boolean {
+    public async exists(filePath: string, allowAccessToPluginRoot: boolean = false): Promise<boolean> {
+        filePath = this.sanitiserService.sanitize(filePath);
+
         if (this.isExclusion(filePath, allowAccessToPluginRoot)) {
             console.error(`Plugin attempted to access a file that is in the exclusions list: ${filePath}`);
             return false;
         }
-        return this.getAbstractFileByPath(filePath, allowAccessToPluginRoot) instanceof TFile;
+
+        return await this.vault.adapter.exists(filePath);
     }
 
     public async read(file: TFile, allowAccessToPluginRoot: boolean = false): Promise<string> {
@@ -220,7 +222,7 @@ export class VaultService {
             }
         }
 
-        // If more than 20 matches, randomly sample 20
+        // randomly sample matches if more than N matches are found
         let selectedMatches: { file: TFile; snippet: ISearchSnippet }[];
         if (flatMatches.length > 20) {
             selectedMatches = randomSample(flatMatches, 20);
@@ -255,9 +257,8 @@ export class VaultService {
     }
 
     public isExclusion(filePath: string, allowAccessToPluginRoot: boolean = false): boolean {
-        // the ai should never be able to edit the user instruction
         const exclusions = allowAccessToPluginRoot
-            ? [this.USER_INSTRUCTION, ...this.plugin.settings.exclusions]
+            ? this.plugin.settings.exclusions
             : [this.AGENT_ROOT_DIR, this.AGENT_ROOT_CONTENTS, ...this.plugin.settings.exclusions];
 
         return exclusions.some(pattern => {
@@ -294,7 +295,7 @@ export class VaultService {
         for (const dir of dirs) {
             if (dir) {
                 currentPath = currentPath ? `${currentPath}/${dir}` : dir;
-                if (this.getAbstractFileByPath(currentPath, allowAccessToPluginRoot) == null) {
+                if (!(await this.exists(currentPath, allowAccessToPluginRoot))) {
                     await this.createFolder(currentPath, allowAccessToPluginRoot);
                 }
             }

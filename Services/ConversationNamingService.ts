@@ -35,7 +35,7 @@ export class ConversationNamingService {
 
         try {
             const generatedName: string = await this.namingProvider.generateName(userPrompt, abortController.signal);
-            const validatedName: string = this.validateName(generatedName);
+            const validatedName: string = await this.validateName(generatedName);
 
             const stillExists = this.conversationService.getCurrentConversationPath() === conversationPath;
             if (!stillExists) {
@@ -54,12 +54,12 @@ export class ConversationNamingService {
         }
     }
 
-    private validateName(generatedName: string): string {
+    private async validateName(generatedName: string): Promise<string> {
         let cleanedTitle = generatedName.trim().replace(/^["']|["']$/g, "").split(/\s+/).slice(0, 6).join(" ");
 
         let index = 1;
         let availableTitle = cleanedTitle;
-        while (this.vaultService.exists(`${Path.Conversations}/${availableTitle}.json`, true)) {
+        while (await this.vaultService.exists(`${Path.Conversations}/${availableTitle}.json`, true)) {
             availableTitle = `${cleanedTitle}(${index})`;
             index++;
 

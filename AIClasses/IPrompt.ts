@@ -1,9 +1,8 @@
 import type AIAgentPlugin from "main";
-import type { TFile, Vault } from "obsidian";
 import { Resolve } from "Services/DependencyService";
 import { Services } from "Services/Services";
 import { SystemInstruction } from "./SystemPrompt";
-import { Path } from "Enums/Path";
+import type { FileSystemService } from "Services/FileSystemService";
 
 export interface IPrompt {
   systemInstruction(): string;
@@ -12,10 +11,12 @@ export interface IPrompt {
 
 export class AIPrompt implements IPrompt {
 
-  private vault: Vault;
+  private readonly plugin: AIAgentPlugin;
+  private readonly fileSystemService: FileSystemService;
 
   public constructor() {
-    this.vault = Resolve<AIAgentPlugin>(Services.AIAgentPlugin).app.vault;
+    this.plugin = Resolve<AIAgentPlugin>(Services.AIAgentPlugin);
+    this.fileSystemService = Resolve<FileSystemService>(Services.FileSystemService);
   }
 
   public systemInstruction(): string {
@@ -23,7 +24,7 @@ export class AIPrompt implements IPrompt {
   }
 
   public async userInstruction(): Promise<string> {
-    const userInstruction: TFile | null = this.vault.getFileByPath(Path.UserInstruction);
-    return userInstruction ? await this.vault.read(userInstruction) : "";
+    const userInstruction: string | null = await this.fileSystemService.readFile(this.plugin.settings.userInstruction, true);
+    return userInstruction ?? "";
   }
 }

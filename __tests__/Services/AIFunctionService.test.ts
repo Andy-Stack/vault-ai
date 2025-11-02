@@ -80,13 +80,13 @@ describe('AIFunctionService - Integration Tests', () => {
 
 			const result = await service.performAIFunction({
 				name: AIFunction.SearchVaultFiles,
-				arguments: { search_term: 'test' },
+				arguments: { search_terms: ['test'] },
 				toolId: 'tool_1'
 			} as any);
 
 			expect(result.name).toBe(AIFunction.SearchVaultFiles);
 			expect(result.toolId).toBe('tool_1');
-			expect(result.response).toEqual([
+			expect(result.response).toEqual([{searchTerm: 'test', results: [
 				{
 					path: 'notes/test.md',
 					snippets: [
@@ -100,29 +100,29 @@ describe('AIFunctionService - Integration Tests', () => {
 						{ text: 'Guide for testing', matchPosition: 0 }
 					]
 				}
-			]);
+			]}]);
 		});
 
 		it('should return empty array when search term is empty', async () => {
 			const result = await service.performAIFunction({
 				name: AIFunction.SearchVaultFiles,
-				arguments: { search_term: '' },
+				arguments: { search_terms: [''] },
 				toolId: 'tool_2'
 			} as any);
 
 			// Empty search terms return empty results
-			expect(result.response).toEqual([]);
+			expect(result.response).toEqual([{searchTerm: '', results: []}]);
 		});
 
 		it('should return empty array when search term is whitespace', async () => {
 			const result = await service.performAIFunction({
 				name: AIFunction.SearchVaultFiles,
-				arguments: { search_term: '   ' },
+				arguments: { search_terms: ['   '] },
 				toolId: 'tool_3'
 			} as any);
 
 			// Whitespace search terms return empty results (after trim)
-			expect(result.response).toEqual([]);
+			expect(result.response).toEqual([{searchTerm: '   ', results: []}]);
 		});
 
 		it('should return empty array when no matches found', async () => {
@@ -130,12 +130,12 @@ describe('AIFunctionService - Integration Tests', () => {
 
 			const result = await service.performAIFunction({
 				name: AIFunction.SearchVaultFiles,
-				arguments: { search_term: 'nonexistent' },
+				arguments: { search_terms: ['nonexistent'] },
 				toolId: 'tool_4'
 			} as any);
 
 			// No matches returns empty results
-			expect(result.response).toEqual([]);
+			expect(result.response).toEqual([{searchTerm: 'nonexistent', results: []}]);
 		});
 
 		it('should handle single match', async () => {
@@ -150,12 +150,14 @@ describe('AIFunctionService - Integration Tests', () => {
 
 			const result = await service.performAIFunction({
 				name: AIFunction.SearchVaultFiles,
-				arguments: { search_term: 'single' },
+				arguments: { search_terms: ['single'] },
 				toolId: 'tool_5'
 			} as any);
 
 			expect(result.response).toHaveLength(1);
-			expect(result.response[0].path).toBe('single.md');
+			expect(result.response[0].searchTerm).toBe('single');
+			expect(result.response[0].results).toHaveLength(1);
+			expect(result.response[0].results[0].path).toBe('single.md');
 		});
 	});
 
@@ -573,11 +575,11 @@ describe('AIFunctionService - Integration Tests', () => {
 
 			const searchResult = await service.performAIFunction({
 				name: AIFunction.SearchVaultFiles,
-				arguments: { search_term: 'test' },
+				arguments: { search_terms: ['test'] },
 				toolId: 'search_1'
 			} as any);
 
-			const foundPath = searchResult.response[0].path;
+			const foundPath = searchResult.response[0].results[0].path;
 
 			// Then read
 			mockFileSystemService.readFile.mockResolvedValue('File content here');

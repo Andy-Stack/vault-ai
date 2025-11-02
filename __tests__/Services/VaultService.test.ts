@@ -27,7 +27,10 @@ const mockVault = {
 	createFolder: vi.fn(),
 	getFiles: vi.fn(),
 	getAllFolders: vi.fn(),
-	on: vi.fn()
+	on: vi.fn(),
+	adapter: {
+		exists: vi.fn()
+	}
 };
 
 const mockFileManager = {
@@ -87,6 +90,9 @@ describe('VaultService - Integration Tests', () => {
 
 		// Reset plugin settings
 		mockPluginSettings.exclusions = [];
+
+		// Set default mock for adapter.exists (can be overridden in individual tests)
+		mockVault.adapter.exists.mockResolvedValue(false);
 
 		// Mock console.error to prevent noise in tests
 		consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -226,37 +232,35 @@ describe('VaultService - Integration Tests', () => {
 	});
 
 	describe('exists', () => {
-		it('should return true when file exists and is not excluded', () => {
-			const mockFile = createMockFile('note.md');
-			mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
+		it('should return true when file exists and is not excluded', async () => {
+			mockVault.adapter.exists.mockResolvedValue(true);
 
-			const result = vaultService.exists('note.md');
+			const result = await vaultService.exists('note.md');
 
 			expect(result).toBe(true);
 		});
 
-		it('should return false when file is excluded', () => {
-			const result = vaultService.exists('AI Agent/test.md', false);
+		it('should return false when file is excluded', async () => {
+			const result = await vaultService.exists('AI Agent/test.md', false);
 
 			expect(result).toBe(false);
 			expect(consoleErrorSpy).toHaveBeenCalled();
 		});
 
-		it('should return false when file does not exist', () => {
-			mockVault.getAbstractFileByPath.mockReturnValue(null);
+		it('should return false when file does not exist', async () => {
+			mockVault.adapter.exists.mockResolvedValue(false);
 
-			const result = vaultService.exists('nonexistent.md');
+			const result = await vaultService.exists('nonexistent.md');
 
 			expect(result).toBe(false);
 		});
 
-		it('should return false when abstract file is a folder, not a file', () => {
-			const mockFolder = createMockFolder('folder');
-			mockVault.getAbstractFileByPath.mockReturnValue(mockFolder);
+		it('should return true when folder exists', async () => {
+			mockVault.adapter.exists.mockResolvedValue(true);
 
-			const result = vaultService.exists('folder');
+			const result = await vaultService.exists('folder');
 
-			expect(result).toBe(false);
+			expect(result).toBe(true);
 		});
 	});
 
@@ -326,11 +330,9 @@ describe('VaultService - Integration Tests', () => {
 
 		it('should not create directories that already exist', async () => {
 			const mockFile = createMockFile('existing/note.md');
-			const existingFolder = createMockFolder('existing');
 
-			mockVault.getAbstractFileByPath.mockImplementation((path: string) => {
-				if (path === 'existing') return existingFolder;
-				return null;
+			mockVault.adapter.exists.mockImplementation(async (path: string) => {
+				return path === 'existing';
 			});
 			mockVault.create.mockResolvedValue(mockFile);
 
@@ -958,95 +960,69 @@ describe('VaultService - Integration Tests', () => {
 	});
 
 	describe('isExclusion (private method behavior)', () => {
-		it('should exclude exact path matches', () => {
+		it('should exclude exact path matches', async () => {
 			mockPluginSettings.exclusions = ['secret.md'];
 
-			const result = vaultService.exists('secret.md');
+			const result = await vaultService.exists('secret.md');
 
 			expect(result).toBe(false);
 		});
 
-		it('should handle wildcard * (matches any non-slash)', () => {
+		it('should handle wildcard * (matches any non-slash)', async () => {
 			mockPluginSettings.exclusions = ['folder/*.md'];
 
 			// Mock files to exist in vault
-			mockVault.getAbstractFileByPath.mockImplementation((path: string) => {
-				if (path === 'folder/file.md' || path === 'folder/sub/file.md') {
-					return createMockFile(path);
-				}
-				return null;
-			});
+			mockVault.adapter.exists.mockResolvedValue(true);
 
-			expect(vaultService.exists('folder/file.md')).toBe(false);
-			expect(vaultService.exists('folder/sub/file.md')).toBe(true); // * doesn't match /
+			expect(await vaultService.exists('folder/file.md')).toBe(false);
+			expect(await vaultService.exists('folder/sub/file.md')).toBe(true); // * doesn't match /
 		});
 
-		it('should handle double wildcard ** (matches anything including slashes)', () => {
+		it('should handle double wildcard ** (matches anything including slashes)', async () => {
 			mockPluginSettings.exclusions = ['private/**'];
 
 			// Mock files to exist in vault
-			mockVault.getAbstractFileByPath.mockImplementation((path: string) => {
-				if (path === 'private/file.md' || path === 'private/sub/deep/file.md' || path === 'public/file.md') {
-					return createMockFile(path);
-				}
-				return null;
-			});
+			mockVault.adapter.exists.mockResolvedValue(true);
 
-			expect(vaultService.exists('private/file.md')).toBe(false);
-			expect(vaultService.exists('private/sub/deep/file.md')).toBe(false);
-			expect(vaultService.exists('public/file.md')).toBe(true);
+			expect(await vaultService.exists('private/file.md')).toBe(false);
+			expect(await vaultService.exists('private/sub/deep/file.md')).toBe(false);
+			expect(await vaultService.exists('public/file.md')).toBe(true);
 		});
 
-		it('should handle patterns ending with / to match directory and contents', () => {
+		it('should handle patterns ending with / to match directory and contents', async () => {
 			mockPluginSettings.exclusions = ['temp/'];
 
-			expect(vaultService.exists('temp/file.md')).toBe(false);
-			expect(vaultService.exists('temp/sub/file.md')).toBe(false);
+			expect(await vaultService.exists('temp/file.md')).toBe(false);
+			expect(await vaultService.exists('temp/sub/file.md')).toBe(false);
 		});
 
-		it('should always exclude AI Agent root by default', () => {
-			const result = vaultService.exists('AI Agent/file.md', false);
+		it('should always exclude AI Agent root by default', async () => {
+			const result = await vaultService.exists('AI Agent/file.md', false);
 
 			expect(result).toBe(false);
 		});
 
-		it('should always exclude user instruction file', () => {
-			const result = vaultService.exists('AI Agent/AGENT_INSTRUCTIONS.md', true);
-
-			expect(result).toBe(false);
-		});
-
-		it('should handle special regex characters in patterns', () => {
+		it('should handle special regex characters in patterns', async () => {
 			mockPluginSettings.exclusions = ['folder[test].md'];
 
 			// Mock files to exist in vault
-			mockVault.getAbstractFileByPath.mockImplementation((path: string) => {
-				if (path === 'folder[test].md' || path === 'foldert.md') {
-					return createMockFile(path);
-				}
-				return null;
-			});
+			mockVault.adapter.exists.mockResolvedValue(true);
 
 			// Should match literally, not as regex character class
-			expect(vaultService.exists('folder[test].md')).toBe(false);
-			expect(vaultService.exists('foldert.md')).toBe(true);
+			expect(await vaultService.exists('folder[test].md')).toBe(false);
+			expect(await vaultService.exists('foldert.md')).toBe(true);
 		});
 
-		it('should handle multiple exclusion patterns', () => {
+		it('should handle multiple exclusion patterns', async () => {
 			mockPluginSettings.exclusions = ['private/**', 'temp/', '*.secret'];
 
 			// Mock files to exist in vault
-			mockVault.getAbstractFileByPath.mockImplementation((path: string) => {
-				if (path === 'private/file.md' || path === 'temp/file.md' || path === 'data.secret' || path === 'public/file.md') {
-					return createMockFile(path);
-				}
-				return null;
-			});
+			mockVault.adapter.exists.mockResolvedValue(true);
 
-			expect(vaultService.exists('private/file.md')).toBe(false);
-			expect(vaultService.exists('temp/file.md')).toBe(false);
-			expect(vaultService.exists('data.secret')).toBe(false);
-			expect(vaultService.exists('public/file.md')).toBe(true);
+			expect(await vaultService.exists('private/file.md')).toBe(false);
+			expect(await vaultService.exists('temp/file.md')).toBe(false);
+			expect(await vaultService.exists('data.secret')).toBe(false);
+			expect(await vaultService.exists('public/file.md')).toBe(true);
 		});
 	});
 

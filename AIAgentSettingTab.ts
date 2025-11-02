@@ -153,7 +153,7 @@ export class AIAgentSettingTab extends PluginSettingTab {
 			.setName("AI File Exclusions")
 			.setDesc("Set which directories and files the AI should ignore. Enter one path per line - supports glob patterns like folder/**, *.md")
 			.addTextArea(text => {
-				text.setPlaceholder(`Examples:\n\n${Path.UserInstruction}\n${Path.Conversations}/*.json\nPrivateNotes/**`)
+				text.setPlaceholder(`Examples:\n\n${Path.Conversations}/*.json\nPrivateNotes/**`)
 					.setValue(this.plugin.settings.exclusions.join("\n"))
 					.onChange(async (value) => {
 						this.plugin.settings.exclusions = value.split("\n").map(line => line.trim()).filter(line => line.length > 0);

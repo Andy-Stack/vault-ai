@@ -53,25 +53,18 @@ export class SearchStateStore {
 
     public setResults(results: string[]) {
         this.searchState.update(state => ({ ...state, results }));
-        this.setSelectedResultToFirst();
+        this.setSelectedResult(0);
     }
 
-    public setSelectedResultToFirst() {
-        this.searchState.update(state => ({ ...state, selectedResult: state.results.length > 0 ? state.results[0] : "" }));
-    }
-
-    public setSelectedResultToNext() {
+    public setSelectedResult(index: number) {
         this.searchState.update(state => {
-            if (state.results.length === 0) {
+            if (index >= state.results.length) {
                 return state;
             }
 
-            const currentIndex = state.results.indexOf(state.selectedResult);
-            const nextIndex = (currentIndex + 1) % state.results.length;
-
             return {
                 ...state,
-                selectedResult: state.results[nextIndex]
+                selectedResult: state.results[index]
             };
         });
     }
@@ -90,6 +83,22 @@ export class SearchStateStore {
             return {
                 ...state,
                 selectedResult: state.results[previousIndex]
+            };
+        });
+    }
+    
+    public setSelectedResultToNext() {
+        this.searchState.update(state => {
+            if (state.results.length === 0) {
+                return state;
+            }
+
+            const currentIndex = state.results.indexOf(state.selectedResult);
+            const nextIndex = (currentIndex + 1) % state.results.length;
+
+            return {
+                ...state,
+                selectedResult: state.results[nextIndex]
             };
         });
     }

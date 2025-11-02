@@ -14,7 +14,7 @@ export class AIFunctionService {
     public async performAIFunction(functionCall: AIFunctionCall): Promise<AIFunctionResponse> {
         switch (functionCall.name) {
             case AIFunction.SearchVaultFiles:
-                return new AIFunctionResponse(functionCall.name, await this.searchVaultFiles(functionCall.arguments.search_term), functionCall.toolId);
+                return new AIFunctionResponse(functionCall.name, await this.searchVaultFiles(functionCall.arguments.search_terms), functionCall.toolId);
 
             case AIFunction.ReadVaultFiles:
                 return new AIFunctionResponse(functionCall.name, await this.readVaultFiles(functionCall.arguments.file_paths), functionCall.toolId);
@@ -46,16 +46,24 @@ export class AIFunctionService {
         }
     }
 
-    private async searchVaultFiles(searchTerm: string): Promise<object> {
-        const matches: ISearchMatch[] = searchTerm.trim() === "" ? [] : await this.fileSystemService.searchVaultFiles(searchTerm);
+    private async searchVaultFiles(searchTerms: string[]): Promise<object> {
+        let results: { searchTerm: string, results: object[] }[] = [];
 
-        return matches.map(match => ({
-            path: match.file.path,
-            snippets: match.snippets.map((snippet) => ({
-                text: snippet.text,
-                matchPosition: snippet.matchIndex
-            }))
-        }));
+        for (const searchTerm of searchTerms) {
+            const matches: ISearchMatch[] = searchTerm.trim() === "" ? [] : await this.fileSystemService.searchVaultFiles(searchTerm);
+            results.push({
+                searchTerm: searchTerm,
+                results: matches.map(match => ({
+                    path: match.file.path,
+                    snippets: match.snippets.map((snippet) => ({
+                        text: snippet.text,
+                        matchPosition: snippet.matchIndex
+                    }))
+                }))
+            });
+        }
+
+        return results;
     }
 
     private async readVaultFiles(filePaths: string[]): Promise<object> {
