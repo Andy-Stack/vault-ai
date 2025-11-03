@@ -91,13 +91,13 @@ export class VaultService {
         await this.vault.process(file, () => content);
     }
 
-    public async delete(file: TAbstractFile, force?: boolean, allowAccessToPluginRoot: boolean = false): Promise<{ success: true } | { success: false, error: string }> {
+    public async delete(file: TAbstractFile, allowAccessToPluginRoot: boolean = false): Promise<{ success: true } | { success: false, error: string }> {
         if (this.isExclusion(file.path, allowAccessToPluginRoot)) {
             console.error(`Plugin attempted to delete a file that is in the exclusions list: ${file.path}`)
             return { success: false, error: "File is in exclusion list" };
         }
         try {
-            await this.vault.delete(file, force);
+            await this.vault.trash(file, true);
             return { success: true };
         } catch (error) {
             console.error(`Error deleting file ${file.path}:`, error);

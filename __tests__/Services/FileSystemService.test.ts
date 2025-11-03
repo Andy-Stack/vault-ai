@@ -233,7 +233,7 @@ describe('FileSystemService', () => {
 			const result = await fileSystemService.deleteFile('delete-me.md');
 
 			expect(result).toEqual({ success: true });
-			expect(mockVaultService.delete).toHaveBeenCalledWith(mockFile, undefined, false);
+			expect(mockVaultService.delete).toHaveBeenCalledWith(mockFile, false);
 		});
 
 		it('should return error when file does not exist', async () => {
@@ -254,18 +254,19 @@ describe('FileSystemService', () => {
 			await fileSystemService.deleteFile('plugin/temp.json', true);
 
 			expect(mockVaultService.getAbstractFileByPath).toHaveBeenCalledWith('plugin/temp.json', true);
-			expect(mockVaultService.delete).toHaveBeenCalledWith(mockFile, undefined, true);
+			expect(mockVaultService.delete).toHaveBeenCalledWith(mockFile, true);
 		});
 
-		it('should return error when path is not a file', async () => {
+		it('should delete folder successfully (supports both files and folders)', async () => {
 			const mockFolder = createMockFolder('folder');
 
 			mockVaultService.getAbstractFileByPath = vi.fn().mockReturnValue(mockFolder);
+			mockVaultService.delete = vi.fn().mockResolvedValue({ success: true });
 
 			const result = await fileSystemService.deleteFile('folder');
 
-			expect(result).toEqual({ success: false, error: 'File not found' });
-			expect(mockVaultService.delete).not.toHaveBeenCalled();
+			expect(result).toEqual({ success: true });
+			expect(mockVaultService.delete).toHaveBeenCalledWith(mockFolder, false);
 		});
 	});
 

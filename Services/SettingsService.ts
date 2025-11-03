@@ -16,7 +16,7 @@ const DEFAULT_SETTINGS: IAIAgentSettings = {
     exclusions: [],
 
     searchResultsLimit: 15,
-    snippetSizeLimit: 150
+    snippetSizeLimit: 300
 }
 
 export interface IAIAgentSettings {

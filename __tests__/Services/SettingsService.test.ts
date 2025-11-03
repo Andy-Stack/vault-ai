@@ -35,7 +35,7 @@ describe('SettingsService', () => {
             expect(settingsService.settings.exclusions).toEqual([]);
             expect(settingsService.settings.userInstruction).toBe('');
             expect(settingsService.settings.searchResultsLimit).toBe(15);
-            expect(settingsService.settings.snippetSizeLimit).toBe(150);
+            expect(settingsService.settings.snippetSizeLimit).toBe(300);
         });
 
         it('should merge loaded settings with defaults', () => {
@@ -80,7 +80,7 @@ describe('SettingsService', () => {
             expect(settingsService.settings.exclusions).toEqual([]); // Default
             expect(settingsService.settings.userInstruction).toBe(''); // Default
             expect(settingsService.settings.searchResultsLimit).toBe(15); // Default
-            expect(settingsService.settings.snippetSizeLimit).toBe(150); // Default
+            expect(settingsService.settings.snippetSizeLimit).toBe(300); // Default
         });
     });
 
@@ -97,7 +97,7 @@ describe('SettingsService', () => {
                 exclusions: [],
                 userInstruction: '',
                 searchResultsLimit: 15,
-                snippetSizeLimit: 150
+                snippetSizeLimit: 300
             };
             settingsService = new SettingsService(loadedSettings);
         });
@@ -137,7 +137,7 @@ describe('SettingsService', () => {
                 exclusions: [],
                 userInstruction: '',
                 searchResultsLimit: 15,
-                snippetSizeLimit: 150
+                snippetSizeLimit: 300
             };
             settingsService = new SettingsService(loadedSettings);
 
@@ -157,7 +157,7 @@ describe('SettingsService', () => {
                 exclusions: [],
                 userInstruction: '',
                 searchResultsLimit: 15,
-                snippetSizeLimit: 150
+                snippetSizeLimit: 300
             };
             settingsService = new SettingsService(loadedSettings);
 
@@ -177,7 +177,7 @@ describe('SettingsService', () => {
                 exclusions: [],
                 userInstruction: '',
                 searchResultsLimit: 15,
-                snippetSizeLimit: 150
+                snippetSizeLimit: 300
             };
             settingsService = new SettingsService(loadedSettings);
 
@@ -222,7 +222,7 @@ describe('SettingsService', () => {
                 exclusions: [],
                 userInstruction: '',
                 searchResultsLimit: 15,
-                snippetSizeLimit: 150
+                snippetSizeLimit: 300
             };
             settingsService = new SettingsService(loadedSettings);
         });
@@ -276,7 +276,7 @@ describe('SettingsService', () => {
                 exclusions: ['node_modules'],
                 userInstruction: 'Be helpful',
                 searchResultsLimit: 15,
-                snippetSizeLimit: 150
+                snippetSizeLimit: 300
             };
             settingsService = new SettingsService(loadedSettings);
         });
@@ -403,7 +403,7 @@ describe('SettingsService', () => {
 
         it('should use default snippetSizeLimit when not specified', () => {
             settingsService = new SettingsService({});
-            expect(settingsService.settings.snippetSizeLimit).toBe(150);
+            expect(settingsService.settings.snippetSizeLimit).toBe(300);
         });
 
         it('should allow custom searchResultsLimit values', () => {

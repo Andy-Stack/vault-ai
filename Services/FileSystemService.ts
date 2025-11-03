@@ -48,11 +48,11 @@ export class FileSystemService {
     public async deleteFile(filePath: string, allowAccessToPluginRoot: boolean = false): Promise<{ success: true } | { success: false, error: string }> {
         const file: TAbstractFile | null = this.vaultService.getAbstractFileByPath(filePath, allowAccessToPluginRoot);
 
-        if (!file || !(file instanceof TFile)) {
+        if (!file) {
             return { success: false, error: "File not found" };
         }
 
-        return await this.vaultService.delete(file, undefined, allowAccessToPluginRoot);
+        return await this.vaultService.delete(file, allowAccessToPluginRoot);
     }
 
     public async moveFile(sourcePath: string, destinationPath: string, allowAccessToPluginRoot: boolean = false): Promise<{ success: true } | { success: false, error: string }> {
