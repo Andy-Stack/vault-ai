@@ -3,7 +3,6 @@ import { SettingsService, IAIAgentSettings } from '../../Services/SettingsServic
 import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { AIProvider, AIProviderModel } from '../../Enums/ApiProvider';
-import type AIAgentPlugin from '../../main';
 
 describe('SettingsService', () => {
     let settingsService: SettingsService;
@@ -35,6 +34,8 @@ describe('SettingsService', () => {
             });
             expect(settingsService.settings.exclusions).toEqual([]);
             expect(settingsService.settings.userInstruction).toBe('');
+            expect(settingsService.settings.searchResultsLimit).toBe(15);
+            expect(settingsService.settings.snippetSizeLimit).toBe(150);
         });
 
         it('should merge loaded settings with defaults', () => {
@@ -45,7 +46,9 @@ describe('SettingsService', () => {
                     claude: 'claude-key-123',
                     openai: 'openai-key-456',
                     gemini: 'gemini-key-789'
-                }
+                },
+                searchResultsLimit: 25,
+                snippetSizeLimit: 200
             };
 
             settingsService = new SettingsService(loadedSettings as IAIAgentSettings);
@@ -55,6 +58,8 @@ describe('SettingsService', () => {
             expect(settingsService.settings.apiKeys.claude).toBe('claude-key-123');
             expect(settingsService.settings.apiKeys.openai).toBe('openai-key-456');
             expect(settingsService.settings.apiKeys.gemini).toBe('gemini-key-789');
+            expect(settingsService.settings.searchResultsLimit).toBe(25);
+            expect(settingsService.settings.snippetSizeLimit).toBe(200);
         });
 
         it('should handle partially loaded settings and fill missing properties with defaults', () => {
@@ -74,6 +79,8 @@ describe('SettingsService', () => {
             expect(settingsService.settings.apiKeys.openai).toBe('partial-key'); // Loaded
             expect(settingsService.settings.exclusions).toEqual([]); // Default
             expect(settingsService.settings.userInstruction).toBe(''); // Default
+            expect(settingsService.settings.searchResultsLimit).toBe(15); // Default
+            expect(settingsService.settings.snippetSizeLimit).toBe(150); // Default
         });
     });
 
@@ -88,7 +95,9 @@ describe('SettingsService', () => {
                     gemini: 'gemini-api-key'
                 },
                 exclusions: [],
-                userInstruction: ''
+                userInstruction: '',
+                searchResultsLimit: 15,
+                snippetSizeLimit: 150
             };
             settingsService = new SettingsService(loadedSettings);
         });
@@ -126,7 +135,9 @@ describe('SettingsService', () => {
                     gemini: 'gemini-key'
                 },
                 exclusions: [],
-                userInstruction: ''
+                userInstruction: '',
+                searchResultsLimit: 15,
+                snippetSizeLimit: 150
             };
             settingsService = new SettingsService(loadedSettings);
 
@@ -144,7 +155,9 @@ describe('SettingsService', () => {
                     gemini: 'gemini-key'
                 },
                 exclusions: [],
-                userInstruction: ''
+                userInstruction: '',
+                searchResultsLimit: 15,
+                snippetSizeLimit: 150
             };
             settingsService = new SettingsService(loadedSettings);
 
@@ -162,7 +175,9 @@ describe('SettingsService', () => {
                     gemini: 'gemini-key'
                 },
                 exclusions: [],
-                userInstruction: ''
+                userInstruction: '',
+                searchResultsLimit: 15,
+                snippetSizeLimit: 150
             };
             settingsService = new SettingsService(loadedSettings);
 
@@ -205,7 +220,9 @@ describe('SettingsService', () => {
                     gemini: ''
                 },
                 exclusions: [],
-                userInstruction: ''
+                userInstruction: '',
+                searchResultsLimit: 15,
+                snippetSizeLimit: 150
             };
             settingsService = new SettingsService(loadedSettings);
         });
@@ -257,7 +274,9 @@ describe('SettingsService', () => {
                     gemini: ''
                 },
                 exclusions: ['node_modules'],
-                userInstruction: 'Be helpful'
+                userInstruction: 'Be helpful',
+                searchResultsLimit: 15,
+                snippetSizeLimit: 150
             };
             settingsService = new SettingsService(loadedSettings);
         });
@@ -373,6 +392,90 @@ describe('SettingsService', () => {
 
             settingsService.settings.userInstruction = 'Direct modification';
             expect(settingsService.settings.userInstruction).toBe('Direct modification');
+        });
+    });
+
+    describe('Search and Snippet Limit Settings', () => {
+        it('should use default searchResultsLimit when not specified', () => {
+            settingsService = new SettingsService({});
+            expect(settingsService.settings.searchResultsLimit).toBe(15);
+        });
+
+        it('should use default snippetSizeLimit when not specified', () => {
+            settingsService = new SettingsService({});
+            expect(settingsService.settings.snippetSizeLimit).toBe(150);
+        });
+
+        it('should allow custom searchResultsLimit values', () => {
+            settingsService = new SettingsService({
+                searchResultsLimit: 30
+            });
+            expect(settingsService.settings.searchResultsLimit).toBe(30);
+        });
+
+        it('should allow custom snippetSizeLimit values', () => {
+            settingsService = new SettingsService({
+                snippetSizeLimit: 300
+            });
+            expect(settingsService.settings.snippetSizeLimit).toBe(300);
+        });
+
+        it('should allow zero values for searchResultsLimit', () => {
+            settingsService = new SettingsService({
+                searchResultsLimit: 0
+            });
+            expect(settingsService.settings.searchResultsLimit).toBe(0);
+        });
+
+        it('should allow zero values for snippetSizeLimit', () => {
+            settingsService = new SettingsService({
+                snippetSizeLimit: 0
+            });
+            expect(settingsService.settings.snippetSizeLimit).toBe(0);
+        });
+
+        it('should allow direct modification of searchResultsLimit', () => {
+            settingsService = new SettingsService({});
+            settingsService.settings.searchResultsLimit = 50;
+            expect(settingsService.settings.searchResultsLimit).toBe(50);
+        });
+
+        it('should allow direct modification of snippetSizeLimit', () => {
+            settingsService = new SettingsService({});
+            settingsService.settings.snippetSizeLimit = 500;
+            expect(settingsService.settings.snippetSizeLimit).toBe(500);
+        });
+
+        it('should persist searchResultsLimit and snippetSizeLimit when saving settings', async () => {
+            settingsService = new SettingsService({
+                searchResultsLimit: 20,
+                snippetSizeLimit: 250
+            });
+
+            await settingsService.saveSettings();
+
+            expect(mockPlugin.saveData).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    searchResultsLimit: 20,
+                    snippetSizeLimit: 250
+                })
+            );
+        });
+
+        it('should handle modified limits in saveSettings', async () => {
+            settingsService = new SettingsService({});
+
+            settingsService.settings.searchResultsLimit = 100;
+            settingsService.settings.snippetSizeLimit = 600;
+
+            await settingsService.saveSettings();
+
+            expect(mockPlugin.saveData).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    searchResultsLimit: 100,
+                    snippetSizeLimit: 600
+                })
+            );
         });
     });
 });

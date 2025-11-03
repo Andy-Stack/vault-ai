@@ -4,5 +4,6 @@ export enum Selector {
     ApiKeySettingOk = "api-key-setting-ok",
     ApiKeySettingError = "api-key-setting-error",
     ApiRequestAborted = "api-request-aborted",
-    ConversationHistoryModal =  "conversation-history-modal"
+    ConversationHistoryModal =  "conversation-history-modal",
+    ContextSettingItemDescription = "context-setting-item-description"
 }

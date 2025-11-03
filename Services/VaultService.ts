@@ -227,8 +227,8 @@ export class VaultService {
 
         // randomly sample matches if more than N matches are found
         let selectedMatches: { file: TFile; snippet: ISearchSnippet }[];
-        if (flatMatches.length > 20) {
-            selectedMatches = randomSample(flatMatches, 20);
+        if (flatMatches.length > this.settingsService.settings.searchResultsLimit) {
+            selectedMatches = randomSample(flatMatches, this.settingsService.settings.searchResultsLimit);
         } else {
             selectedMatches = flatMatches;
         }
@@ -307,7 +307,7 @@ export class VaultService {
 
     private extractSnippets(content: string, regex: RegExp): ISearchSnippet[] {
         const snippets: ISearchSnippet[] = [];
-        const maxContextLength = 300;
+        const snippetSize = this.settingsService.settings.snippetSizeLimit / 2;
 
         let match: RegExpExecArray | null;
 
@@ -315,8 +315,8 @@ export class VaultService {
             const matchIndex = match.index;
             const matchLength = match[0].length;
 
-            const snippetStart = Math.max(0, matchIndex - maxContextLength);
-            const snippetEnd = Math.min(content.length, matchIndex + matchLength + maxContextLength);
+            const snippetStart = Math.max(0, matchIndex - snippetSize);
+            const snippetEnd = Math.min(content.length, matchIndex + matchLength + snippetSize);
 
             snippets.push({
                 text: content.substring(snippetStart, snippetEnd),
@@ -337,15 +337,15 @@ export class VaultService {
 
         const merged: ISearchSnippet[] = [];
         let current = snippets[0];
-        const maxContextLength = 300;
+        const snippetSize = this.settingsService.settings.snippetSizeLimit / 2;
 
         for (let i = 1; i < snippets.length; i++) {
             const next = snippets[i];
 
-            const currentStart = Math.max(0, current.matchIndex - maxContextLength);
-            const currentEnd = Math.min(content.length, current.matchIndex + current.matchLength + maxContextLength);
-            const nextStart = Math.max(0, next.matchIndex - maxContextLength);
-            const nextEnd = Math.min(content.length, next.matchIndex + next.matchLength + maxContextLength);
+            const currentStart = Math.max(0, current.matchIndex - snippetSize);
+            const currentEnd = Math.min(content.length, current.matchIndex + current.matchLength + snippetSize);
+            const nextStart = Math.max(0, next.matchIndex - snippetSize);
+            const nextEnd = Math.min(content.length, next.matchIndex + next.matchLength + snippetSize);
 
             if (nextStart <= currentEnd) {
                 const mergedStart = Math.min(currentStart, nextStart);

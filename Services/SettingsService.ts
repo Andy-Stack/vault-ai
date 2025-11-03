@@ -5,6 +5,7 @@ import { AIProvider, AIProviderModel } from "Enums/ApiProvider";
 
 const DEFAULT_SETTINGS: IAIAgentSettings = {
     firstTimeStart: true,
+    userInstruction: "",
 
     model: AIProviderModel.ClaudeSonnet_4_5,
     apiKeys: {
@@ -14,11 +15,13 @@ const DEFAULT_SETTINGS: IAIAgentSettings = {
     },
     exclusions: [],
 
-    userInstruction: ""
+    searchResultsLimit: 15,
+    snippetSizeLimit: 150
 }
 
 export interface IAIAgentSettings {
     firstTimeStart: boolean;
+    userInstruction: string;
 
     model: string;
     apiKeys: {
@@ -28,7 +31,8 @@ export interface IAIAgentSettings {
     };
     exclusions: string[];
 
-    userInstruction: string;
+    searchResultsLimit: number;
+    snippetSizeLimit: number;
 }
 
 export class SettingsService {

@@ -51,7 +51,9 @@ const mockSettings: IAIAgentSettings = {
 		gemini: 'test-gemini-key'
 	},
 	exclusions: [],
-	userInstruction: ''
+	userInstruction: '',
+	searchResultsLimit: 15,
+	snippetSizeLimit: 150
 };
 
 const mockPlugin = {
@@ -99,8 +101,10 @@ describe('VaultService - Integration Tests', () => {
 		// Reset all mocks
 		vi.clearAllMocks();
 
-		// Reset settings exclusions
+		// Reset settings to defaults
 		mockSettings.exclusions = [];
+		mockSettings.searchResultsLimit = 15;
+		mockSettings.snippetSizeLimit = 150;
 
 		// Set default mock for adapter.exists (can be overridden in individual tests)
 		mockVault.adapter.exists.mockResolvedValue(false);
@@ -827,7 +831,7 @@ describe('VaultService - Integration Tests', () => {
 			// The exact behavior depends on implementation details
 		});
 
-		it('should randomly sample when more than 20 matches', async () => {
+		it('should randomly sample when more than searchResultsLimit matches', async () => {
 			// Create 25 files, each with a match
 			const files: TFile[] = [];
 			for (let i = 0; i < 25; i++) {
@@ -840,9 +844,50 @@ describe('VaultService - Integration Tests', () => {
 
 			const results = await vaultService.searchVaultFiles('search');
 
-			// Should have at most 20 snippet matches (plus potentially filename matches)
+			// Should have at most searchResultsLimit snippet matches (plus potentially filename matches)
 			const totalSnippets = results.reduce((sum, r) => sum + r.snippets.length, 0);
-			expect(totalSnippets).toBeLessThanOrEqual(20);
+			expect(totalSnippets).toBeLessThanOrEqual(settingsService.settings.searchResultsLimit);
+		});
+
+		it('should respect custom searchResultsLimit setting', async () => {
+			// Set custom limit
+			settingsService.settings.searchResultsLimit = 5;
+
+			// Create 10 files, each with a match
+			const files: TFile[] = [];
+			for (let i = 0; i < 10; i++) {
+				files.push(createMockFile(`note${i}.md`));
+			}
+			const folder = createMockFolder('/', files);
+
+			mockVault.getAbstractFileByPath.mockReturnValue(folder);
+			mockVault.cachedRead.mockResolvedValue('This contains the search term');
+
+			const results = await vaultService.searchVaultFiles('search');
+
+			// Should have at most 5 snippet matches
+			const totalSnippets = results.reduce((sum, r) => sum + r.snippets.length, 0);
+			expect(totalSnippets).toBeLessThanOrEqual(5);
+		});
+
+		it('should respect custom snippetSizeLimit setting for snippet extraction', async () => {
+			// Set custom snippet size
+			settingsService.settings.snippetSizeLimit = 20;
+
+			const file = createMockFile('note.md');
+			const folder = createMockFolder('/', [file]);
+			const content = 'a'.repeat(100) + 'MATCH' + 'b'.repeat(100);
+
+			mockVault.getAbstractFileByPath.mockReturnValue(folder);
+			mockVault.cachedRead.mockResolvedValue(content);
+
+			const results = await vaultService.searchVaultFiles('MATCH');
+
+			expect(results.length).toBeGreaterThan(0);
+			const match = results[0];
+			// Snippet should be approximately snippetSizeLimit characters (10 before + 5 for MATCH + 10 after)
+			// Allow some margin for the match itself
+			expect(match.snippets[0].text.length).toBeLessThanOrEqual(settingsService.settings.snippetSizeLimit + 10);
 		});
 
 		it('should perform case-insensitive search', async () => {

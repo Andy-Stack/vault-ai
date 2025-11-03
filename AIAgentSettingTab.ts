@@ -161,7 +161,7 @@ export class AIAgentSettingTab extends PluginSettingTab {
 
 		/* Exclusions Setting */
 		new Setting(containerEl)
-			.setName("AI File Exclusions")
+			.setName("File Exclusions")
 			.setDesc("Set which directories and files the AI should ignore. Enter one path per line - supports glob patterns like folder/**, *.md")
 			.addTextArea(text => {
 				text.setPlaceholder(`Examples:\n\n${Path.Conversations}/*.json\nPrivateNotes/**`)
@@ -171,6 +171,41 @@ export class AIAgentSettingTab extends PluginSettingTab {
 						await this.settingsService.saveSettings();
 					});
 				text.inputEl.classList.add(Selector.AIExclusionsInput);
+			});
+
+		/* Context Header */
+		new Setting(containerEl)
+			.setHeading()
+			.setName("Context");
+
+		/* Search Results Limit Setting */
+		new Setting(containerEl)
+			.setName("Search Results Limit")
+			.setDesc("Set the maximum number of results provided to the AI when it searches through files in your vault. Higher values use more tokens.")
+			.addSlider(slider => {
+				slider
+					.setLimits(5, 40, 1)
+					.setValue(this.settingsService.settings.searchResultsLimit)
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.settingsService.settings.searchResultsLimit = value;
+						await this.settingsService.saveSettings();
+					});
+			});
+
+		/* Snippet Size Limit Setting */
+		new Setting(containerEl)
+			.setName("Snippet Size Limit")
+			.setDesc("Set the character limit of search previews provided to the AI when it searches through files in your vault. Higher values use more tokens.")
+			.addSlider(slider => {
+				slider
+					.setLimits(50, 1000, 10)
+					.setValue(this.settingsService.settings.snippetSizeLimit)
+					.setDynamicTooltip()
+					.onChange(async (value) => {
+						this.settingsService.settings.snippetSizeLimit = value;
+						await this.settingsService.saveSettings();
+					});
 			});
 	}
 
