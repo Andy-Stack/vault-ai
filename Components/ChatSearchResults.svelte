@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { basename } from 'path';
+	import { basename } from 'path-browserify';
 	import type { ISearchState, SearchStateStore } from 'Stores/SearchStateStore';
     import { tick } from 'svelte';
     import { setIcon } from 'obsidian';

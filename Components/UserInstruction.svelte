@@ -2,7 +2,7 @@
 	import { Copy } from "Enums/Copy";
 	import { Path } from "Enums/Path";
 	import type AIAgentPlugin from "main";
-	import { basename } from "path";
+	import { basename } from "path-browserify";
 	import { Resolve } from "Services/DependencyService";
 	import type { FileSystemService } from "Services/FileSystemService";
 	import type { SettingsService } from "Services/SettingsService";

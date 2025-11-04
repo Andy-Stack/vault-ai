@@ -1,4 +1,4 @@
-import { basename, extname } from "path";
+import { basename, extname } from "path-browserify";
 import { setTooltip } from "obsidian";
 import type { HTMLService } from "Services/HTMLService";
 import { Resolve } from "Services/DependencyService";
