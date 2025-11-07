@@ -1,14 +1,15 @@
 <script lang="ts">
-  import { Resolve } from '../Services/DependencyService';
-  import { Services } from '../Services/Services';
-  import type AIAgentPlugin from '../main';
-  import { setIcon, type WorkspaceLeaf } from 'obsidian';
-  import { ConversationFileSystemService } from '../Services/ConversationFileSystemService';
-  import { conversationStore } from '../Stores/ConversationStore';
-	import type { ConversationHistoryModal } from 'Modals/ConversationHistoryModal';
-	import { openPluginSettings } from 'Helpers/Helpers';
-	import type { ChatService } from 'Services/ChatService';
-	import { fade } from 'svelte/transition';
+  import { Resolve } from "../Services/DependencyService";
+  import { Services } from "../Services/Services";
+  import type AIAgentPlugin from "../main";
+  import { setIcon, type WorkspaceLeaf } from "obsidian";
+  import { ConversationFileSystemService } from "../Services/ConversationFileSystemService";
+  import { conversationStore } from "../Stores/ConversationStore";
+	import type { ConversationHistoryModal } from "Modals/ConversationHistoryModal";
+	import { openPluginSettings } from "Helpers/Helpers";
+	import type { ChatService } from "Services/ChatService";
+	import { fade } from "svelte/transition";
+	import type { HelpModal } from "Modals/HelpModal";
 
   export let leaf: WorkspaceLeaf;
   export let onNewConversation: (() => void) | undefined = undefined;
@@ -49,6 +50,11 @@
     openPluginSettings(plugin);
   }
 
+  function openHelpMenu() {
+    const modal = Resolve<HelpModal>(Services.HelpModal);
+    modal.open();
+  }
+
   function closePlugin() {
     leaf.detach();
   }
@@ -57,22 +63,26 @@
   let deleteConversationButton: HTMLButtonElement;
   let conversationHistoryButton: HTMLButtonElement;
   let settingsButton: HTMLButtonElement;
+  let helpMenuButton: HTMLButtonElement;
   let closeButton: HTMLButtonElement;
 
   $: if (newConversationButton) {
-    setIcon(newConversationButton, 'plus');
+    setIcon(newConversationButton, "plus");
   }
   $: if (deleteConversationButton) {
-    setIcon(deleteConversationButton, 'trash-2');
+    setIcon(deleteConversationButton, "trash-2");
   }
   $: if (conversationHistoryButton) {
-    setIcon(conversationHistoryButton, 'messages-square');
+    setIcon(conversationHistoryButton, "messages-square");
   }
   $: if (settingsButton) {
-    setIcon(settingsButton, 'settings');
+    setIcon(settingsButton, "settings");
+  }
+  $: if (helpMenuButton) {
+    setIcon(helpMenuButton, "circle-help");
   }
   $: if (closeButton) {
-    setIcon(closeButton, 'circle-x');
+    setIcon(closeButton, "circle-x");
   }
 </script>
 
@@ -107,6 +117,13 @@
       on:click={openSettings}
       aria-label="AI Agent Settings"
     ></button>
+    <button
+      bind:this={helpMenuButton}
+      id="help-menu-button"
+      class="top-bar-button clickable-icon"
+      on:click={openHelpMenu}
+      aria-label="Help"
+    ></button>
     {#if conversationTitle !== ""}
       <div id="conversation-divider-2" class="top-bar-divider" out:fade></div>
       <div id="conversation-title" class="typing-in" out:fade>{conversationTitle}</div>
@@ -137,7 +154,7 @@
     grid-column: 2;
     display: grid;
     grid-template-rows: auto;
-    grid-template-columns: var(--size-4-2) auto auto auto auto auto auto 1fr 0.1fr auto var(--size-4-2);
+    grid-template-columns: var(--size-4-2) auto auto auto auto auto auto auto 1fr 0.1fr auto var(--size-4-2);
     background-color: var(--background-modifier-hover);
     border-radius: var(--radius-m);
   }
@@ -182,14 +199,19 @@
     grid-column: 6;
   }
 
-  #conversation-divider-2 {
+  #help-menu-button {
     grid-row: 1;
     grid-column: 7;
   }
 
-  #conversation-title {
+  #conversation-divider-2 {
     grid-row: 1;
     grid-column: 8;
+  }
+
+  #conversation-title {
+    grid-row: 1;
+    grid-column: 9;
     display: inline-block;
     align-self: center;
     white-space: nowrap;
@@ -201,6 +223,6 @@
 
   #close-button {
     grid-row: 1;
-    grid-column: 10;
+    grid-column: 11;
   }
 </style>

@@ -34,7 +34,8 @@ import { UserInputService } from "./UserInputService";
 import { SearchStateStore } from "Stores/SearchStateStore";
 import { InputService } from "./InputService";
 import { HTMLService } from "./HTMLService";
-import { SettingsService, type IAIAgentSettings } from "./SettingsService";
+import { SettingsService } from "./SettingsService";
+import { HelpModal } from "Modals/HelpModal";
 
 export async function RegisterPlugin(plugin: AIAgentPlugin) {
     RegisterSingleton<AIAgentPlugin>(Services.AIAgentPlugin, plugin);
@@ -66,7 +67,7 @@ export function RegisterDependencies() {
     RegisterTransient<StreamingMarkdownService>(Services.StreamingMarkdownService, () => new StreamingMarkdownService());
     RegisterTransient<InputService>(Services.InputService, () => new InputService());
 
-    RegisterModals(plugin.app);
+    RegisterModals();
     RegisterAiProvider();
 }
 
@@ -94,6 +95,7 @@ export function RegisterAiProvider() {
     Resolve<ConversationNamingService>(Services.ConversationNamingService).resolveNamingProvider();
 }
 
-function RegisterModals(app: App) {
-    RegisterTransient<ConversationHistoryModal>(Services.ConversationHistoryModal, () => new ConversationHistoryModal(app));
+function RegisterModals() {
+    RegisterTransient<ConversationHistoryModal>(Services.ConversationHistoryModal, () => new ConversationHistoryModal());
+    RegisterTransient<HelpModal>(Services.HelpModal, () => new HelpModal())
 }

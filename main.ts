@@ -41,7 +41,7 @@ export default class AIAgentPlugin extends Plugin {
 		this.addSettingTab(new AIAgentSettingTab());
 
 		this.app.workspace.onLayoutReady(async () => {
-			await this.setup(this);
+			await this.setup();
 		});
 	}
 
@@ -69,7 +69,7 @@ export default class AIAgentPlugin extends Plugin {
 	}
 
 	// create example user instruction (on first launch only)
-	private async setup(plugin: AIAgentPlugin) {
+	private async setup() {
 		const settingsService = Resolve<SettingsService>(Services.SettingsService);
 		if (!settingsService.settings.firstTimeStart) {
 			return;

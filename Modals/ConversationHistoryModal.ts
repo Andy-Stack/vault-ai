@@ -10,6 +10,7 @@ import { dateToString } from 'Helpers/Helpers';
 import { conversationStore } from 'Stores/ConversationStore';
 import { Selector } from 'Enums/Selector';
 import type { ChatService } from 'Services/ChatService';
+import type AIAgentPlugin from 'main';
 
 interface IListItem {
     id: string;
@@ -31,8 +32,9 @@ export class ConversationHistoryModal extends Modal {
     private conversations: Conversation[];
     public onModalClose?: () => void;
 
-    constructor(app: App) {
-        super(app);
+    constructor() {
+        const plugin = Resolve<AIAgentPlugin>(Services.AIAgentPlugin);
+        super(plugin.app);
     }
 
     override async open() {
