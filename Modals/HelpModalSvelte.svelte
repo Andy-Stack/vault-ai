@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { Copy } from "Enums/Copy";
 	import type AIAgentPlugin from "main";
-	import { setIcon } from "obsidian";
+	import { DropdownComponent, setIcon } from "obsidian";
 	import { Resolve } from "Services/DependencyService";
 	import { Services } from "Services/Services";
 	import type { StreamingMarkdownService } from "Services/StreamingMarkdownService";
 	import { fade } from "svelte/transition";
+	import { onMount } from "svelte";
 
 	export let onClose: () => void;
 
@@ -13,6 +14,7 @@
 	const streamingMarkdownService: StreamingMarkdownService = Resolve<StreamingMarkdownService>(Services.StreamingMarkdownService);
 
 	let closeButton: HTMLButtonElement;
+	let dropdownContainer: HTMLDivElement;
 
 	const topics: Record<number, { title: string; content: string }> = {
 		1: {
@@ -50,6 +52,25 @@
 	$: if (closeButton) {
 		setIcon(closeButton, 'circle-x');
 	}
+
+	onMount(() => {
+		if (dropdownContainer) {
+			const dropdown = new DropdownComponent(dropdownContainer);
+
+			// Add all topic options
+			Object.entries(topics).forEach(([key, topic]) => {
+				dropdown.addOption(key, topic.title);
+			});
+
+			// Set initial value
+			dropdown.setValue(selectedTopic.toString());
+
+			// Handle changes
+			dropdown.onChange((value) => {
+				selectTopic(Number(value));
+			});
+		}
+	});
 </script>
 
 <div class="help-modal-container">
@@ -70,6 +91,10 @@
 		</div>
 	</div>
 	<div class="help-modal-body">
+		<div class="help-modal-dropdown" bind:this={dropdownContainer}></div>
+		<div id="help-modal-version-string-mobile">
+			Plugin version: {plugin.manifest.version}
+		</div>
 		<div class="help-modal-topics">
 			<div
 				class="help-modal-topic-frame"
@@ -187,6 +212,14 @@
 		overflow: auto;
 	}
 
+	.help-modal-dropdown {
+		display: none;
+	}
+
+	#help-modal-version-string-mobile {
+		display: none;
+	}
+
 	.help-modal-topic-frame {
 		grid-column: 1 / 4;
 		display: grid;
@@ -276,5 +309,46 @@
 		background-color: var(--alt-background-primary);
 		padding: 0 var(--size-4-2) var(--size-4-2) var(--size-4-6);
 		overflow-y: auto;
+	}
+
+	/* Mobile styles */
+	:global(.is-mobile) .help-modal-body {
+		grid-template-rows: auto var(--size-4-2) 1fr var(--size-4-2) auto;
+		grid-template-columns: 1fr;
+	}
+
+	:global(.is-mobile) .help-modal-dropdown {
+		display: block;
+		grid-row: 1;
+		grid-column: 1;
+		width: 100%;
+	}
+
+	.help-modal-dropdown :global(.dropdown) {
+		width: 100%;
+		border: solid;
+		border-width: 1px;
+		border-color: var(--color-accent) !important;
+		outline: none;
+	}
+
+	:global(.is-mobile) #help-modal-version-string-mobile {
+		display: block;
+		grid-row: 5;
+		grid-column: 1;
+		align-self: flex-end;
+		padding: var(--size-4-1) var(--size-4-2);
+		font-size: var(--font-smallest);
+		color: var(--text-muted);
+	}
+
+	:global(.is-mobile) .help-modal-topics {
+		display: none;
+	}
+
+	:global(.is-mobile) .help-modal-content {
+		grid-row: 3;
+		grid-column: 1;
+		padding: var(--size-4-2);
 	}
 </style>
