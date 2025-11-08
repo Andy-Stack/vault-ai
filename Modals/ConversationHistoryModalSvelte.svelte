@@ -110,17 +110,17 @@
 <style>
   .conversation-history-modal-container {
     display: grid;
-    grid-template-rows: var(--size-4-3) auto var(--size-4-3) 1fr var(--size-4-3);
-    grid-template-columns: var(--size-4-3) 1fr var(--size-4-3);
+    grid-template-rows: auto var(--size-4-1) 1fr var(--size-4-2);
+    grid-template-columns: var(--size-4-2) 1fr var(--size-4-2);
     max-height: 60vh;
   }
 
   .conversation-history-modal-top-bar {
-    grid-row: 2;
+    grid-row: 1;
     grid-column: 2;
     height: var(--size-4-16);
     display: grid;
-    grid-template-rows: var(--size-4-3) 1fr var(--size-4-3);
+    grid-template-rows: var(--size-4-2) 1fr var(--size-4-2);
     grid-template-columns: 1fr;
   }
 
@@ -135,7 +135,7 @@
   }
 
   .conversation-history-modal-content {
-    grid-row: 4;
+    grid-row: 3;
     grid-column: 2;
     overflow: scroll;
     scroll-behavior: smooth;

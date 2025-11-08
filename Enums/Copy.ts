@@ -27,6 +27,18 @@ export enum Copy {
     GPT_4_1_Mini = "GPT-4.1 Mini",
     GPT_4_1_Nano = "GPT-4.1 Nano",
 
+    HelpModalAboutTitle = "",
+    HelpModalAboutContent = "",
+
+    HelpModalGuideTitle = "",
+    HelpModalGuideContent = "",
+
+    HelpModalTroubleshootTitle = "",
+    HelpModalTroubleshootContent = "",
+
+    HelpModalPrivacyTitle = "",
+    HelpModalPrivacyContent = "",
+
     EXAMPLE_USER_INSTRUCTION = `### TL;DR
 
 **My recommendation would be to write down in your own words what you would like the AI to specialise in and how you would like it to manage your vault. Then ask an AI to write a system prompt using the latest best practices from your description.**
