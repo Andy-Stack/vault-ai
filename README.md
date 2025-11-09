@@ -24,7 +24,7 @@
 
 ### Manual Installation
 
-1. Download the latest release from the [Releases page](https://github.com/yourusername/ai-agent-plugin/releases)
+1. Download the latest release from the [Releases page](https://github.com/andy-stack/ai-agent-plugin/releases)
 2. Extract the files into your vault's `.obsidian/plugins/ai-agent-plugin/` directory
 3. Reload Obsidian
 4. Enable "AI Agent" in Settings → Community Plugins
@@ -216,7 +216,7 @@ Protect your privacy by preventing the AI from accessing sensitive files or dire
 ```bash
 # Clone into your vault's plugin directory
 cd /path/to/vault/.obsidian/plugins/
-git clone https://github.com/yourusername/ai-agent-plugin.git
+git clone https://github.com/andy-stack/ai-agent-plugin.git
 cd ai-agent-plugin
 
 # Install dependencies
@@ -276,7 +276,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/yourusername/ai-agent-plugin/issues)
+- **Issues**: Report bugs or request features on [GitHub Issues](https://github.com/andy-stack/ai-agent-plugin/issues)
 
 ## Acknowledgments
 
