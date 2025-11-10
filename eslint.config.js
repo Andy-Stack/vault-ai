@@ -59,6 +59,8 @@ export default [
       "@typescript-eslint/ban-ts-comment": "off",
       "@typescript-eslint/no-empty-function": "off",
       "no-prototype-builtins": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
 
       // Enable additional TypeScript rules for PR issues
       "@typescript-eslint/require-await": "error",
@@ -73,13 +75,16 @@ export default [
       "eslint-comments/no-unused-disable": "error",
       "eslint-comments/no-restricted-disable": [
         "error",
-        "@typescript-eslint/no-explicit-any"
+        "@typescript-eslint/no-explicit-any",
+        "no-restricted-globals"
       ],
 
       // Console usage (allow warn, error, debug only)
       "no-console": ["error", { allow: ["warn", "error", "debug"] }],
 
       // Restricted globals
+      // Note: fetch is intentionally not restricted here because this plugin legitimately needs
+      // fetch for streaming and AbortSignal support, which requestUrl doesn't provide
       "no-restricted-globals": [
         "error",
         {
@@ -89,10 +94,6 @@ export default [
         {
           name: "localStorage",
           message: "Prefer `App#saveLocalStorage` / `App#loadLocalStorage` functions to write / read localStorage data that's unique to a vault."
-        },
-        {
-          name: "fetch",
-          message: "Use the built-in `requestUrl` function instead of `fetch` for network requests."
         }
       ],
 

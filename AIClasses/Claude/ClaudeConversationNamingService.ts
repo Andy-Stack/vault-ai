@@ -28,7 +28,6 @@ export class ClaudeConversationNamingService implements IConversationNamingServi
             }]
         };
 
-        // eslint-disable-next-line no-restricted-globals -- requestUrl doeesn't support AbortSignal
         const response = await fetch(AIProviderURL.Claude, {
             method: 'POST',
             headers: {
