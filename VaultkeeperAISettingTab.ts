@@ -1,4 +1,4 @@
-import { AIProvider, AIProviderModel } from "Enums/ApiProvider";
+import { AIProviderModel, fromModel } from "Enums/ApiProvider";
 import { Copy } from "Enums/Copy";
 import { Selector } from "Enums/Selector";
 import type VaultkeeperAIPlugin from "main";
@@ -132,7 +132,7 @@ export class VaultkeeperAISettingTab extends PluginSettingTab {
 				text.setPlaceholder(Copy.PlaceholderEnterApiKey)
 					.setValue(this.settingsService.getApiKeyForCurrentModel())
 					.onChange(async (value) => {
-						const provider = AIProvider.fromModel(this.settingsService.settings.model);
+						const provider = fromModel(this.settingsService.settings.model);
 						this.settingsService.setApiKeyForProvider(provider, value);
 						await this.settingsService.saveSettings(() => RegisterAiProvider());
 						this.highlightApiKey();

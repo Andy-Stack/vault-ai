@@ -1,4 +1,4 @@
-import { AIProvider } from "Enums/ApiProvider";
+import { AIProvider, fromModel } from "Enums/ApiProvider";
 import type VaultkeeperAIPlugin from "main";
 import { RegisterSingleton, RegisterTransient, Resolve } from "./DependencyService";
 import { Services } from "./Services";
@@ -73,7 +73,7 @@ export function RegisterDependencies() {
 
 export function RegisterAiProvider() {
     const settingsService = Resolve<SettingsService>(Services.SettingsService);
-    const provider = AIProvider.fromModel(settingsService.settings.model);
+    const provider = fromModel(settingsService.settings.model);
 
     if (provider == AIProvider.Claude) {
         RegisterSingleton<IAIClass>(Services.IAIClass, new Claude());

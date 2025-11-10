@@ -50,7 +50,7 @@ export enum Copy {
 
     // Settings Placeholders
     PlaceholderEnterApiKey = "Enter your API key",
-    PlaceholderFileExclusions = "Examples:\n\nprivate/**\n*.secret.md\njournal/personal/**\n.obsidian/workspace.json",
+    PlaceholderFileExclusions = "Examples:\n\nprivate/**\n*.secret.md\njournal/personal/**",
 
     // Settings Tooltips
     TooltipShowApiKey = "Show API Key",

@@ -1,4 +1,4 @@
-import { App, Modal } from 'obsidian';
+import { Modal } from 'obsidian';
 import ConversationHistoryModalSvelte from './ConversationHistoryModalSvelte.svelte';
 import type { Conversation } from 'Conversations/Conversation';
 import { mount, unmount } from 'svelte';

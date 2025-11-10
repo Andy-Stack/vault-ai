@@ -10,98 +10,95 @@ export enum SearchTrigger {
     Folder = "/"
 }
 
-export namespace SearchTrigger {
-    
-    const values: string[] = [
-        SearchTrigger.Tag,
-        SearchTrigger.File,
-        SearchTrigger.Folder
-    ];
+const values: string[] = [
+    SearchTrigger.Tag,
+    SearchTrigger.File,
+    SearchTrigger.Folder
+];
 
-    export function isSearchTrigger(input: string): boolean {
-        return values.includes(input);
+export function isSearchTrigger(input: string): boolean {
+    return values.includes(input);
+}
+
+export function isSearchTriggerElement(node: Node): boolean {
+    return node.nodeType === Node.ELEMENT_NODE &&
+           (node as HTMLElement).tagName === 'SPAN' &&
+           (node as HTMLElement).classList?.contains('search-trigger');
+}
+
+export function fromInput(input: string): SearchTrigger {
+    switch(input) {
+        case "#":
+            return SearchTrigger.Tag;
+        case "@":
+            return SearchTrigger.File;
+        case "/":
+            return SearchTrigger.Folder;
+        default:
+            throw new Error(`Unknown search trigger: ${input}`);
+    }
+}
+
+export function toNode(trigger: SearchTrigger, content: string): Node {
+    let text: string;
+
+    switch (trigger) {
+        case SearchTrigger.Tag:
+            text = content;
+            break;
+        case SearchTrigger.File:
+            text = basename(content, extname(content));
+            break;
+        case SearchTrigger.Folder:
+            text = basename(content) + "/";
+            break;
     }
 
-    export function isSearchTriggerElement(node: Node): boolean {
-        return node.nodeType === Node.ELEMENT_NODE &&
-               (node as HTMLElement).tagName === 'SPAN' &&
-               (node as HTMLElement).classList?.contains('search-trigger');
-    }
-
-    export function fromInput(input: string): SearchTrigger {
-        switch(input) {
-            case SearchTrigger.Tag:
-                return SearchTrigger.Tag;
-            case SearchTrigger.File:
-                return SearchTrigger.File;
-            case SearchTrigger.Folder:
-                return SearchTrigger.Folder;
-            default:
-                throw new Error(`Unknown search trigger: ${input}`);
+    const node = createEl("span", {
+        text: text,
+        cls: "search-trigger",
+        attr: {
+            contenteditable: false
         }
-    }
+    });
 
-    export function toNode(trigger: SearchTrigger, content: string): Node {
-        let text: string;
+    node.dataset.trigger = trigger;
+    node.dataset.content = content;
 
-        switch (trigger) {
-            case SearchTrigger.Tag:
-                text = content;
-                break;
-            case SearchTrigger.File:
-                text = basename(content, extname(content));
-                break;
-            case SearchTrigger.Folder:
-                text = basename(content) + "/";
-                break;
-        }
+    setTooltip(node, content, { placement: "top" });
 
-        const node = createEl("span", {
-            text: text,
-            cls: "search-trigger",
-            attr: {
-                contenteditable: false
-            }
-        });
+    return node;
+}
 
-        node.dataset.trigger = trigger;
-        node.dataset.content = content;
+export function triggerToText(input: string): string {
+    const htmlService: HTMLService = Resolve<HTMLService>(Services.HTMLService);
 
-        setTooltip(node, content, { placement: "top" });
+    const temp = htmlService.parseHTMLToContainer(input);
+    let result = "";
 
-        return node;
-    }
-
-    export function triggerToText(input: string): string {
-        const htmlService: HTMLService = Resolve<HTMLService>(Services.HTMLService);
-
-        const temp = htmlService.parseHTMLToContainer(input);
-        let result = "";
-
-        temp.childNodes.forEach(node => {
-          if (node.nodeType === Node.TEXT_NODE) {
+    temp.childNodes.forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
             result += node.textContent || "";
-          } else if (SearchTrigger.isSearchTriggerElement(node)) {
+        } else if (isSearchTriggerElement(node)) {
             const element = node as HTMLElement;
             const trigger = element.dataset.trigger;
             const content = element.dataset.content;
 
             if (trigger && content) {
-              switch (trigger) {
-                case SearchTrigger.Tag:
-                  result += `tag:"${content}"`;
-                  break;
-                case SearchTrigger.File:
-                  result += `file:"${content}"`;
-                  break;
-                case SearchTrigger.Folder:
-                  result += `folder:"${content}"`;
-                  break;
-              }
+                switch (trigger) {
+                    case "#":
+                        result += `tag:"${content}"`;
+                        break;
+                    case "@":
+                        result += `file:"${content}"`;
+                        break;
+                    case "/":
+                        result += `folder:"${content}"`;
+                        break;
+                }
             }
-          }
-        });
+        }
+    });
 
-        return result;
-      }
+    return result;
 }

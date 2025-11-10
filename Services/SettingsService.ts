@@ -1,7 +1,7 @@
 import type VaultkeeperAIPlugin from "main";
 import { Resolve } from "./DependencyService";
 import { Services } from "./Services";
-import { AIProvider, AIProviderModel } from "Enums/ApiProvider";
+import { AIProvider, AIProviderModel, fromModel } from "Enums/ApiProvider";
 
 const DEFAULT_SETTINGS: IVaultkeeperAISettings = {
     firstTimeStart: true,
@@ -54,7 +54,7 @@ export class SettingsService {
     }
 
     public getApiKeyForCurrentModel(): string {
-        const provider = AIProvider.fromModel(this.settings.model);
+        const provider = fromModel(this.settings.model);
         return this.getApiKeyForProvider(provider);
     }
 

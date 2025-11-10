@@ -4,17 +4,15 @@ export enum AIProvider {
     OpenAI = "OpenAI"
 }
 
-export namespace AIProvider {
-    export function fromModel(model: string): AIProvider {
-        if (model.startsWith("claude-")) {
-            return AIProvider.Claude;
-        } else if (model.startsWith("gemini-")) {
-            return AIProvider.Gemini;
-        } else if (model.startsWith("gpt-")) {
-            return AIProvider.OpenAI;
-        } else {
-            throw new Error("Invalid Model Selection!");
-        }
+export function fromModel(model: string): AIProvider {
+    if (model.startsWith("claude-")) {
+        return AIProvider.Claude;
+    } else if (model.startsWith("gemini-")) {
+        return AIProvider.Gemini;
+    } else if (model.startsWith("gpt-")) {
+        return AIProvider.OpenAI;
+    } else {
+        throw new Error("Invalid Model Selection!");
     }
 }
 
@@ -43,10 +41,10 @@ export enum AIProviderModel {
     GPT_4_1_Mini = "gpt-4.1-mini",
     GPT_4_1_Nano = "gpt-4.1-nano",
 
-    // Conversation naming models
-    ClaudeNamer = "claude-haiku-4-5-20251001",
-    GeminiNamer = "gemini-2.5-flash-lite",
-    OpenAINamer = "gpt-4o-mini",
+    // Conversation naming models (aliases to existing models)
+    ClaudeNamer = ClaudeHaiku_4_5,
+    GeminiNamer = GeminiFlash_2_5_Lite,
+    OpenAINamer = GPT_4o_Mini,
 }
 
 export enum AIProviderURL {

@@ -1,4 +1,4 @@
-import { SearchTrigger } from "../Enums/SearchTrigger";
+import { isSearchTriggerElement } from "../Enums/SearchTrigger";
 
 export class InputService {
 
@@ -28,7 +28,7 @@ export class InputService {
             if (node.nodeType === Node.ELEMENT_NODE) {
                 const el = node as HTMLElement;
 
-                if (SearchTrigger.isSearchTriggerElement(node)) {
+                if (isSearchTriggerElement(node)) {
                     return false;
                 }
 

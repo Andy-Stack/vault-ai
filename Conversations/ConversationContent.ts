@@ -21,7 +21,7 @@ export class ConversationContent {
         this.toolId = toolId;
     }
 
-    public static isConversationContentData(data: unknown): data is {
+    public static isConversationContentData(this: void, data: unknown): data is {
         role: string; content: string; promptContent: string; functionCall: string; timestamp: string, isFunctionCall: boolean, isFunctionCallResponse: boolean, toolId?: string
     } {
         return (

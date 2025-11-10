@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { SettingsService, IVaultkeeperAISettings } from '../../Services/SettingsService';
 import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
-import { AIProvider, AIProviderModel } from '../../Enums/ApiProvider';
+import { AIProvider, AIProviderModel, fromModel } from '../../Enums/ApiProvider';
 
 describe('SettingsService', () => {
     let settingsService: SettingsService;
@@ -185,7 +185,7 @@ describe('SettingsService', () => {
             expect(key).toBe('gemini-key');
         });
 
-        it('should use AIProvider.fromModel to determine provider', () => {
+        it('should use fromModel to determine provider', () => {
             // Test with various Claude models
             settingsService = new SettingsService({
                 model: AIProviderModel.ClaudeOpus_4,

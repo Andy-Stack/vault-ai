@@ -5,7 +5,7 @@
 	import type { ISearchState, SearchStateStore } from "Stores/SearchStateStore";
 	import { Resolve } from "Services/DependencyService";
 	import { Services } from "Services/Services";
-	import { SearchTrigger } from "Enums/SearchTrigger";
+	import { SearchTrigger, isSearchTrigger, isSearchTriggerElement, fromInput, toNode, triggerToText } from "Enums/SearchTrigger";
 	import ChatSearchResults from "./ChatSearchResults.svelte";
 	import type { Writable } from "svelte/store";
 	import type { InputService } from "Services/InputService";
@@ -60,7 +60,7 @@
     }
 
     const request = textareaElement.innerHTML;
-    const formattedRequest = SearchTrigger.triggerToText(request);
+    const formattedRequest = triggerToText(request);
 
     textareaElement.textContent = "";
     userRequest = "";
@@ -89,7 +89,7 @@
       e.preventDefault();
       
       const elementBeforeCursor = inputService.getElementBeforeCursor(textareaElement);
-      if (elementBeforeCursor && SearchTrigger.isSearchTriggerElement(elementBeforeCursor)) {
+      if (elementBeforeCursor && isSearchTriggerElement(elementBeforeCursor)) {
           elementBeforeCursor.remove();
           return;
       }
@@ -107,11 +107,11 @@
       handleSubmit();
     }
 
-    if (SearchTrigger.isSearchTrigger(e.key)) {
+    if (isSearchTrigger(e.key)) {
       e.preventDefault();
 
       const position = inputService.getCursorPosition(textareaElement);
-      const trigger = SearchTrigger.fromInput(e.key);
+      const trigger = fromInput(e.key);
 
       searchStateStore.initializeSearch(trigger, position);
 
@@ -162,7 +162,7 @@
 
   function handleSearchResultAcceptance() {
     if ($searchState.selectedResult !== "" && $searchState.position != null && $searchState.trigger != null) {
-      const node = SearchTrigger.toNode($searchState.trigger, $searchState.selectedResult);
+      const node = toNode($searchState.trigger, $searchState.selectedResult);
 
       inputService.deleteTextRange($searchState.position, inputService.getCursorPosition(textareaElement), textareaElement);
       inputService.insertElementAtCursor(node, textareaElement);

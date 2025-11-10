@@ -3,12 +3,12 @@ import { countTokens } from 'gpt-tokenizer'
 
 export class OpenAITokenService implements ITokenService {
     
-    public async countTokens(input: string): Promise<number> {
+    public countTokens(input: string): Promise<number> {
         if (input.trim() === "") {
-            return 0;
+            return Promise.resolve(0);
         }
 
-        return countTokens(input);
+        return Promise.resolve(countTokens(input));
     }
     
 }
