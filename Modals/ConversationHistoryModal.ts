@@ -10,7 +10,7 @@ import { dateToString } from 'Helpers/Helpers';
 import { conversationStore } from 'Stores/ConversationStore';
 import { Selector } from 'Enums/Selector';
 import type { ChatService } from 'Services/ChatService';
-import type VaultAIPlugin from 'main';
+import type VaultkeeperAIPlugin from 'main';
 
 interface IListItem {
     id: string;
@@ -33,7 +33,7 @@ export class ConversationHistoryModal extends Modal {
     public onModalClose?: () => void;
 
     constructor() {
-        const plugin = Resolve<VaultAIPlugin>(Services.VaultAIPlugin);
+        const plugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
         super(plugin.app);
     }
 

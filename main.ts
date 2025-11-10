@@ -1,7 +1,7 @@
 import { WorkspaceLeaf, Plugin } from "obsidian";
 import { MainView, VIEW_TYPE_MAIN } from "Views/MainView";
 import { RegisterDependencies, RegisterPlugin } from "Services/ServiceRegistration";
-import { VaultAISettingTab } from "VaultAISettingTab";
+import { VaultkeeperAISettingTab } from "VaultkeeperAISettingTab";
 import { Services } from "Services/Services";
 import type { StatusBarService } from "Services/StatusBarService";
 import { DeregisterAllServices, Resolve } from "Services/DependencyService";
@@ -10,7 +10,7 @@ import { Path } from "Enums/Path";
 import { Copy } from "Enums/Copy";
 import type { SettingsService } from "Services/SettingsService";
 
-export default class VaultAIPlugin extends Plugin {
+export default class VaultkeeperAIPlugin extends Plugin {
 	
 	public async onload() {
 		// KaTeX CSS is bundled with the plugin to comply with CSP
@@ -27,18 +27,18 @@ export default class VaultAIPlugin extends Plugin {
 		);
 
 		this.addCommand({
-			id: "vault-ai",
-			name: "Vault AI",
+			id: "vaultkeeper-ai",
+			name: "Vaultkeeper AI",
 			callback: () => {
 				this.activateView();
 			}
 		});
 
-		this.addRibbonIcon("sparkles", "Vault AI", (_: MouseEvent) => {
+		this.addRibbonIcon("sparkles", "Vaultkeeper AI", (_: MouseEvent) => {
 			this.activateView();
 		});
 
-		this.addSettingTab(new VaultAISettingTab());
+		this.addSettingTab(new VaultkeeperAISettingTab());
 
 		this.app.workspace.onLayoutReady(async () => {
 			await this.setup();

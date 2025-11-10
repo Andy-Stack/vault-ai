@@ -1,21 +1,21 @@
 import { AIProvider, AIProviderModel } from "Enums/ApiProvider";
 import { Copy } from "Enums/Copy";
 import { Selector } from "Enums/Selector";
-import type VaultAIPlugin from "main";
+import type VaultkeeperAIPlugin from "main";
 import { PluginSettingTab, Setting, setIcon, setTooltip } from "obsidian";
 import { Resolve } from "Services/DependencyService";
 import type { SettingsService } from "Services/SettingsService";
 import { Services } from "Services/Services";
 import { RegisterAiProvider } from "Services/ServiceRegistration";
 
-export class VaultAISettingTab extends PluginSettingTab {
+export class VaultkeeperAISettingTab extends PluginSettingTab {
 	private readonly settingsService: SettingsService;
 
 	private apiKeySetting: Setting | null = null;
 	private apiKeyInputEl: HTMLInputElement | null = null;
 
 	constructor() {
-		const plugin = Resolve<VaultAIPlugin>(Services.VaultAIPlugin);
+		const plugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
 		super(plugin.app, plugin);
 		this.settingsService = Resolve<SettingsService>(Services.SettingsService);
 	}
@@ -134,7 +134,7 @@ export class VaultAISettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						const provider = AIProvider.fromModel(this.settingsService.settings.model);
 						this.settingsService.setApiKeyForProvider(provider, value);
-						await this.settingsService.saveSettings();
+						await this.settingsService.saveSettings(() => RegisterAiProvider());
 						this.highlightApiKey();
 					});
 				text.inputEl.type = "password";

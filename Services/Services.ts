@@ -1,5 +1,5 @@
 export class Services {
-    static VaultAIPlugin = Symbol("VaultAIPlugin");
+    static VaultkeeperAIPlugin = Symbol("VaultkeeperAIPlugin");
     static SettingsService = Symbol("SettingsService");
     static StatusBarService = Symbol("StatusBarService");
     static HTMLService = Symbol("HTMLService");

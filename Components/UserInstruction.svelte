@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Copy } from "Enums/Copy";
 	import { Path } from "Enums/Path";
-	import type VaultAIPlugin from "main";
+	import type VaultkeeperAIPlugin from "main";
 	import { HelpModal } from "Modals/HelpModal";
 	import { basename } from "path-browserify";
 	import { Resolve } from "Services/DependencyService";
@@ -12,7 +12,7 @@
 
     export let userInstructionActive: boolean;
 
-    const plugin: VaultAIPlugin = Resolve<VaultAIPlugin>(Services.VaultAIPlugin);
+    const plugin: VaultkeeperAIPlugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
     const settingsService: SettingsService = Resolve<SettingsService>(Services.SettingsService);
     const fileSystemService: FileSystemService = Resolve<FileSystemService>(Services.FileSystemService);
 

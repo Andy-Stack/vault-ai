@@ -1,9 +1,9 @@
-import type VaultAIPlugin from "main";
+import type VaultkeeperAIPlugin from "main";
 import { Resolve } from "./DependencyService";
 import { Services } from "./Services";
 import { AIProvider, AIProviderModel } from "Enums/ApiProvider";
 
-const DEFAULT_SETTINGS: IVaultAISettings = {
+const DEFAULT_SETTINGS: IVaultkeeperAISettings = {
     firstTimeStart: true,
     userInstruction: "",
 
@@ -19,7 +19,7 @@ const DEFAULT_SETTINGS: IVaultAISettings = {
     snippetSizeLimit: 300
 }
 
-export interface IVaultAISettings {
+export interface IVaultkeeperAISettings {
     firstTimeStart: boolean;
     userInstruction: string;
 
@@ -37,12 +37,12 @@ export interface IVaultAISettings {
 
 export class SettingsService {
 
-    private readonly plugin: VaultAIPlugin;
+    private readonly plugin: VaultkeeperAIPlugin;
     
-    public readonly settings: IVaultAISettings;
+    public readonly settings: IVaultkeeperAISettings;
 
-    public constructor(loadedSettings: Partial<IVaultAISettings>) {
-        this.plugin = Resolve<VaultAIPlugin>(Services.VaultAIPlugin);
+    public constructor(loadedSettings: Partial<IVaultkeeperAISettings>) {
+        this.plugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
         this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedSettings);
     }
 

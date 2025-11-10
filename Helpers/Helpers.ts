@@ -1,6 +1,6 @@
-import type VaultAIPlugin from "main";
+import type VaultkeeperAIPlugin from "main";
 
-export function openPluginSettings(plugin: VaultAIPlugin) {
+export function openPluginSettings(plugin: VaultkeeperAIPlugin) {
     // @ts-ignore - accessing internal API
     plugin.app.setting.open();
     // @ts-ignore - accessing internal API

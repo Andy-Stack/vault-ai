@@ -1,5 +1,5 @@
 export enum Selector {
-    MarkDownLink = "vault-ai-internal-markdown-link",
+    MarkDownLink = "vaultkeeper-ai-internal-markdown-link",
     AIExclusionsInput = "ai-exclusions-input",
     ApiKeySettingOk = "api-key-setting-ok",
     ApiKeySettingError = "api-key-setting-error",

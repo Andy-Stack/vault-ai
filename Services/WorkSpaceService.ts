@@ -1,10 +1,10 @@
-import type VaultAIPlugin from "main";
+import type VaultkeeperAIPlugin from "main";
 import { Resolve } from "./DependencyService";
 import { Services } from "./Services";
 import type { TFile, WorkspaceLeaf } from "obsidian";
 
 export class WorkSpaceService {
-    private readonly plugin: VaultAIPlugin = Resolve<VaultAIPlugin>(Services.VaultAIPlugin);
+    private readonly plugin: VaultkeeperAIPlugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
 
     public async openNote(noteName: string) {
         const file: TFile | null = this.plugin.app.metadataCache.getFirstLinkpathDest(noteName, "");

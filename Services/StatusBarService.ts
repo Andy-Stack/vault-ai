@@ -1,18 +1,18 @@
-import type VaultAIPlugin from "main";
+import type VaultkeeperAIPlugin from "main";
 import { Resolve } from "./DependencyService";
 import { Services } from "./Services";
 import { Selector } from "Enums/Selector";
 
 export class StatusBarService {
 
-    private readonly plugin: VaultAIPlugin;
+    private readonly plugin: VaultkeeperAIPlugin;
     private statusBarItem: HTMLElement | null;
     private currentInputTokens: number = 0;
     private currentOutputTokens: number = 0;
     private animationFrame: number | null = null;
 
     public constructor() {
-        this.plugin = Resolve<VaultAIPlugin>(Services.VaultAIPlugin);
+        this.plugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
     }
 
     public setStatusBarMessage(message: string) {

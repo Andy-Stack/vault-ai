@@ -14,7 +14,7 @@ describe('OpenAIConversationNamingService', () => {
 
     beforeEach(() => {
         mockPlugin = {};
-        RegisterSingleton(Services.VaultAIPlugin, mockPlugin);
+        RegisterSingleton(Services.VaultkeeperAIPlugin, mockPlugin);
 
         // Mock SettingsService
         mockSettingsService = {

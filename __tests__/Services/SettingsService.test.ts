@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { SettingsService, IVaultAISettings } from '../../Services/SettingsService';
+import { SettingsService, IVaultkeeperAISettings } from '../../Services/SettingsService';
 import { RegisterSingleton, DeregisterAllServices } from '../../Services/DependencyService';
 import { Services } from '../../Services/Services';
 import { AIProvider, AIProviderModel } from '../../Enums/ApiProvider';
@@ -9,11 +9,11 @@ describe('SettingsService', () => {
     let mockPlugin: any;
 
     beforeEach(() => {
-        // Mock VaultAIPlugin
+        // Mock VaultkeeperAIPlugin
         mockPlugin = {
             saveData: vi.fn().mockResolvedValue(undefined)
         };
-        RegisterSingleton(Services.VaultAIPlugin, mockPlugin);
+        RegisterSingleton(Services.VaultkeeperAIPlugin, mockPlugin);
     });
 
     afterEach(() => {
@@ -39,7 +39,7 @@ describe('SettingsService', () => {
         });
 
         it('should merge loaded settings with defaults', () => {
-            const loadedSettings: Partial<IVaultAISettings> = {
+            const loadedSettings: Partial<IVaultkeeperAISettings> = {
                 firstTimeStart: false,
                 model: AIProviderModel.GeminiFlash_2_5,
                 apiKeys: {
@@ -51,7 +51,7 @@ describe('SettingsService', () => {
                 snippetSizeLimit: 200
             };
 
-            settingsService = new SettingsService(loadedSettings as IVaultAISettings);
+            settingsService = new SettingsService(loadedSettings as IVaultkeeperAISettings);
 
             expect(settingsService.settings.firstTimeStart).toBe(false);
             expect(settingsService.settings.model).toBe(AIProviderModel.GeminiFlash_2_5);
@@ -63,7 +63,7 @@ describe('SettingsService', () => {
         });
 
         it('should handle partially loaded settings and fill missing properties with defaults', () => {
-            const loadedSettings: Partial<IVaultAISettings> = {
+            const loadedSettings: Partial<IVaultkeeperAISettings> = {
                 model: AIProviderModel.GPT_4o,
                 apiKeys: {
                     claude: '',
@@ -72,7 +72,7 @@ describe('SettingsService', () => {
                 }
             };
 
-            settingsService = new SettingsService(loadedSettings as IVaultAISettings);
+            settingsService = new SettingsService(loadedSettings as IVaultkeeperAISettings);
 
             expect(settingsService.settings.firstTimeStart).toBe(true); // Default
             expect(settingsService.settings.model).toBe(AIProviderModel.GPT_4o); // Loaded
@@ -86,7 +86,7 @@ describe('SettingsService', () => {
 
     describe('getApiKeyForProvider', () => {
         beforeEach(() => {
-            const loadedSettings: IVaultAISettings = {
+            const loadedSettings: IVaultkeeperAISettings = {
                 firstTimeStart: false,
                 model: AIProviderModel.ClaudeSonnet_4_5,
                 apiKeys: {
@@ -126,7 +126,7 @@ describe('SettingsService', () => {
 
     describe('getApiKeyForCurrentModel', () => {
         it('should return Claude key when current model is Claude', () => {
-            const loadedSettings: IVaultAISettings = {
+            const loadedSettings: IVaultkeeperAISettings = {
                 firstTimeStart: false,
                 model: AIProviderModel.ClaudeSonnet_4_5,
                 apiKeys: {
@@ -146,7 +146,7 @@ describe('SettingsService', () => {
         });
 
         it('should return OpenAI key when current model is GPT', () => {
-            const loadedSettings: IVaultAISettings = {
+            const loadedSettings: IVaultkeeperAISettings = {
                 firstTimeStart: false,
                 model: AIProviderModel.GPT_4o,
                 apiKeys: {
@@ -166,7 +166,7 @@ describe('SettingsService', () => {
         });
 
         it('should return Gemini key when current model is Gemini', () => {
-            const loadedSettings: IVaultAISettings = {
+            const loadedSettings: IVaultkeeperAISettings = {
                 firstTimeStart: false,
                 model: AIProviderModel.GeminiFlash_2_5,
                 apiKeys: {
@@ -211,7 +211,7 @@ describe('SettingsService', () => {
 
     describe('setApiKeyForProvider', () => {
         beforeEach(() => {
-            const loadedSettings: IVaultAISettings = {
+            const loadedSettings: IVaultkeeperAISettings = {
                 firstTimeStart: false,
                 model: AIProviderModel.ClaudeSonnet_4_5,
                 apiKeys: {
@@ -265,7 +265,7 @@ describe('SettingsService', () => {
 
     describe('saveSettings', () => {
         beforeEach(() => {
-            const loadedSettings: IVaultAISettings = {
+            const loadedSettings: IVaultkeeperAISettings = {
                 firstTimeStart: false,
                 model: AIProviderModel.ClaudeSonnet_4_5,
                 apiKeys: {

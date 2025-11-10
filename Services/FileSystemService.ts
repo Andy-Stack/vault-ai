@@ -1,4 +1,4 @@
-import type VaultAIPlugin from "main";
+import type VaultkeeperAIPlugin from "main";
 import { TAbstractFile, TFile, TFolder, type Vault } from "obsidian";
 import { Resolve } from "./DependencyService";
 import { Services } from "./Services";
