@@ -2,6 +2,7 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import obsidianmd from "eslint-plugin-obsidianmd";
+import eslintComments from "eslint-plugin-eslint-comments";
 
 export default [
   // Ignore patterns
@@ -23,6 +24,7 @@ export default [
     files: ["**/*.ts"],
     plugins: {
       obsidianmd: obsidianmd,
+      "eslint-comments": eslintComments,
     },
     languageOptions: {
       parser: tseslint.parser,
@@ -64,6 +66,15 @@ export default [
       "@typescript-eslint/no-namespace": "error",
       "@typescript-eslint/no-require-imports": "error",
       "@typescript-eslint/switch-exhaustiveness-check": "error",
+      "@typescript-eslint/no-explicit-any": "error",
+
+      // ESLint directive comment rules
+      "eslint-comments/require-description": "error",
+      "eslint-comments/no-unused-disable": "error",
+      "eslint-comments/no-restricted-disable": [
+        "error",
+        "@typescript-eslint/no-explicit-any"
+      ],
 
       // Console usage (allow warn, error, debug only)
       "no-console": ["error", { allow: ["warn", "error", "debug"] }],
@@ -113,30 +124,6 @@ export default [
       // Allow namespace merging with enums (TypeScript pattern)
       "no-redeclare": "off",
       "@typescript-eslint/no-redeclare": "off",
-    }
-  },
-
-  // Allow fetch() in streaming services (requires AbortController support)
-  {
-    files: [
-      "**/StreamingService.ts",
-      "**/ClaudeConversationNamingService.ts",
-      "**/GeminiConversationNamingService.ts",
-      "**/OpenAIConversationNamingService.ts"
-    ],
-    rules: {
-      "no-restricted-globals": [
-        "error",
-        {
-          name: "app",
-          message: "Avoid using the global app object. Instead use the reference provided by your plugin instance.",
-        },
-        {
-          name: "localStorage",
-          message: "Prefer `App#saveLocalStorage` / `App#loadLocalStorage` functions to write / read localStorage data that's unique to a vault."
-        }
-        // fetch is allowed in these files for streaming with AbortController
-      ]
     }
   }
 ];

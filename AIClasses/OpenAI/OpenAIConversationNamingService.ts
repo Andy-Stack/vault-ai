@@ -33,6 +33,7 @@ export class OpenAIConversationNamingService implements IConversationNamingServi
             ]
         };
 
+        // eslint-disable-next-line no-restricted-globals -- requestUrl doeesn't support AbortSignal
         const response = await fetch(AIProviderURL.OpenAI, {
             method: 'POST',
             headers: {

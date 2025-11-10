@@ -36,8 +36,7 @@ export class MainView extends ItemView {
     return 'sparkles';
   }
 
-  // ItemView requires onOpen to return Promise<void>, but mount operations are synchronous
-  // eslint-disable-next-line @typescript-eslint/require-await
+  // eslint-disable-next-line @typescript-eslint/require-await -- mount operations are valid but synchronous
   async onOpen() {
     const container = this.contentEl;
     container.empty();

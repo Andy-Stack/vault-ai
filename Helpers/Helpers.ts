@@ -2,10 +2,10 @@ import type VaultkeeperAIPlugin from "main";
 
 export function openPluginSettings(plugin: VaultkeeperAIPlugin) {
     // @ts-ignore - accessing internal API
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- required to open Settings menu – internal API, no alternative, low runtime risk
     plugin.app.setting.open();
     // @ts-ignore - accessing internal API
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access -- required to switch Settings tab – internal API, no alternative, low runtime risk
     plugin.app.setting.openTabById(plugin.manifest.id);
 }
 

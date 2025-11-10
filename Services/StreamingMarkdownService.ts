@@ -25,7 +25,7 @@ export class StreamingMarkdownService {
     private readonly htmlService: HTMLService = Resolve<HTMLService>(Services.HTMLService);
     private readonly fileSystemService: FileSystemService = Resolve<FileSystemService>(Services.FileSystemService);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- trying to explicitly define unified types gets very complex so allow use of any
     private readonly processor: Processor<any, any, any, any, any> | null = null;
     private streamingStates: Map<string, IStreamingState> = new Map<string, IStreamingState>();
 

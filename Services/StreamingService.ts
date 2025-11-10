@@ -18,6 +18,7 @@ export class StreamingService {
     additionalHeaders?: Record<string, string>
   ): AsyncGenerator<IStreamChunk, void, unknown> {
     try {
+      // eslint-disable-next-line no-restricted-globals -- requestUrl doeesn't support streaming
       const response = await fetch(
         url,
         {
