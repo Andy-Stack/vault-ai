@@ -6,7 +6,7 @@
 [![Obsidian Plugin](https://img.shields.io/badge/Obsidian-Plugin-purple.svg)](https://obsidian.md)
 
 <p align="center">
-	<img width="1853" height="896" alt="ai_agent" src="https://github.com/user-attachments/assets/ffdda606-c776-4db9-b11a-061524da63e5" />
+	<img width="1853" height="896" alt="vaultkeeper-ai" src="https://github.com/user-attachments/assets/cdb20159-e679-4e73-8535-9fec0258df39" />
 </p>
 
 ## Features
