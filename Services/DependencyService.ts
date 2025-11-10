@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const services = new Map<symbol, any>();
 
 export function RegisterSingleton<T>(type: symbol, instance: T): void {
@@ -9,6 +10,7 @@ export function RegisterTransient<T>(type: symbol, factory: () => T): void {
 }
 
 export function Resolve<T>(type: symbol): T {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const service = services.get(type);
     if (!service) {
         throw new Error(`Service not found for type: ${type.description}`);
@@ -16,7 +18,7 @@ export function Resolve<T>(type: symbol): T {
 
     if (typeof service === 'function') {
         // It's a transient factory, return a new instance
-        return service();
+        return (service as () => T)();
     }
 
     // It's a singleton, return the existing instance

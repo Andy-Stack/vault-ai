@@ -98,7 +98,7 @@ export class AIFunctionService {
                 return new AIFunctionResponse(functionCall.name, {}, functionCall.toolId)
 
             default: {
-                const error = `Unknown function request ${functionCall.name}`
+                const error = `Unknown function request ${functionCall.name as string}`
                 console.error(error);
                 return new AIFunctionResponse(
                     functionCall.name,
@@ -143,7 +143,7 @@ export class AIFunctionService {
     }
 
     private async writeVaultFile(filePath: string, content: string): Promise<object> {
-        const result: boolean | unknown = await this.fileSystemService.writeFile(normalizePath(filePath), content);
+        const result: boolean | Error = await this.fileSystemService.writeFile(normalizePath(filePath), content);
         return typeof result === "boolean" ? { success: result } : { success: false, error: result };
     }
 

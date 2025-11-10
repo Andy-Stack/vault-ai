@@ -1,8 +1,8 @@
 import { vi } from 'vitest';
 
 export class Plugin {
-	app: any;
-	manifest: any;
+	app: unknown;
+	manifest: unknown;
 	constructor() {
 		this.app = {};
 		this.manifest = {};
@@ -16,10 +16,10 @@ export class Plugin {
 }
 
 export class PluginSettingTab {
-	app: any;
-	plugin: any;
-	containerEl: any;
-	constructor(app: any, plugin: any) {
+	app: unknown;
+	plugin: unknown;
+	containerEl: unknown;
+	constructor(app: unknown, plugin: unknown) {
 		this.app = app;
 		this.plugin = plugin;
 		this.containerEl = { createEl: vi.fn(), empty: vi.fn() };
@@ -29,25 +29,25 @@ export class PluginSettingTab {
 }
 
 export class ItemView {
-	app: any;
-	leaf: any;
-	containerEl: any = { createEl: vi.fn(), empty: vi.fn() };
+	app: unknown;
+	leaf: unknown;
+	containerEl: unknown = { createEl: vi.fn(), empty: vi.fn() };
 	constructor() {
 		this.app = {};
 		this.leaf = {};
 	}
 	getViewType() { return 'test-view'; }
-	getDisplayText() { return 'Test View'; }
+	getDisplayText() { return 'Test view'; }
 	onOpen() { return Promise.resolve(); }
 	onClose() { return Promise.resolve(); }
 }
 
 export class Modal {
-	app: any;
-	containerEl: any;
-	titleEl: any;
-	contentEl: any;
-	constructor(app: any) {
+	app: unknown;
+	containerEl: unknown;
+	titleEl: unknown;
+	contentEl: unknown;
+	constructor(app: unknown) {
 		this.app = app;
 		this.containerEl = { createEl: vi.fn(), empty: vi.fn() };
 		this.titleEl = { createEl: vi.fn(), empty: vi.fn() };
@@ -58,7 +58,7 @@ export class Modal {
 }
 
 export class Notice {
-	constructor(message: string) {}
+	constructor() {}
 	hide() {}
 }
 
@@ -68,20 +68,20 @@ export class TFile {
 	basename: string = '';
 	extension: string = '';
 	stat: { ctime: number; mtime: number; size: number } = { ctime: Date.now(), mtime: Date.now(), size: 0 };
-	parent: any = null;
-	vault: any;
+	parent: unknown = null;
+	vault: unknown;
 }
 
 export class TFolder {
 	path: string = '';
 	name: string = '';
-	children: any[] = [];
-	parent: any = null;
-	vault: any;
+	children: unknown[] = [];
+	parent: unknown = null;
+	vault: unknown;
 }
 
 export interface TAbstractFile {
-	vault: any;
+	vault: unknown;
 	path: string;
 	name: string;
 	parent: TFolder | null;
@@ -102,7 +102,7 @@ export const requestUrl = vi.fn(() => Promise.resolve({
 export const setIcon = vi.fn();
 
 export class Vault {
-	adapter: any;
+	adapter: unknown;
 
 	constructor() {
 		this.adapter = {
@@ -131,15 +131,15 @@ export class FileManager {
 }
 
 export class WorkspaceLeaf {
-	view: any;
+	view: unknown;
 	getViewState() { return {}; }
 	setViewState() { return Promise.resolve(); }
 }
 
 export class Setting {
-	settingEl: any;
+	settingEl: unknown;
 
-	constructor(containerEl: any) {
+	constructor() {
 		this.settingEl = { createEl: vi.fn(), empty: vi.fn() };
 	}
 

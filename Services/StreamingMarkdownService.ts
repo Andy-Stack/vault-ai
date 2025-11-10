@@ -25,6 +25,7 @@ export class StreamingMarkdownService {
     private readonly htmlService: HTMLService = Resolve<HTMLService>(Services.HTMLService);
     private readonly fileSystemService: FileSystemService = Resolve<FileSystemService>(Services.FileSystemService);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private readonly processor: Processor<any, any, any, any, any> | null = null;
     private streamingStates: Map<string, IStreamingState> = new Map<string, IStreamingState>();
 
@@ -164,7 +165,7 @@ export class StreamingMarkdownService {
             .replace(/\r\n/g, "\n")
             .replace(/\r/g, "\n")
             // Convert LaTeX delimiters
-            .replace(/\\\[([\s\S]*?)\\\]/g, (match, math) => {
+            .replace(/\\\[([\s\S]*?)\\\]/g, (_match: string, math: string) => {
                 // Ensure math blocks are on their own lines
                 return "\n$$\n" + math.trim() + "\n$$\n";
             })
