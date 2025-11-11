@@ -427,6 +427,108 @@ describe('Claude', () => {
             expect(result[0].content[0].type).toBe('text');
             expect(result[0].content[1].type).toBe('tool_use');
         });
+
+        it('should convert function call without ID to legacy text format', () => {
+            const functionCallContent = new ConversationContent(
+                Role.Assistant,
+                '',
+                '',
+                JSON.stringify({
+                    functionCall: {
+                        name: 'search_vault_files',
+                        args: { query: 'test' }
+                        // No ID field
+                    }
+                }),
+                new Date(),
+                true
+            );
+
+            const result = (claude as any).extractContents([functionCallContent]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].content).toHaveLength(1);
+            expect(result[0].content[0]).toEqual({
+                type: 'text',
+                text: '[Legacy Tool Call] search_vault_files\nInput: {"query":"test"}'
+            });
+        });
+
+        it('should convert function call with empty ID to legacy text format', () => {
+            const functionCallContent = new ConversationContent(
+                Role.Assistant,
+                '',
+                '',
+                JSON.stringify({
+                    functionCall: {
+                        id: '',  // Empty ID
+                        name: 'search_vault_files',
+                        args: { query: 'test' }
+                    }
+                }),
+                new Date(),
+                true
+            );
+
+            const result = (claude as any).extractContents([functionCallContent]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].content).toHaveLength(1);
+            expect(result[0].content[0]).toEqual({
+                type: 'text',
+                text: '[Legacy Tool Call] search_vault_files\nInput: {"query":"test"}'
+            });
+        });
+
+        it('should convert function response without ID to legacy text format', () => {
+            const responseContent = JSON.stringify({
+                functionResponse: {
+                    name: 'search_vault_files',
+                    response: ['file1.txt', 'file2.txt']
+                }
+                // No ID field
+            });
+            const functionResponseContent = new ConversationContent(
+                Role.User,
+                responseContent,
+                responseContent
+            );
+            functionResponseContent.isFunctionCallResponse = true;
+
+            const result = (claude as any).extractContents([functionResponseContent]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].content).toHaveLength(1);
+            expect(result[0].content[0]).toEqual({
+                type: 'text',
+                text: '[Legacy Tool Result] search_vault_files\nResult: ["file1.txt","file2.txt"]'
+            });
+        });
+
+        it('should convert function response with empty ID to legacy text format', () => {
+            const responseContent = JSON.stringify({
+                id: '',  // Empty ID
+                functionResponse: {
+                    name: 'search_vault_files',
+                    response: ['file1.txt', 'file2.txt']
+                }
+            });
+            const functionResponseContent = new ConversationContent(
+                Role.User,
+                responseContent,
+                responseContent
+            );
+            functionResponseContent.isFunctionCallResponse = true;
+
+            const result = (claude as any).extractContents([functionResponseContent]);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].content).toHaveLength(1);
+            expect(result[0].content[0]).toEqual({
+                type: 'text',
+                text: '[Legacy Tool Result] search_vault_files\nResult: ["file1.txt","file2.txt"]'
+            });
+        });
     });
 
     describe('mapFunctionDefinitions', () => {

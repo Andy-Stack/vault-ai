@@ -37,31 +37,27 @@ export class ConversationHistoryModal extends Modal {
         super(plugin.app);
     }
 
-    private async loadConversations() {
+    onOpen() {
+        void this.initializeContent();
+    }
+
+    private async initializeContent() {
         this.conversations = await this.conversationFileSystemService.getAllConversations();
 
         this.items = this.conversations
-            .sort((a, b) => b.updated.getTime() - a.updated.getTime())
-            .map((conversation) => {
-                const filePath = this.conversationFileSystemService.generateConversationPath(conversation);
-                return {
-                    id: filePath,
-                    date: dateToString(conversation.created, false),
-                    updated: conversation.updated,
-                    title: conversation.title,
-                    selected: false,
-                    filePath: filePath
-                };
-            });
+        .sort((a, b) => b.updated.getTime() - a.updated.getTime())
+        .map((conversation) => {
+            const filePath = this.conversationFileSystemService.generateConversationPath(conversation);
+            return {
+                id: filePath,
+                date: dateToString(conversation.created, false),
+                updated: conversation.updated,
+                title: conversation.title,
+                selected: false,
+                filePath: filePath
+            };
+        });
 
-        // Update the component with loaded items if it's already mounted
-        if (this.component) {
-            this.component.items = this.items;
-        }
-    }
-
-    onOpen() {
-        void this.loadConversations();
         const { contentEl, modalEl, containerEl } = this;
 
         containerEl.addClass(Selector.ConversationHistoryModal);

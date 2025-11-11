@@ -175,12 +175,20 @@ export class Claude implements IAIClass {
                     if (isValidJson(content.functionCall)) {
                         try {
                             const parsedContent = JSON.parse(content.functionCall) as StoredFunctionCall;
-                            contentBlocks.push({
-                                type: "tool_use",
-                                id: parsedContent.functionCall.id,
-                                name: parsedContent.functionCall.name,
-                                input: parsedContent.functionCall.args
-                            });
+
+                            if (parsedContent.functionCall.id && parsedContent.functionCall.id.trim() !== "") {
+                                contentBlocks.push({
+                                    type: "tool_use",
+                                    id: parsedContent.functionCall.id,
+                                    name: parsedContent.functionCall.name,
+                                    input: parsedContent.functionCall.args
+                                });
+                            } else {
+                                contentBlocks.push({
+                                    type: "text",
+                                    text: this.convertFunctionCallToText(parsedContent)
+                                });
+                            }
                         } catch (error) {
                             console.error("Failed to parse function call:", error);
                             // Fall back to treating as text
@@ -208,11 +216,19 @@ export class Claude implements IAIClass {
                     if (isValidJson(contentToExtract)) {
                         try {
                             const parsedContent = JSON.parse(contentToExtract) as StoredFunctionResponse;
-                            contentBlocks.push({
-                                type: "tool_result",
-                                tool_use_id: parsedContent.id,
-                                content: JSON.stringify(parsedContent.functionResponse.response)
-                            });
+
+                            if (parsedContent.id && parsedContent.id.trim() !== "") {
+                                contentBlocks.push({
+                                    type: "tool_result",
+                                    tool_use_id: parsedContent.id,
+                                    content: JSON.stringify(parsedContent.functionResponse.response)
+                                });
+                            } else {
+                                contentBlocks.push({
+                                    type: "text",
+                                    text: this.convertFunctionResponseToText(parsedContent)
+                                });
+                            }
                         } catch (error) {
                             console.error("Failed to parse function response:", error);
                             contentBlocks.push({
@@ -247,5 +263,20 @@ export class Claude implements IAIClass {
                 required: functionDefinition.parameters.required
             }
         }));
+    }
+
+    /* 
+     If a conversation used another provider it may not have function id's required by Claude.
+     Instead provide the function call and response as plain text to preserve context without breaking.
+    */
+
+    private convertFunctionCallToText(parsedContent: StoredFunctionCall): string {
+        const inputJson = JSON.stringify(parsedContent.functionCall.args);
+        return `[Legacy Tool Call] ${parsedContent.functionCall.name}\nInput: ${inputJson}`;
+    }
+
+    private convertFunctionResponseToText(parsedContent: StoredFunctionResponse): string {
+        const resultJson = JSON.stringify(parsedContent.functionResponse.response);
+        return `[Legacy Tool Result] ${parsedContent.functionResponse.name}\nResult: ${resultJson}`;
     }
 }

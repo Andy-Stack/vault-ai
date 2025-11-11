@@ -199,6 +199,9 @@ Each AI provider has their own data policies:
 - [Google (Gemini)](https://policies.google.com/privacy)
 - [OpenAI (ChatGPT)](https://openai.com/privacy/)`,
 
+    // Conversation Modal Copy
+    NoConversationsFound = "No conversations match your search.",
+
     // Help Modal Additional Copy
     HelpModalCloseAriaLabel = "Close Help Modal",
     PluginVersionPrefix = "Plugin version: ",

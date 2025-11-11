@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Copy } from "Enums/Copy";
 	import { setIcon } from "obsidian";
 	import { fade } from "svelte/transition";
 
@@ -80,28 +81,28 @@
   <div class="conversation-history-modal-content">
     {#if filteredItems.length === 0}
     <p class="history-empty-state" in:fade={{ duration: 200 }}>
-      No conversations match your search.
+      {Copy.NoConversationsFound}
     </p>
     {:else}
     {#each filteredItems as item (item.id)}
-    <div class="history-list-modal-content" in:fade={{ duration: 200 }} out:fade={{ duration: 200 }}>
-      <div
-        class="history-list-modal-clickable"
-        on:click={(e) => handleConversationClick(item.id, e)}
-        on:keydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
-        role="button"
-        tabindex="0">
-        <span class="history-list-modal-date">{item.date}</span>
-        <span class="history-list-modal-separator">|</span>
-        <span class="history-list-modal-title">{item.title}</span>
+      <div class="history-list-modal-content" in:fade={{ duration: 200 }} out:fade={{ duration: 200 }}>
+        <div
+          class="history-list-modal-clickable"
+          on:click={(e) => handleConversationClick(item.id, e)}
+          on:keydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
+          role="button"
+          tabindex="0">
+          <span class="history-list-modal-date">{item.date}</span>
+          <span class="history-list-modal-separator">|</span>
+          <span class="history-list-modal-title">{item.title}</span>
+        </div>
+        <input
+          type="checkbox"
+          class="history-list-modal-checkbox"
+          checked={selectedItems.has(item.id)}
+          on:change={() => toggleSelection(item.id)}
+        />
       </div>
-      <input
-        type="checkbox"
-        class="history-list-modal-checkbox"
-        checked={selectedItems.has(item.id)}
-        on:change={() => toggleSelection(item.id)}
-      />
-    </div>
     {/each}
     {/if}
   </div>
