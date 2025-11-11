@@ -248,7 +248,7 @@ describe('AIFunctionService - Integration Tests', () => {
 
 	describe('performAIFunction - WriteVaultFile', () => {
 		it('should write file successfully', async () => {
-			mockFileSystemService.writeFile.mockResolvedValue(true);
+			mockFileSystemService.writeFile.mockResolvedValue(undefined);
 
 			const result = await service.performAIFunction({
 				name: AIFunction.WriteVaultFile,
@@ -286,7 +286,7 @@ describe('AIFunctionService - Integration Tests', () => {
 		});
 
 		it('should normalize file path', async () => {
-			mockFileSystemService.writeFile.mockResolvedValue(true);
+			mockFileSystemService.writeFile.mockResolvedValue(undefined);
 
 			await service.performAIFunction({
 				name: AIFunction.WriteVaultFile,
@@ -306,7 +306,7 @@ describe('AIFunctionService - Integration Tests', () => {
 		});
 
 		it('should handle empty content', async () => {
-			mockFileSystemService.writeFile.mockResolvedValue(true);
+			mockFileSystemService.writeFile.mockResolvedValue(undefined);
 
 			const result = await service.performAIFunction({
 				name: AIFunction.WriteVaultFile,
@@ -610,7 +610,7 @@ describe('AIFunctionService - Integration Tests', () => {
 
 		it('should handle write -> move workflow', async () => {
 			// First write
-			mockFileSystemService.writeFile.mockResolvedValue(true);
+			mockFileSystemService.writeFile.mockResolvedValue(undefined);
 
 			const writeResult = await service.performAIFunction({
 				name: AIFunction.WriteVaultFile,

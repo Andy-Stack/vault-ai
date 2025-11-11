@@ -143,8 +143,8 @@ export class AIFunctionService {
     }
 
     private async writeVaultFile(filePath: string, content: string): Promise<object> {
-        const result: boolean | Error = await this.fileSystemService.writeFile(normalizePath(filePath), content);
-        return typeof result === "boolean" ? { success: result } : { success: false, error: result };
+        const result: Error | undefined = await this.fileSystemService.writeFile(normalizePath(filePath), content);
+        return result === undefined ? { success: true } : { success: false, error: result };
     }
 
     private async deleteVaultFiles(filepaths: string[], confirmation: boolean): Promise<object> {

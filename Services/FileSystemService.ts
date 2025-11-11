@@ -28,15 +28,14 @@ export class FileSystemService {
         return null;
     }
 
-    public async writeFile(filePath: string, content: string, allowAccessToPluginRoot: boolean = false): Promise<boolean | Error> {
+    public async writeFile(filePath: string, content: string, allowAccessToPluginRoot: boolean = false): Promise<Error | undefined> {
         try {
             const file: TAbstractFile | null = this.vaultService.getAbstractFileByPath(filePath, allowAccessToPluginRoot);
             if (file == null || !(file instanceof TFile)) {
                 await this.vaultService.create(filePath, content, allowAccessToPluginRoot);
-                return true;
+                return;
             }
             await this.vaultService.modify(file, content, allowAccessToPluginRoot);
-            return true;
         }
         catch (error) {
             console.error("Error writing file:", error);

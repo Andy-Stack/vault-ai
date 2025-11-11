@@ -169,7 +169,7 @@ describe('FileSystemService', () => {
 
 			const result = await fileSystemService.writeFile('new.md', 'content');
 
-			expect(result).toBe(true);
+			expect(result).toBe(undefined);
 			expect(mockVaultService.create).toHaveBeenCalledWith('new.md', 'content', false);
 			expect(mockVaultService.modify).not.toHaveBeenCalled();
 		});
@@ -182,7 +182,7 @@ describe('FileSystemService', () => {
 
 			const result = await fileSystemService.writeFile('existing.md', 'new content');
 
-			expect(result).toBe(true);
+			expect(result).toBe(undefined);
 			expect(mockVaultService.modify).toHaveBeenCalledWith(mockFile, 'new content', false);
 			expect(mockVaultService.create).not.toHaveBeenCalled();
 		});
