@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { dateToString, isValidJson, randomSample, escapeRegex, openPluginSettings } from '../../Helpers/Helpers';
+import { describe, it, expect, vi } from 'vitest';
+import { StringTools } from "../../Helpers/StringTools";
+import { randomSample, openPluginSettings } from '../../Helpers/Helpers';
 
 describe('Helpers', () => {
 	describe('dateToString', () => {
 		it('should format date with time by default', () => {
 			const date = new Date('2024-01-15T14:30:45');
-			const result = dateToString(date);
+			const result = StringTools.dateToString(date);
 
 			// Format should be YYYY-MM-DD-HH-MM-SS (sv-SE locale with colons and spaces replaced)
 			expect(result).toMatch(/^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$/);
@@ -16,7 +17,7 @@ describe('Helpers', () => {
 
 		it('should format date without time when includeTime is false', () => {
 			const date = new Date('2024-01-15T14:30:45');
-			const result = dateToString(date, false);
+			const result = StringTools.dateToString(date, false);
 
 			// Format should be YYYY-MM-DD
 			expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -28,7 +29,7 @@ describe('Helpers', () => {
 
 		it('should use sv-SE locale for consistent formatting', () => {
 			const date = new Date('2024-03-05T09:08:07');
-			const result = dateToString(date);
+			const result = StringTools.dateToString(date);
 
 			// sv-SE uses YYYY-MM-DD format with leading zeros
 			expect(result.startsWith('2024-03-05')).toBe(true);
@@ -36,7 +37,7 @@ describe('Helpers', () => {
 
 		it('should replace colons and spaces with hyphens', () => {
 			const date = new Date('2024-01-15T14:30:45');
-			const result = dateToString(date);
+			const result = StringTools.dateToString(date);
 
 			// Should not contain colons or spaces
 			expect(result).not.toContain(':');
@@ -47,21 +48,21 @@ describe('Helpers', () => {
 
 		it('should handle midnight correctly', () => {
 			const date = new Date('2024-01-15T00:00:00');
-			const result = dateToString(date);
+			const result = StringTools.dateToString(date);
 
 			expect(result).toContain('00-00-00');
 		});
 
 		it('should handle end of day correctly', () => {
 			const date = new Date('2024-01-15T23:59:59');
-			const result = dateToString(date);
+			const result = StringTools.dateToString(date);
 
 			expect(result).toContain('23-59-59');
 		});
 
 		it('should pad single-digit months and days', () => {
 			const date = new Date('2024-03-05T09:08:07');
-			const result = dateToString(date);
+			const result = StringTools.dateToString(date);
 
 			// Should have leading zeros
 			expect(result).toContain('03');
@@ -75,76 +76,76 @@ describe('Helpers', () => {
 			const date1 = new Date('2020-01-01T00:00:00');
 			const date2 = new Date('2030-12-31T23:59:59');
 
-			expect(dateToString(date1, false)).toContain('2020');
-			expect(dateToString(date2, false)).toContain('2030');
+			expect(StringTools.dateToString(date1, false)).toContain('2020');
+			expect(StringTools.dateToString(date2, false)).toContain('2030');
 		});
 	});
 
 	describe('isValidJson', () => {
 		it('should return true for valid JSON object', () => {
-			expect(isValidJson('{"key": "value"}')).toBe(true);
+			expect(StringTools.isValidJson('{"key": "value"}')).toBe(true);
 		});
 
 		it('should return true for valid JSON array', () => {
-			expect(isValidJson('[1, 2, 3]')).toBe(true);
+			expect(StringTools.isValidJson('[1, 2, 3]')).toBe(true);
 		});
 
 		it('should return true for valid JSON string', () => {
-			expect(isValidJson('"hello"')).toBe(true);
+			expect(StringTools.isValidJson('"hello"')).toBe(true);
 		});
 
 		it('should return true for valid JSON number', () => {
-			expect(isValidJson('123')).toBe(true);
+			expect(StringTools.isValidJson('123')).toBe(true);
 		});
 
 		it('should return true for valid JSON boolean', () => {
-			expect(isValidJson('true')).toBe(true);
-			expect(isValidJson('false')).toBe(true);
+			expect(StringTools.isValidJson('true')).toBe(true);
+			expect(StringTools.isValidJson('false')).toBe(true);
 		});
 
 		it('should return true for valid JSON null', () => {
-			expect(isValidJson('null')).toBe(true);
+			expect(StringTools.isValidJson('null')).toBe(true);
 		});
 
 		it('should return true for complex nested JSON', () => {
 			const json = '{"a":{"b":{"c":[1,2,3]}}}';
-			expect(isValidJson(json)).toBe(true);
+			expect(StringTools.isValidJson(json)).toBe(true);
 		});
 
 		it('should return false for invalid JSON with syntax error', () => {
-			expect(isValidJson('{"key": value}')).toBe(false); // Missing quotes
+			expect(StringTools.isValidJson('{"key": value}')).toBe(false); // Missing quotes
 		});
 
 		it('should return false for invalid JSON with trailing comma', () => {
-			expect(isValidJson('{"key": "value",}')).toBe(false);
+			expect(StringTools.isValidJson('{"key": "value",}')).toBe(false);
 		});
 
 		it('should return false for unclosed braces', () => {
-			expect(isValidJson('{"key": "value"')).toBe(false);
+			expect(StringTools.isValidJson('{"key": "value"')).toBe(false);
 		});
 
 		it('should return false for single quotes instead of double quotes', () => {
-			expect(isValidJson("{'key': 'value'}")).toBe(false);
+			expect(StringTools.isValidJson("{'key': 'value'}")).toBe(false);
 		});
 
 		it('should return false for empty string', () => {
-			expect(isValidJson('')).toBe(false);
+			expect(StringTools.isValidJson('')).toBe(false);
 		});
 
 		it('should return false for random text', () => {
-			expect(isValidJson('not json at all')).toBe(false);
+			expect(StringTools.isValidJson('not json at all')).toBe(false);
 		});
 
 		it('should return false for undefined keywords', () => {
-			expect(isValidJson('undefined')).toBe(false);
+			expect(StringTools.isValidJson('undefined')).toBe(false);
 		});
 
 		it('should handle whitespace in valid JSON', () => {
-			expect(isValidJson('  {"key": "value"}  ')).toBe(true);
+			expect(StringTools.isValidJson('  {"key": "value"}  ')).toBe(true);
 		});
 
 		it('should handle newlines in valid JSON', () => {
-			expect(isValidJson('{\n  "key": "value"\n}')).toBe(true);
+			expect(StringTools.isValidJson('{\n  "key": "value"\n}')).toBe(true);
 		});
 	});
 
@@ -235,52 +236,52 @@ describe('Helpers', () => {
 
 	describe('escapeRegex', () => {
 		it('should escape dot', () => {
-			expect(escapeRegex('.')).toBe('\\.');
+			expect(StringTools.escapeRegex('.')).toBe('\\.');
 		});
 
 		it('should escape asterisk', () => {
-			expect(escapeRegex('*')).toBe('\\*');
+			expect(StringTools.escapeRegex('*')).toBe('\\*');
 		});
 
 		it('should escape plus', () => {
-			expect(escapeRegex('+')).toBe('\\+');
+			expect(StringTools.escapeRegex('+')).toBe('\\+');
 		});
 
 		it('should escape question mark', () => {
-			expect(escapeRegex('?')).toBe('\\?');
+			expect(StringTools.escapeRegex('?')).toBe('\\?');
 		});
 
 		it('should escape caret', () => {
-			expect(escapeRegex('^')).toBe('\\^');
+			expect(StringTools.escapeRegex('^')).toBe('\\^');
 		});
 
 		it('should escape dollar sign', () => {
-			expect(escapeRegex('$')).toBe('\\$');
+			expect(StringTools.escapeRegex('$')).toBe('\\$');
 		});
 
 		it('should escape curly braces', () => {
-			expect(escapeRegex('{}')).toBe('\\{\\}');
+			expect(StringTools.escapeRegex('{}')).toBe('\\{\\}');
 		});
 
 		it('should escape parentheses', () => {
-			expect(escapeRegex('()')).toBe('\\(\\)');
+			expect(StringTools.escapeRegex('()')).toBe('\\(\\)');
 		});
 
 		it('should escape pipe', () => {
-			expect(escapeRegex('|')).toBe('\\|');
+			expect(StringTools.escapeRegex('|')).toBe('\\|');
 		});
 
 		it('should escape square brackets', () => {
-			expect(escapeRegex('[]')).toBe('\\[\\]');
+			expect(StringTools.escapeRegex('[]')).toBe('\\[\\]');
 		});
 
 		it('should escape backslash', () => {
-			expect(escapeRegex('\\')).toBe('\\\\');
+			expect(StringTools.escapeRegex('\\')).toBe('\\\\');
 		});
 
 		it('should escape all special regex characters at once', () => {
 			const input = '.*+?^${}()|[]\\';
-			const escaped = escapeRegex(input);
+			const escaped = StringTools.escapeRegex(input);
 
 			// Should be able to use in RegExp without error
 			expect(() => new RegExp(escaped)).not.toThrow();
@@ -291,12 +292,12 @@ describe('Helpers', () => {
 		});
 
 		it('should not escape normal characters', () => {
-			expect(escapeRegex('abc123')).toBe('abc123');
+			expect(StringTools.escapeRegex('abc123')).toBe('abc123');
 		});
 
 		it('should handle mixed text with special characters', () => {
 			const input = 'file.*.txt';
-			const escaped = escapeRegex(input);
+			const escaped = StringTools.escapeRegex(input);
 
 			expect(escaped).toBe('file\\.\\*\\.txt');
 
@@ -306,12 +307,12 @@ describe('Helpers', () => {
 		});
 
 		it('should handle empty string', () => {
-			expect(escapeRegex('')).toBe('');
+			expect(StringTools.escapeRegex('')).toBe('');
 		});
 
 		it('should handle string with only special characters', () => {
 			const input = '???***';
-			const escaped = escapeRegex(input);
+			const escaped = StringTools.escapeRegex(input);
 
 			expect(escaped).toBe('\\?\\?\\?\\*\\*\\*');
 		});
@@ -320,7 +321,7 @@ describe('Helpers', () => {
 			const patterns = ['.*', 'a+', 'b?', '^start', 'end$', '(group)'];
 
 			patterns.forEach(pattern => {
-				const escaped = escapeRegex(pattern);
+				const escaped = StringTools.escapeRegex(pattern);
 				const regex = new RegExp(escaped);
 
 				// Should match the literal pattern string, not behave as regex

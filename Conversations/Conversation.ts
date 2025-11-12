@@ -1,4 +1,4 @@
-import { dateToString } from "Helpers/Helpers";
+import { StringTools } from "Helpers/StringTools";
 import { ConversationContent } from "./ConversationContent";
 
 export class Conversation {
@@ -13,7 +13,7 @@ export class Conversation {
     constructor() {
         this.created = new Date();
         this.updated = new Date();
-        this.title = `${dateToString(this.created)}`;
+        this.title = `${StringTools.dateToString(this.created)}`;
     }
     
     public static isConversationData(data: unknown): data is { title: string; created: string; updated: string; contents: ConversationContent[] } {

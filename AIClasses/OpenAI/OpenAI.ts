@@ -11,10 +11,10 @@ import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFun
 import type VaultkeeperAIPlugin from "main";
 import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
 import { Role } from "Enums/Role";
-import { isValidJson } from "Helpers/Helpers";
 import type { SettingsService } from "Services/SettingsService";
 import type { StoredFunctionCall, StoredFunctionResponse } from "AIClasses/Schemas/AIFunctionTypes";
 import type { ChatCompletionChunk, ChatCompletionTool } from "openai/resources/chat/completions";
+import { StringTools } from "Helpers/StringTools";
 
 interface IToolCallAccumulator {
     id: string | null;
@@ -62,7 +62,7 @@ export class OpenAI implements IAIClass {
                 const contentToExtract = content.role === Role.User ? content.promptContent : content.content;
                 // Handle function call
                 if (content.isFunctionCall && content.functionCall.trim() !== "") {
-                    if (isValidJson(content.functionCall)) {
+                    if (StringTools.isValidJson(content.functionCall)) {
                         try {
                             const parsedContent = JSON.parse(content.functionCall) as StoredFunctionCall;
                             return {
@@ -98,7 +98,7 @@ export class OpenAI implements IAIClass {
 
                 // Handle function response
                 if (content.isFunctionCallResponse && contentToExtract.trim() !== "") {
-                    if (isValidJson(contentToExtract)) {
+                    if (StringTools.isValidJson(contentToExtract)) {
                         try {
                             const parsedContent = JSON.parse(contentToExtract) as StoredFunctionResponse;
                             return {

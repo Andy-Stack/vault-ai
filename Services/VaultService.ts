@@ -3,7 +3,8 @@ import { Resolve } from "./DependencyService";
 import { Services } from "./Services";
 import type VaultkeeperAIPlugin from "main";
 import { Path } from "Enums/Path";
-import { escapeRegex, randomSample } from "Helpers/Helpers";
+import { randomSample } from "Helpers/Helpers";
+import { StringTools } from "Helpers/StringTools";
 import type { ISearchMatch, ISearchSnippet } from "../Helpers/SearchTypes";
 import type { SanitiserService } from "./SanitiserService";
 import { FileEvent } from "Enums/FileEvent";
@@ -198,16 +199,21 @@ export class VaultService {
     }
 
     public async searchVaultFiles(searchTerm: string, allowAccessToPluginRoot: boolean = false): Promise<ISearchMatch[]> {
-        let regex: RegExp;
-        try {
-            regex = new RegExp(searchTerm, "ig");
-        } catch {
-            regex = new RegExp(escapeRegex(searchTerm), "ig");
+        const allMatches: ISearchMatch[] = [];
+
+        if (searchTerm.trim() === "") {
+            return allMatches;
+        }
+        
+        // Always ensure 'g' flag is present for extractSnippets to work correctly
+        // (regex.exec in a loop requires 'g' flag to advance, otherwise infinite loop)
+        const regex = StringTools.asRegex(searchTerm, ["i", "g"]);
+
+        if (regex === null) {
+            return allMatches;
         }
 
         const files: TFile[] = await this.listFilesInDirectory(Path.Root, true, allowAccessToPluginRoot);
-
-        const allMatches: ISearchMatch[] = [];
 
         for (const file of files) {
             const content = await this.vault.cachedRead(file);

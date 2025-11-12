@@ -11,12 +11,12 @@ import { fromString as aiFunctionFromString } from "Enums/AIFunction";
 import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFunctionDefinition";
 import type VaultkeeperAIPlugin from "main";
 import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
-import { isValidJson } from "Helpers/Helpers";
 import type { ConversationContent } from "Conversations/ConversationContent";
 import type { SettingsService } from "Services/SettingsService";
 import type { StoredFunctionCall, StoredFunctionResponse } from "AIClasses/Schemas/AIFunctionTypes";
 import type { Candidate, Part, FunctionDeclaration } from "@google/genai";
 import { FinishReason } from "@google/genai";
+import { StringTools } from "Helpers/StringTools";
 
 export class Gemini implements IAIClass {
 
@@ -166,7 +166,7 @@ export class Gemini implements IAIClass {
 
         if (contentToExtract.trim() !== "") {
           if (content.isFunctionCallResponse) {
-            if (isValidJson(contentToExtract)) {
+            if (StringTools.isValidJson(contentToExtract)) {
               try {
                 const parsedContent = JSON.parse(contentToExtract) as StoredFunctionResponse;
                 if (parsedContent.functionResponse) {
@@ -193,7 +193,7 @@ export class Gemini implements IAIClass {
         }
 
         if (content.isFunctionCall && content.functionCall.trim() !== "") {
-          if (isValidJson(content.functionCall)) {
+          if (StringTools.isValidJson(content.functionCall)) {
             try {
               const parsedContent = JSON.parse(content.functionCall) as StoredFunctionCall;
               if (parsedContent.functionCall) {

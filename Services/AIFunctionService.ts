@@ -113,7 +113,7 @@ export class AIFunctionService {
         const results: { searchTerm: string, results: object[] }[] = [];
 
         for (const searchTerm of searchTerms) {
-            const matches: ISearchMatch[] = searchTerm.trim() === "" ? [] : await this.fileSystemService.searchVaultFiles(searchTerm);
+            const matches: ISearchMatch[] = await this.fileSystemService.searchVaultFiles(searchTerm);
             results.push({
                 searchTerm: searchTerm,
                 results: matches.map(match => ({

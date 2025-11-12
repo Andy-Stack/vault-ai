@@ -9,12 +9,12 @@ import { AIFunctionCall } from "AIClasses/AIFunctionCall";
 import { fromString as aiFunctionFromString } from "Enums/AIFunction";
 import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFunctionDefinition";
 import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
-import { isValidJson } from "Helpers/Helpers";
 import type { ConversationContent } from "Conversations/ConversationContent";
 import { Role } from "Enums/Role";
 import type { SettingsService } from "Services/SettingsService";
 import type { RawMessageStreamEvent, ContentBlockParam, Tool } from '@anthropic-ai/sdk/resources/messages';
 import type { StoredFunctionCall, StoredFunctionResponse } from "AIClasses/Schemas/AIFunctionTypes";
+import { StringTools } from "Helpers/StringTools";
 
 export class Claude implements IAIClass {
 
@@ -172,7 +172,7 @@ export class Claude implements IAIClass {
 
                 // Add function call if present
                 if (content.isFunctionCall && content.functionCall.trim() !== "") {
-                    if (isValidJson(content.functionCall)) {
+                    if (StringTools.isValidJson(content.functionCall)) {
                         try {
                             const parsedContent = JSON.parse(content.functionCall) as StoredFunctionCall;
 
@@ -213,7 +213,7 @@ export class Claude implements IAIClass {
 
                 // Add function response if present
                 if (content.isFunctionCallResponse && contentToExtract.trim() !== "") {
-                    if (isValidJson(contentToExtract)) {
+                    if (StringTools.isValidJson(contentToExtract)) {
                         try {
                             const parsedContent = JSON.parse(contentToExtract) as StoredFunctionResponse;
 

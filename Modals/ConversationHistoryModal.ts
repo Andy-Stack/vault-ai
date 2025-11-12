@@ -6,7 +6,7 @@ import { Resolve } from 'Services/DependencyService';
 import { Services } from 'Services/Services';
 import type { ConversationFileSystemService } from 'Services/ConversationFileSystemService';
 import type { FileSystemService } from 'Services/FileSystemService';
-import { dateToString } from 'Helpers/Helpers';
+import { StringTools } from "Helpers/StringTools";
 import { conversationStore } from 'Stores/ConversationStore';
 import { Selector } from 'Enums/Selector';
 import type { ChatService } from 'Services/ChatService';
@@ -50,7 +50,7 @@ export class ConversationHistoryModal extends Modal {
             const filePath = this.conversationFileSystemService.generateConversationPath(conversation);
             return {
                 id: filePath,
-                date: dateToString(conversation.created, false),
+                date: StringTools.dateToString(conversation.created, false),
                 updated: conversation.updated,
                 title: conversation.title,
                 selected: false,

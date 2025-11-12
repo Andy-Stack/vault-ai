@@ -7,35 +7,6 @@ export function openPluginSettings(plugin: VaultkeeperAIPlugin) {
     plugin.app.setting.openTabById(plugin.manifest.id);
 }
 
-export function isValidJson(str: string): boolean {
-    try {
-        JSON.parse(str);
-    } catch {
-        return false;
-    }
-    return true;
-}
-
-export function dateToString(date: Date, includeTime: boolean = true): string {
-    if (includeTime) {
-        return date.toLocaleString('sv-SE', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        }).replace(/[:\s]/g, '-');
-    } else {
-        return date.toLocaleDateString('sv-SE', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).replace(/[:\s]/g, '-');
-    }
-}
-
-
 export function randomSample<T>(array: T[], n: number): T[] {
     const result: T[] = [];
     const taken = new Set<number>();
@@ -49,8 +20,4 @@ export function randomSample<T>(array: T[], n: number): T[] {
     }
 
     return result;
-}
-
-export function escapeRegex(string: string): string {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

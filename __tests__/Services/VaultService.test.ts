@@ -906,6 +906,104 @@ describe('VaultService - Integration Tests', () => {
 			// Should find all three variants
 		});
 
+		it('should parse regex literal with case-insensitive flag', async () => {
+			const file = createMockFile('note.md');
+			const folder = createMockFolder('/', [file]);
+
+			mockVault.getAbstractFileByPath.mockReturnValue(folder);
+			mockVault.cachedRead.mockResolvedValue('This note contains information about MAUI development');
+
+			// Build the regex pattern string to avoid vitest transformer issues
+			const pattern = '/' + 'maui' + '/' + 'i';
+			const results = await vaultService.searchVaultFiles(pattern);
+
+			expect(results.length).toBeGreaterThan(0);
+			const match = results.find(r => r.file.path === 'note.md');
+			expect(match).toBeDefined();
+			expect(match!.snippets.length).toBeGreaterThan(0);
+			expect(match!.snippets[0].text).toContain('MAUI');
+		});
+
+		it('should parse regex with word boundary patterns', async () => {
+			const file = createMockFile('note.md');
+			const folder = createMockFolder('/', [file]);
+
+			mockVault.getAbstractFileByPath.mockReturnValue(folder);
+			mockVault.cachedRead.mockResolvedValue('docker dockerfiles and dockers');
+
+			// Should match only whole word "docker", not "dockers" or "dockerfiles"
+			const pattern = '/' + '\\b' + 'docker' + '\\b' + '/' + 'i';
+			const results = await vaultService.searchVaultFiles(pattern);
+
+			expect(results.length).toBeGreaterThan(0);
+			const match = results.find(r => r.file.path === 'note.md');
+			expect(match).toBeDefined();
+		});
+
+		it('should parse regex with alternation patterns', async () => {
+			const file = createMockFile('note.md');
+			const folder = createMockFolder('/', [file]);
+
+			mockVault.getAbstractFileByPath.mockReturnValue(folder);
+			mockVault.cachedRead.mockResolvedValue('I prefer gray over grey');
+
+			// Should match both "gray" and "grey"
+			const pattern = '/' + 'gr(a|e)y' + '/' + 'i';
+			const results = await vaultService.searchVaultFiles(pattern);
+
+			expect(results.length).toBeGreaterThan(0);
+			const match = results.find(r => r.file.path === 'note.md');
+			expect(match).toBeDefined();
+		});
+
+		it('should parse regex with optional characters', async () => {
+			const file = createMockFile('note.md');
+			const folder = createMockFolder('/', [file]);
+
+			mockVault.getAbstractFileByPath.mockReturnValue(folder);
+			mockVault.cachedRead.mockResolvedValue('kubernetes k8s and kube configurations');
+
+			// Should match kubernetes, k8s, or kube
+			const pattern = '/' + '(kubernetes|k8s|kube)' + '/' + 'i';
+			const results = await vaultService.searchVaultFiles(pattern);
+
+			expect(results.length).toBeGreaterThan(0);
+			const match = results.find(r => r.file.path === 'note.md');
+			expect(match).toBeDefined();
+		});
+
+		it('should parse regex with wildcard sequences', async () => {
+			const file = createMockFile('note.md');
+			const folder = createMockFolder('/', [file]);
+
+			mockVault.getAbstractFileByPath.mockReturnValue(folder);
+			mockVault.cachedRead.mockResolvedValue('project alpha and proj_alpha are both valid');
+
+			// Should match "project alpha", "proj_alpha", "proj alpha", etc.
+			const pattern = '/' + 'proj.*alpha' + '/' + 'i';
+			const results = await vaultService.searchVaultFiles(pattern);
+
+			expect(results.length).toBeGreaterThan(0);
+			const match = results.find(r => r.file.path === 'note.md');
+			expect(match).toBeDefined();
+		});
+
+		it('should parse regex with character classes', async () => {
+			const file = createMockFile('note.md');
+			const folder = createMockFolder('/', [file]);
+
+			mockVault.getAbstractFileByPath.mockReturnValue(folder);
+			mockVault.cachedRead.mockResolvedValue('Version v1.2 and v10.5 released');
+
+			// Should match version numbers like v1.2, v10.5, etc.
+			const pattern = '/' + 'v\\d+\\.\\d+' + '/';
+			const results = await vaultService.searchVaultFiles(pattern);
+
+			expect(results.length).toBeGreaterThan(0);
+			const match = results.find(r => r.file.path === 'note.md');
+			expect(match).toBeDefined();
+		});
+
 		it('should not log errors when vault contains excluded directories', async () => {
 			// Setup: Create a vault structure with excluded "Vaultkeeper AI" directory
 			const normalFile = createMockFile('notes/document.md');

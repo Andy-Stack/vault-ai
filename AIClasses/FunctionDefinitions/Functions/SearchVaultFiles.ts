@@ -19,7 +19,7 @@ export const SearchVaultFiles: IAIFunctionDefinition = {
         items: {
           type: "string"
         },
-        description: `Array of regex patterns to search for in vault files. Each pattern supports both simple text searches (e.g., 'meeting notes', 'project alpha') and advanced regex patterns (e.g., '(urgent|important)', '\\d{4}-\\d{2}-\\d{2}' for dates). Files matching ANY of the search terms will be returned (OR logic). The search is performed on both file names and content. Examples: ['meeting', 'project'] or ['TODO', 'FIXME', 'urgent'] or ['\\d{4}-\\d{2}-\\d{2}', 'deadline']. Use empty array [] to return all vault files.`,
+        description: "Search patterns for vault files (searches both names and content). Supports plain text (case-insensitive) or regex literals with /pattern/flags format. Examples: \"meeting notes\", /\\bproject\\b/i, /(k8s|kubernetes)/i. Returns files matching ANY term (OR logic).",
       },
       user_message: {
         type: "string",

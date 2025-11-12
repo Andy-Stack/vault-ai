@@ -1,9 +1,9 @@
 import { TAbstractFile, TFile, TFolder } from "obsidian";
 import { Resolve } from "./DependencyService";
 import { Services } from "./Services";
-import { isValidJson } from "Helpers/Helpers";
 import type { VaultService } from "./VaultService";
 import type { ISearchMatch } from "../Helpers/SearchTypes";
+import { StringTools } from "Helpers/StringTools";
 
 export class FileSystemService {
     
@@ -73,7 +73,7 @@ export class FileSystemService {
         const file: TAbstractFile | null = this.vaultService.getAbstractFileByPath(filePath, allowAccessToPluginRoot);
         if (file && file instanceof TFile) {
             const content = await this.vaultService.read(file, allowAccessToPluginRoot);
-            if (isValidJson(content) === true) {
+            if (StringTools.isValidJson(content) === true) {
                 return JSON.parse(content) as object;
             }
         }
