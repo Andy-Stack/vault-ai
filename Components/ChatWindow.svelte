@@ -90,8 +90,6 @@
   }
 
   async function handleSubmit(userRequest: string, formattedRequest: string) {
-    focusInput();
-
     if (handleNoApiKey()) {
       return;
     }

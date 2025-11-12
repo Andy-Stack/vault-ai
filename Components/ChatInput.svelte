@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { setIcon } from "obsidian";
+  import { Platform, setIcon } from "obsidian";
 	import type { UserInputService } from "Services/UserInputService";
 	import type { ISearchState, SearchStateStore } from "Stores/SearchStateStore";
 	import { Resolve } from "Services/DependencyService";
@@ -64,6 +64,12 @@
 
     textareaElement.textContent = "";
     userRequest = "";
+
+    if (Platform.isMobile) {
+      textareaElement.blur();
+    } else {
+      focusInput();
+    }
 
     onsubmit(request, formattedRequest);
   }
