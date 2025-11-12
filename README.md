@@ -33,7 +33,7 @@
 3. Reload Obsidian
 4. Enable "Vaultkeeper AI" in Settings → Community Plugins
 
-### From Community Plugins
+### From Community Plugins (Plugin has not yet been reviewed and accepted - hopefully coming soon)
 
 1. Open Obsidian Settings
 2. Navigate to Community Plugins
@@ -311,6 +311,7 @@ This plugin is built on the shoulders of many excellent projects:
 - [fuzzysort](https://github.com/farzher/fuzzysort) - Fuzzy search for reference autocomplete
 - [gpt-tokenizer](https://github.com/niieani/gpt-tokenizer) - Token counting and usage tracking
 - [Zod](https://github.com/colinhacks/zod) - TypeScript-first schema validation
+- [regex-parser](https://github.com/IonicaBizau/regex-parser.js) - Parses a string as regular expression
 
 **Development**
 - [Vitest](https://vitest.dev/) - Fast unit testing framework
