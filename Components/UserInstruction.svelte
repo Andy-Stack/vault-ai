@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Copy } from "Enums/Copy";
 	import { Path } from "Enums/Path";
-	import type VaultkeeperAIPlugin from "main";
 	import { HelpModal } from "Modals/HelpModal";
 	import { basename } from "path-browserify";
 	import { Resolve } from "Services/DependencyService";
@@ -10,9 +9,9 @@
 	import { Services } from "Services/Services";
 	import { tick } from "svelte";
 
+    export let focusInput: () => void;
     export let userInstructionActive: boolean;
 
-    const plugin: VaultkeeperAIPlugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
     const settingsService: SettingsService = Resolve<SettingsService>(Services.SettingsService);
     const fileSystemService: FileSystemService = Resolve<FileSystemService>(Services.FileSystemService);
 
@@ -79,12 +78,15 @@
         });
     }
 
-    function handleInstructionSelect() {
+    function handleInstructionSelect(e?: MouseEvent) {
         if (selectedInstruction < userInstructions.length) {
             settingsService.settings.userInstruction = userInstructions[selectedInstruction];
             settingsService.saveSettings();
         }
         userInstructionActive = false;
+
+        e?.preventDefault();
+        focusInput();
     }
 
     async function handleKeydown(e: KeyboardEvent) {

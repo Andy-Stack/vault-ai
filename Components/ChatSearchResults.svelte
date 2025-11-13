@@ -41,7 +41,7 @@
             case SearchTrigger.Tag:
                 return "tag";
             default:
-                return "file-text";
+                return "file-question-mark";
         }
     }
 

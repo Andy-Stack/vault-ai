@@ -166,7 +166,7 @@
     }
   }
 
-  function handleSearchResultAcceptance() {
+  function handleSearchResultAcceptance(e?: MouseEvent) {
     if ($searchState.selectedResult !== "" && $searchState.position != null && $searchState.trigger != null) {
       const node = toNode($searchState.trigger, $searchState.selectedResult);
 
@@ -174,6 +174,9 @@
       inputService.insertElementAtCursor(node, textareaElement);
     }
     searchStateStore.resetSearch();
+
+    e?.preventDefault();
+    focusInput();
   }
 
   function handleInput() {
@@ -269,7 +272,7 @@
   </div>
 
   <div id="user-instruction-container" style:padding-top={userInstructionActive ? "var(--size-4-2)" : 0}>
-    <UserInstruction bind:userInstructionActive={userInstructionActive}/>
+    <UserInstruction focusInput={focusInput} bind:userInstructionActive={userInstructionActive}/>
   </div>
 
   <button
