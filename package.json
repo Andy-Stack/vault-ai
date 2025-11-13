@@ -45,7 +45,7 @@
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.68.0",
-		"@google/genai": "^1.29.0",
+		"@google/genai": "^1.29.1",
 		"@shikijs/rehype": "^3.15.0",
 		"core-js": "^3.46.0",
 		"express": "^5.1.0",
@@ -54,7 +54,7 @@
 		"highlight.js": "^11.11.1",
 		"katex": "^0.16.25",
 		"lowlight": "^3.3.0",
-		"openai": "^6.8.1",
+		"openai": "^6.9.0",
 		"path-browserify": "^1.0.1",
 		"regex-parser": "^2.3.1",
 		"rehype-highlight": "^7.0.2",

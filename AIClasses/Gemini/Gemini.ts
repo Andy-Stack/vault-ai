@@ -9,7 +9,6 @@ import { AIProvider, AIProviderURL } from "Enums/ApiProvider";
 import { AIFunctionCall } from "AIClasses/AIFunctionCall";
 import { fromString as aiFunctionFromString } from "Enums/AIFunction";
 import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFunctionDefinition";
-import type VaultkeeperAIPlugin from "main";
 import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
 import type { ConversationContent } from "Conversations/ConversationContent";
 import type { SettingsService } from "Services/SettingsService";
@@ -24,7 +23,6 @@ export class Gemini implements IAIClass {
 
   private readonly apiKey: string;
   private readonly aiPrompt: IPrompt = Resolve<IPrompt>(Services.IPrompt);
-  private readonly plugin: VaultkeeperAIPlugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
   private readonly settingsService: SettingsService = Resolve<SettingsService>(Services.SettingsService);
   private readonly streamingService: StreamingService = Resolve<StreamingService>(Services.StreamingService);
   private readonly aiFunctionDefinitions: AIFunctionDefinitions = Resolve<AIFunctionDefinitions>(Services.AIFunctionDefinitions);

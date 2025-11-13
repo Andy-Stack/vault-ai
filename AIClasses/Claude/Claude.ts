@@ -48,9 +48,13 @@ export class Claude implements IAIClass {
 
         const messages = this.extractContents(conversation.contents);
 
-        const tools = this.mapFunctionDefinitions(
+        const tools = [{
+            type: "web_search_20250305",
+            name: "web_search",
+            max_uses: 5
+        }, ...this.mapFunctionDefinitions(
             this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)
-        );
+        )];
 
         const requestBody = {
             model: this.settingsService.settings.model,
