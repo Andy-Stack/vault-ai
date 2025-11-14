@@ -50,11 +50,25 @@ describe('OpenAIConversationNamingService', () => {
     });
 
     describe('generateName', () => {
-        it('should make request with correct format', async () => {
+        it('should make request with correct Responses API format', async () => {
             fetchMock.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    choices: [{ message: { content: 'Test Conversation' } }]
+                    id: 'resp_123',
+                    created_at: 1234567890,
+                    output_text: 'Test Conversation',
+                    error: null,
+                    incomplete_details: null,
+                    instructions: null,
+                    metadata: null,
+                    model: AIProviderModel.OpenAINamer,
+                    object: 'response',
+                    parallel_tool_calls: true,
+                    temperature: null,
+                    tool_choice: 'auto',
+                    tools: [],
+                    top_p: null,
+                    output: []
                 })
             });
 
@@ -74,19 +88,75 @@ describe('OpenAIConversationNamingService', () => {
 
             const requestBody = JSON.parse(fetchMock.mock.calls[0][1].body);
             expect(requestBody.model).toBe(AIProviderModel.OpenAINamer);
-            expect(requestBody.max_tokens).toBe(100);
-            expect(requestBody.messages).toHaveLength(2);
-            expect(requestBody.messages[0].role).toBe(Role.System);
-            expect(requestBody.messages[0].content).toBeDefined();
-            expect(requestBody.messages[1].role).toBe(Role.User);
-            expect(requestBody.messages[1].content).toBe('User prompt');
+            expect(requestBody.max_output_tokens).toBe(100);
+            expect(requestBody.instructions).toBeDefined();
+            expect(requestBody.input).toHaveLength(1);
+            expect(requestBody.input[0].role).toBe(Role.User);
+            expect(requestBody.input[0].content).toBe('User prompt');
+            expect(requestBody.stream).toBe(false);
+            expect(requestBody.messages).toBeUndefined();
         });
 
-        it('should return generated name from response', async () => {
+        it('should return generated name from output_text', async () => {
             fetchMock.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    choices: [{ message: { content: 'Generated Name' } }]
+                    id: 'resp_123',
+                    created_at: 1234567890,
+                    output_text: 'Generated Name',
+                    error: null,
+                    incomplete_details: null,
+                    instructions: null,
+                    metadata: null,
+                    model: AIProviderModel.OpenAINamer,
+                    object: 'response',
+                    parallel_tool_calls: true,
+                    temperature: null,
+                    tool_choice: 'auto',
+                    tools: [],
+                    top_p: null,
+                    output: []
+                })
+            });
+
+            const result = await service.generateName('Test prompt', undefined);
+
+            expect(result).toBe('Generated Name');
+        });
+
+        it('should return generated name from output array', async () => {
+            fetchMock.mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    id: 'resp_123',
+                    created_at: 1234567890,
+                    output_text: '',
+                    error: null,
+                    incomplete_details: null,
+                    instructions: null,
+                    metadata: null,
+                    model: AIProviderModel.OpenAINamer,
+                    object: 'response',
+                    parallel_tool_calls: true,
+                    temperature: null,
+                    tool_choice: 'auto',
+                    tools: [],
+                    top_p: null,
+                    output: [
+                        {
+                            id: 'msg_1',
+                            type: 'message',
+                            role: 'assistant',
+                            status: 'completed',
+                            content: [
+                                {
+                                    type: 'output_text',
+                                    text: 'Generated Name',
+                                    annotations: []
+                                }
+                            ]
+                        }
+                    ]
                 })
             });
 
@@ -111,7 +181,9 @@ describe('OpenAIConversationNamingService', () => {
             fetchMock.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    choices: []
+                    id: 'resp_123',
+                    status: 'completed',
+                    output: []
                 })
             });
 
@@ -125,7 +197,21 @@ describe('OpenAIConversationNamingService', () => {
             fetchMock.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    choices: [{ message: { content: 'Name' } }]
+                    id: 'resp_123',
+                    created_at: 1234567890,
+                    output_text: 'Name',
+                    error: null,
+                    incomplete_details: null,
+                    instructions: null,
+                    metadata: null,
+                    model: AIProviderModel.OpenAINamer,
+                    object: 'response',
+                    parallel_tool_calls: true,
+                    temperature: null,
+                    tool_choice: 'auto',
+                    tools: [],
+                    top_p: null,
+                    output: []
                 })
             });
 
@@ -143,8 +229,9 @@ describe('OpenAIConversationNamingService', () => {
             fetchMock.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    // Missing choices array
-                    other: 'data'
+                    id: 'resp_123',
+                    status: 'completed'
+                    // Missing output_text and output array
                 })
             });
 

@@ -39,7 +39,6 @@ export enum AIProviderModel {
     GPT_4o_Mini = "gpt-4o-mini",
     GPT_4_1 = "gpt-4.1",
     GPT_4_1_Mini = "gpt-4.1-mini",
-    GPT_4_1_Nano = "gpt-4.1-nano",
 
     // Conversation naming models (aliases to existing models)
     ClaudeNamer = ClaudeHaiku_4_5,
@@ -50,5 +49,5 @@ export enum AIProviderModel {
 export enum AIProviderURL {
     Claude = "https://api.anthropic.com/v1/messages",
     Gemini = "https://generativelanguage.googleapis.com/v1beta/models",
-    OpenAI = "https://api.openai.com/v1/chat/completions"
+    OpenAI = "https://api.openai.com/v1/responses"
 }

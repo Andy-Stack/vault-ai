@@ -26,7 +26,6 @@ export enum Copy {
     GPT_4o_Mini = "GPT-4o Mini",
     GPT_4_1 = "GPT-4.1",
     GPT_4_1_Mini = "GPT-4.1 Mini",
-    GPT_4_1_Nano = "GPT-4.1 Nano",
 
     // AI Provider Groups
     ProviderClaude = "Claude",

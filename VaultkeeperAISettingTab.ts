@@ -93,10 +93,6 @@ export class VaultkeeperAISettingTab extends PluginSettingTab {
 					value: AIProviderModel.GPT_4_1_Mini,
 					text: Copy.GPT_4_1_Mini
 				});
-				openaiGroup.createEl("option", {
-					value: AIProviderModel.GPT_4_1_Nano,
-					text: Copy.GPT_4_1_Nano
-				});
 
 				// Gemini models group
 				const geminiGroup = select.createEl("optgroup", { attr: { label: Copy.ProviderGemini } });

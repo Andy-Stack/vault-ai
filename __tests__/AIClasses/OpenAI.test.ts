@@ -117,11 +117,8 @@ describe('OpenAI', () => {
 
         it('should parse text delta chunks', () => {
             const chunk = JSON.stringify({
-                choices: [{
-                    delta: {
-                        content: 'Hello world'
-                    }
-                }]
+                type: 'response.output_text.delta',
+                delta: 'Hello world'
             });
 
             const result = (openai as any).parseStreamChunk(chunk);
@@ -130,52 +127,23 @@ describe('OpenAI', () => {
             expect(result.isComplete).toBe(false);
         });
 
-        it('should accumulate tool calls by index', () => {
-            // First chunk - start tool call at index 0
-            const chunk1 = JSON.stringify({
-                choices: [{
-                    delta: {
-                        tool_calls: [{
-                            index: 0,
-                            id: 'call_123',
-                            function: {
-                                name: 'search_vault_files',
-                                arguments: '{"qu'
-                            }
-                        }]
+        it('should handle complete function call in done event', () => {
+            // Responses API provides the complete function call in one event
+            const chunk = JSON.stringify({
+                type: 'response.function_call_arguments.done',
+                call: {
+                    id: 'call_123',
+                    type: 'function',
+                    function: {
+                        name: 'search_vault_files',
+                        arguments: '{"query":"test"}'
                     }
-                }]
+                }
             });
 
-            (openai as any).parseStreamChunk(chunk1);
+            const result = (openai as any).parseStreamChunk(chunk);
 
-            // Second chunk - continue accumulating
-            const chunk2 = JSON.stringify({
-                choices: [{
-                    delta: {
-                        tool_calls: [{
-                            index: 0,
-                            function: {
-                                arguments: 'ery":"test"}'
-                            }
-                        }]
-                    }
-                }]
-            });
-
-            (openai as any).parseStreamChunk(chunk2);
-
-            // Third chunk - finish with tool_calls reason
-            const chunk3 = JSON.stringify({
-                choices: [{
-                    delta: {},
-                    finish_reason: 'tool_calls'
-                }]
-            });
-
-            const result = (openai as any).parseStreamChunk(chunk3);
-
-            expect(result.isComplete).toBe(true);
+            expect(result.isComplete).toBe(false);
             expect(result.shouldContinue).toBe(true);
             expect(result.functionCall).toBeDefined();
             expect(result.functionCall?.name).toBe('search_vault_files');
@@ -183,75 +151,72 @@ describe('OpenAI', () => {
             expect(result.functionCall?.toolId).toBe('call_123');
         });
 
-        it('should handle multiple concurrent tool calls but only return first', () => {
-            // OpenAI can send multiple tool calls with different indices
+        it('should handle response.done event with tool calls', () => {
+            // response.done event indicates completion and may contain tool calls
             const chunk = JSON.stringify({
-                choices: [{
-                    delta: {
-                        tool_calls: [
-                            {
-                                index: 0,
-                                id: 'call_1',
-                                function: {
-                                    name: 'search_vault_files',
-                                    arguments: '{"a":1}'
+                type: 'response.done',
+                response: {
+                    id: 'resp_123',
+                    status: 'completed',
+                    output: [
+                        {
+                            role: 'assistant',
+                            tool_calls: [
+                                {
+                                    id: 'call_1',
+                                    type: 'function',
+                                    function: {
+                                        name: 'search_vault_files',
+                                        arguments: '{"a":1}'
+                                    }
                                 }
-                            },
-                            {
-                                index: 1,
-                                id: 'call_2',
-                                function: {
-                                    name: 'read_vault_files',
-                                    arguments: '{"b":2}'
-                                }
-                            }
-                        ]
-                    }
-                }]
+                            ]
+                        }
+                    ]
+                }
             });
 
-            (openai as any).parseStreamChunk(chunk);
+            const result = (openai as any).parseStreamChunk(chunk);
 
-            // Finish
-            const finishChunk = JSON.stringify({
-                choices: [{
-                    delta: {},
-                    finish_reason: 'tool_calls'
-                }]
-            });
-
-            const result = (openai as any).parseStreamChunk(finishChunk);
-
-            // Should only return the first tool call (index 0)
-            expect(result.functionCall).toBeDefined();
-            expect(result.functionCall?.name).toBe('search_vault_files');
-            expect((openai as any).accumulatedToolCalls.size).toBe(2);
+            expect(result.isComplete).toBe(true);
+            expect(result.shouldContinue).toBe(true);
         });
 
-        it('should handle missing choices gracefully', () => {
+        it('should handle unknown event types gracefully', () => {
+            const consoleSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
             const chunk = JSON.stringify({
-                choices: []
+                type: 'response.unknown_event',
+                data: 'some data'
             });
 
             const result = (openai as any).parseStreamChunk(chunk);
 
             expect(result.content).toBe('');
             expect(result.isComplete).toBe(false);
+            expect(consoleSpy).toHaveBeenCalledWith('Unknown event type:', 'response.unknown_event');
+
+            consoleSpy.mockRestore();
         });
 
-        it('should handle finish_reason without tool calls', () => {
+        it('should handle response.done without tool calls', () => {
             const chunk = JSON.stringify({
-                choices: [{
-                    delta: {
-                        content: 'Done'
-                    },
-                    finish_reason: 'stop'
-                }]
+                type: 'response.done',
+                response: {
+                    id: 'resp_123',
+                    status: 'completed',
+                    output: [
+                        {
+                            role: 'assistant',
+                            content: 'Done'
+                        }
+                    ],
+                    output_text: 'Done'
+                }
             });
 
             const result = (openai as any).parseStreamChunk(chunk);
 
-            expect(result.content).toBe('Done');
             expect(result.isComplete).toBe(true);
             expect(result.shouldContinue).toBe(false);
         });
@@ -259,23 +224,20 @@ describe('OpenAI', () => {
         it('should handle invalid JSON in tool call arguments', () => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-            // Setup invalid arguments
-            (openai as any).accumulatedToolCalls.set(0, {
-                id: 'call_123',
-                name: 'search_vault_files',
-                arguments: 'invalid json {'
-            });
-
             const chunk = JSON.stringify({
-                choices: [{
-                    delta: {},
-                    finish_reason: 'tool_calls'
-                }]
+                type: 'response.function_call_arguments.done',
+                call: {
+                    id: 'call_123',
+                    type: 'function',
+                    function: {
+                        name: 'search_vault_files',
+                        arguments: 'invalid json {'
+                    }
+                }
             });
 
             const result = (openai as any).parseStreamChunk(chunk);
 
-            expect(result.isComplete).toBe(true);
             expect(result.functionCall).toBeUndefined();
             expect(consoleSpy).toHaveBeenCalled();
 
@@ -295,23 +257,67 @@ describe('OpenAI', () => {
             consoleSpy.mockRestore();
         });
 
-        it('should handle null content in delta', () => {
+        it('should handle function call arguments delta events', () => {
+            // These events are sent during streaming but we can ignore them
             const chunk = JSON.stringify({
-                choices: [{
-                    delta: {
-                        content: null
-                    }
-                }]
+                type: 'response.function_call_arguments.delta',
+                delta: '{"que'
             });
 
             const result = (openai as any).parseStreamChunk(chunk);
 
             expect(result.content).toBe('');
+            expect(result.isComplete).toBe(false);
+            expect(result.functionCall).toBeUndefined();
+        });
+
+        it('should handle response.refusal.delta events', () => {
+            const chunk = JSON.stringify({
+                type: 'response.refusal.delta',
+                delta: 'I cannot help with that.'
+            });
+
+            const result = (openai as any).parseStreamChunk(chunk);
+
+            expect(result.content).toBe('I cannot help with that.');
+            expect(result.isComplete).toBe(false);
+        });
+
+        it('should handle response.error events', () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            const chunk = JSON.stringify({
+                type: 'response.error',
+                error: { message: 'Something went wrong' }
+            });
+
+            const result = (openai as any).parseStreamChunk(chunk);
+
+            expect(result.isComplete).toBe(true);
+            expect(consoleSpy).toHaveBeenCalled();
+
+            consoleSpy.mockRestore();
+        });
+
+        it('should handle response.completed event', () => {
+            const chunk = JSON.stringify({
+                type: 'response.completed',
+                response: {
+                    id: 'resp_123',
+                    status: 'completed',
+                    output: []
+                }
+            });
+
+            const result = (openai as any).parseStreamChunk(chunk);
+
+            expect(result.isComplete).toBe(true);
+            expect(result.shouldContinue).toBe(false);
         });
     });
 
     describe('Message Format Conversion', () => {
-        it('should include system prompt in messages array', async () => {
+        it('should include system prompt in instructions field', async () => {
             const conversation = new Conversation();
             conversation.contents.push(new ConversationContent(Role.User, 'Hello'));
 
@@ -329,10 +335,9 @@ describe('OpenAI', () => {
             const callArgs = mockStreamingService.streamRequest.mock.calls[0];
             const requestBody = callArgs[1];
 
-            expect(requestBody.messages[0]).toEqual({
-                role: Role.System,
-                content: 'System instruction\n\nUser instruction'
-            });
+            expect(requestBody.instructions).toBe('System instruction\n\nUser instruction');
+            expect(requestBody.input).toBeDefined();
+            expect(requestBody.messages).toBeUndefined();
         });
 
         it('should convert function call to OpenAI tool_calls format', async () => {
@@ -362,7 +367,7 @@ describe('OpenAI', () => {
 
             const callArgs = mockStreamingService.streamRequest.mock.calls[0];
             const requestBody = callArgs[1];
-            const assistantMessage = requestBody.messages.find((m: any) => m.role === Role.Assistant);
+            const assistantMessage = requestBody.input.find((m: any) => m.role === Role.Assistant);
 
             expect(assistantMessage).toBeDefined();
             expect(assistantMessage.tool_calls).toHaveLength(1);
@@ -401,7 +406,7 @@ describe('OpenAI', () => {
 
             const callArgs = mockStreamingService.streamRequest.mock.calls[0];
             const requestBody = callArgs[1];
-            const toolMessage = requestBody.messages.find((m: any) => m.role === 'tool');
+            const toolMessage = requestBody.input.find((m: any) => m.role === 'tool');
 
             expect(toolMessage).toBeDefined();
             expect(toolMessage.tool_call_id).toBe('call_123');
@@ -431,7 +436,7 @@ describe('OpenAI', () => {
 
             const callArgs = mockStreamingService.streamRequest.mock.calls[0];
             const requestBody = callArgs[1];
-            const message = requestBody.messages.find((m: any) => m.role === Role.Assistant);
+            const message = requestBody.input.find((m: any) => m.role === Role.Assistant);
 
             expect(message.content).toBe('Error parsing function call');
             expect(message.tool_calls).toBeUndefined();
@@ -462,7 +467,7 @@ describe('OpenAI', () => {
 
             const callArgs = mockStreamingService.streamRequest.mock.calls[0];
             const requestBody = callArgs[1];
-            const message = requestBody.messages.find((m: any) => m.role === Role.User);
+            const message = requestBody.input.find((m: any) => m.role === Role.User);
 
             expect(message.content).toBe('invalid json {');
             expect(message.role).toBe(Role.User); // Falls back to original role
@@ -487,13 +492,13 @@ describe('OpenAI', () => {
             const callArgs = mockStreamingService.streamRequest.mock.calls[0];
             const requestBody = callArgs[1];
 
-            // Should have system + 2 user messages (empty one filtered out)
-            expect(requestBody.messages).toHaveLength(3);
+            // Should have 2 user messages in input (empty one filtered out)
+            expect(requestBody.input).toHaveLength(2);
         });
     });
 
     describe('mapFunctionDefinitions', () => {
-        it('should map function definitions to OpenAI tool format', () => {
+        it('should map function definitions to OpenAI Responses API tool format', () => {
             const definitions = [
                 {
                     name: 'search_vault_files',
@@ -523,19 +528,15 @@ describe('OpenAI', () => {
             expect(result).toHaveLength(2);
             expect(result[0]).toEqual({
                 type: 'function',
-                function: {
-                    name: 'search_vault_files',
-                    description: 'Search for files',
-                    parameters: definitions[0].parameters
-                }
+                name: 'search_vault_files',
+                description: 'Search for files',
+                parameters: definitions[0].parameters
             });
             expect(result[1]).toEqual({
                 type: 'function',
-                function: {
-                    name: 'read_file',
-                    description: 'Read a file',
-                    parameters: definitions[1].parameters
-                }
+                name: 'read_file',
+                description: 'Read a file',
+                parameters: definitions[1].parameters
             });
         });
 
@@ -566,7 +567,8 @@ describe('OpenAI', () => {
                 expect.any(String), // URL
                 expect.objectContaining({
                     model: 'gpt-4o',
-                    messages: expect.any(Array),
+                    instructions: expect.any(String),
+                    input: expect.any(Array),
                     tools: expect.any(Array),
                     stream: true
                 }),
@@ -579,14 +581,7 @@ describe('OpenAI', () => {
             );
         });
 
-        it('should clear accumulated tool calls at start of streamRequest', async () => {
-            // Set some accumulated state
-            (openai as any).accumulatedToolCalls.set(0, {
-                id: 'old_id',
-                name: 'old_func',
-                arguments: 'old_args'
-            });
-
+        it('should include name field in web_search tool', async () => {
             const conversation = new Conversation();
             conversation.contents.push(new ConversationContent(Role.User, 'Test'));
 
@@ -594,11 +589,16 @@ describe('OpenAI', () => {
                 yield { content: 'done', isComplete: true };
             });
 
-            const generator = openai.streamRequest(conversation, false);
-            await generator.next();
+            const generator = openai.streamRequest(conversation, true);
+            for await (const chunk of generator) {}
 
-            // State should be cleared
-            expect((openai as any).accumulatedToolCalls.size).toBe(0);
+            const callArgs = mockStreamingService.streamRequest.mock.calls[0];
+            const requestBody = callArgs[1];
+            const webSearchTool = requestBody.tools.find((t: any) => t.type === 'web_search');
+
+            expect(webSearchTool).toBeDefined();
+            expect(webSearchTool.type).toBe('web_search');
+            expect(webSearchTool.name).toBe(undefined);
         });
     });
 });

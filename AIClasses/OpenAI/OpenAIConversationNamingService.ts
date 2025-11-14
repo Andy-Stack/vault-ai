@@ -5,7 +5,7 @@ import { AIProvider, AIProviderURL, AIProviderModel } from "Enums/ApiProvider";
 import { Role } from "Enums/Role";
 import { NamePrompt } from "AIClasses/NamePrompt";
 import type { SettingsService } from "Services/SettingsService";
-import type { ChatCompletion } from "openai/resources/chat/completions";
+import type OpenAI from "openai";
 
 export class OpenAIConversationNamingService implements IConversationNamingService {
     
@@ -20,17 +20,15 @@ export class OpenAIConversationNamingService implements IConversationNamingServi
 
         const requestBody = {
             model: AIProviderModel.OpenAINamer,
-            max_tokens: 100,
-            messages: [
-                {
-                    role: Role.System,
-                    content: NamePrompt
-                },
+            max_output_tokens: 100,
+            instructions: NamePrompt,
+            input: [
                 {
                     role: Role.User,
                     content: userPrompt
                 }
-            ]
+            ],
+            stream: false
         };
 
         const response = await fetch(AIProviderURL.OpenAI, {
@@ -47,8 +45,20 @@ export class OpenAIConversationNamingService implements IConversationNamingServi
             throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${await response.text()}`);
         }
 
-        const data = await response.json() as ChatCompletion;
-        const generatedName = data.choices?.[0]?.message?.content;
+        const data = await response.json() as OpenAI.Responses.Response;
+
+        // Try to get the name from output_text first (most common case)
+        if (data.output_text && data.output_text.trim()) {
+            return data.output_text.trim();
+        }
+
+        // Fall back to checking the output array
+        const firstOutput = data.output?.[0];
+        const generatedName = firstOutput && 'content' in firstOutput
+            ? firstOutput.content?.[0]?.type === 'output_text'
+                ? firstOutput.content[0].text
+                : undefined
+            : undefined;
 
         if (!generatedName) {
             throw new Error("Failed to generate conversation name");

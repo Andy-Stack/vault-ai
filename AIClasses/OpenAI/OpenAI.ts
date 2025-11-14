@@ -4,37 +4,25 @@ import type { IAIClass } from "AIClasses/IAIClass";
 import type { IPrompt } from "AIClasses/IPrompt";
 import { StreamingService, type IStreamChunk } from "Services/StreamingService";
 import type { Conversation } from "Conversations/Conversation";
+import type { ConversationContent } from "Conversations/ConversationContent";
 import { AIProvider, AIProviderURL } from "Enums/ApiProvider";
 import { AIFunctionCall } from "AIClasses/AIFunctionCall";
 import { fromString as aiFunctionFromString } from "Enums/AIFunction";
 import type { IAIFunctionDefinition } from "AIClasses/FunctionDefinitions/IAIFunctionDefinition";
-import type VaultkeeperAIPlugin from "main";
 import type { AIFunctionDefinitions } from "AIClasses/FunctionDefinitions/AIFunctionDefinitions";
 import { Role } from "Enums/Role";
 import type { SettingsService } from "Services/SettingsService";
 import type { StoredFunctionCall, StoredFunctionResponse } from "AIClasses/Schemas/AIFunctionTypes";
-import type { ChatCompletionChunk, ChatCompletionTool } from "openai/resources/chat/completions";
 import { StringTools } from "Helpers/StringTools";
-
-interface IToolCallAccumulator {
-    id: string | null;
-    name: string | null;
-    arguments: string;
-}
+import type { ResponseEvent, ResponseOutputTextDelta, ResponseFunctionCallArgumentsDone, ResponseDone, OpenAIFunctionTool } from "./OpenAITypes";
 
 export class OpenAI implements IAIClass {
 
-    private readonly STOP_REASON_TOOL_CALLS: string = "tool_calls";
-
     private readonly apiKey: string;
     private readonly aiPrompt: IPrompt = Resolve<IPrompt>(Services.IPrompt);
-    private readonly plugin: VaultkeeperAIPlugin = Resolve<VaultkeeperAIPlugin>(Services.VaultkeeperAIPlugin);
     private readonly settingsService: SettingsService = Resolve<SettingsService>(Services.SettingsService);
     private readonly streamingService: StreamingService = Resolve<StreamingService>(Services.StreamingService);
     private readonly aiFunctionDefinitions: AIFunctionDefinitions = Resolve<AIFunctionDefinitions>(Services.AIFunctionDefinitions);
-
-    // OpenAI can have multiple tool calls, so we track them by index
-    private accumulatedToolCalls: Map<number, IToolCallAccumulator> = new Map();
 
     public constructor() {
         this.apiKey = this.settingsService.getApiKeyForProvider(AIProvider.OpenAI);
@@ -43,20 +31,152 @@ export class OpenAI implements IAIClass {
     public async* streamRequest(
         conversation: Conversation, allowDestructiveActions: boolean, abortSignal?: AbortSignal
     ): AsyncGenerator<IStreamChunk, void, unknown> {
-        // Reset tool call accumulation state for new request
-        this.accumulatedToolCalls.clear();
 
         const systemPrompt = [
             this.aiPrompt.systemInstruction(),
             await this.aiPrompt.userInstruction()
         ].filter(s => s).join("\n\n");
 
-        const messages = [
-            {
-                role: Role.System,
-                content: systemPrompt
-            },
-            ...conversation.contents
+        const input = this.extractContents(conversation.contents);
+
+        const tools = [{
+            type: "web_search"
+        }, ...this.mapFunctionDefinitions(
+            this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)
+        )];
+
+        const requestBody = {
+            model: this.settingsService.settings.model,
+            instructions: systemPrompt,
+            input: input,
+            tools: tools,
+            stream: true
+        };
+
+        const headers = {
+            "Authorization": `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json"
+        };
+
+        yield* this.streamingService.streamRequest(
+            AIProviderURL.OpenAI,
+            requestBody,
+            (chunk: string) => this.parseStreamChunk(chunk),
+            abortSignal,
+            headers
+        );
+    }
+
+    private parseStreamChunk(chunk: string): IStreamChunk {
+        try {
+            // OpenAI Responses API sends "[DONE]" as the final message, which is not valid JSON
+            if (chunk.trim() === "[DONE]") {
+                return { content: "", isComplete: true };
+            }
+
+            const event = JSON.parse(chunk) as ResponseEvent;
+
+            let text = "";
+            let functionCall: AIFunctionCall | undefined = undefined;
+            let isComplete = false;
+            let shouldContinue = false;
+
+            // Handle different event types
+            switch (event.type) {
+                case "response.output_text.delta": {
+                    // Text content streaming
+                    const deltaEvent = event as ResponseOutputTextDelta;
+                    text = deltaEvent.delta;
+                    break;
+                }
+
+                case "response.refusal.delta": {
+                    // Model refused to respond - treat as text for now
+                    const refusalEvent = event as ResponseOutputTextDelta;
+                    text = refusalEvent.delta;
+                    break;
+                }
+
+                case "response.error": {
+                    // Error occurred during response generation
+                    isComplete = true;
+                    console.error("Response error:", event);
+                    break;
+                }
+
+                case "response.function_call_arguments.delta": {
+                    // Function call arguments streaming - we can ignore these
+                    // as we'll get the complete call in the "done" event
+                    break;
+                }
+
+                case "response.function_call_arguments.done": {
+                    // Complete function call received
+                    const doneEvent = event as ResponseFunctionCallArgumentsDone;
+                    const toolCall = doneEvent.call;
+
+                    if (toolCall.type === "function" && toolCall.function) {
+                        try {
+                            const args = JSON.parse(toolCall.function.arguments) as Record<string, unknown>;
+                            functionCall = new AIFunctionCall(
+                                aiFunctionFromString(toolCall.function.name),
+                                args as Record<string, object>,
+                                toolCall.id
+                            );
+                            // When we receive a function call, we should continue the conversation
+                            shouldContinue = true;
+                        } catch (error) {
+                            console.error("Failed to parse function call arguments:", error);
+                        }
+                    }
+                    break;
+                }
+
+                case "response.completed":
+                case "response.done": {
+                    // Response completed
+                    isComplete = true;
+                    const doneEvent = event as ResponseDone;
+
+                    // Check if the response contains tool calls that should trigger continuation
+                    if (doneEvent.response?.output) {
+                        for (const outputItem of doneEvent.response.output) {
+                            if (outputItem.tool_calls && outputItem.tool_calls.length > 0) {
+                                shouldContinue = true;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+
+                case "response.output_item.added":
+                case "response.output_item.done":
+                    // These events can be used for more granular tracking if needed
+                    // For now, we handle content through the delta events
+                    break;
+
+                default:
+                    // Unknown event type - log but don't error
+                    console.debug("Unknown event type:", event.type);
+                    break;
+            }
+
+            return {
+                content: text,
+                isComplete: isComplete,
+                functionCall: functionCall,
+                shouldContinue: shouldContinue,
+            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Unknown parsing error";
+            console.error("Failed to parse stream chunk:", message, "Chunk:", chunk);
+            return { content: "", isComplete: false, error: `Failed to parse chunk: ${message}` };
+        }
+    }
+
+    private extractContents(conversationContent: ConversationContent[]) {
+        return conversationContent
             .filter(content => content.content.trim() !== "" || content.functionCall.trim() !== "")
             .map(content => {
                 const contentToExtract = content.role === Role.User ? content.promptContent : content.content;
@@ -129,135 +249,15 @@ export class OpenAI implements IAIClass {
                     content: contentToExtract
                 };
             })
-            .filter(message => message.content !== "" || message.tool_calls || message.tool_call_id)
-        ];
-
-        const tools = this.mapFunctionDefinitions(
-            this.aiFunctionDefinitions.getQueryActions(allowDestructiveActions)
-        );
-
-        const requestBody = {
-            model: this.settingsService.settings.model,
-            messages: messages,
-            tools: tools,
-            stream: true
-        };
-
-        const headers = {
-            "Authorization": `Bearer ${this.apiKey}`,
-            "Content-Type": "application/json"
-        };
-
-        yield* this.streamingService.streamRequest(
-            AIProviderURL.OpenAI,
-            requestBody,
-            (chunk: string) => this.parseStreamChunk(chunk),
-            abortSignal,
-            headers
-        );
+            .filter(message => message.content !== "" || message.tool_calls || message.tool_call_id);
     }
 
-    private parseStreamChunk(chunk: string): IStreamChunk {
-        try {
-            // OpenAI sends "[DONE]" as the final message, which is not valid JSON
-            if (chunk.trim() === "[DONE]") {
-                return { content: "", isComplete: true };
-            }
-
-            const data = JSON.parse(chunk) as ChatCompletionChunk;
-
-            let text = "";
-            let functionCall: AIFunctionCall | undefined = undefined;
-            let isComplete = false;
-            let shouldContinue = false;
-
-            const choice = data.choices?.[0];
-            if (!choice) {
-                return { content: "", isComplete: false };
-            }
-
-            const delta = choice.delta;
-
-            // Handle text content
-            if (delta?.content) {
-                text = delta.content;
-            }
-
-            // Handle tool calls - OpenAI streams them incrementally with an index
-            if (delta?.tool_calls) {
-                for (const toolCall of delta.tool_calls) {
-                    const index = toolCall.index;
-
-                    // Get or create accumulator for this tool call index
-                    if (!this.accumulatedToolCalls.has(index)) {
-                        this.accumulatedToolCalls.set(index, {
-                            id: null,
-                            name: null,
-                            arguments: ""
-                        });
-                    }
-
-                    const accumulator = this.accumulatedToolCalls.get(index)!;
-
-                    // Accumulate tool call data
-                    if (toolCall.id) {
-                        accumulator.id = toolCall.id;
-                    }
-                    if (toolCall.function?.name) {
-                        accumulator.name = toolCall.function.name;
-                    }
-                    if (toolCall.function?.arguments) {
-                        accumulator.arguments += toolCall.function.arguments;
-                    }
-                }
-            }
-
-            // Check for completion
-            if (choice.finish_reason) {
-                isComplete = true;
-                shouldContinue = choice.finish_reason === this.STOP_REASON_TOOL_CALLS;
-
-                // If we're finishing with a tool call, create the function call object
-                // For now, we'll handle the first tool call (OpenAI can have multiple)
-                if (shouldContinue && this.accumulatedToolCalls.size > 0) {
-                    // Get the first accumulated tool call
-                    const firstToolCall = this.accumulatedToolCalls.get(0);
-                    if (firstToolCall && firstToolCall.name && firstToolCall.arguments) {
-                        try {
-                            const args = JSON.parse(firstToolCall.arguments) as Record<string, unknown>;
-                            functionCall = new AIFunctionCall(
-                                aiFunctionFromString(firstToolCall.name),
-                                args as Record<string, object>,
-                                firstToolCall.id || undefined
-                            );
-                        } catch (error) {
-                            console.error("Failed to parse accumulated tool call arguments:", error);
-                        }
-                    }
-                }
-            }
-
-            return {
-                content: text,
-                isComplete: isComplete,
-                functionCall: functionCall,
-                shouldContinue: shouldContinue,
-            };
-        } catch (error) {
-            const message = error instanceof Error ? error.message : "Unknown parsing error";
-            console.error("Failed to parse stream chunk:", message, "Chunk:", chunk);
-            return { content: "", isComplete: false, error: `Failed to parse chunk: ${message}` };
-        }
-    }
-
-    private mapFunctionDefinitions(aiFunctionDefinitions: IAIFunctionDefinition[]): ChatCompletionTool[] {
+    private mapFunctionDefinitions(aiFunctionDefinitions: IAIFunctionDefinition[]): OpenAIFunctionTool[] {
         return aiFunctionDefinitions.map((functionDefinition) => ({
             type: "function",
-            function: {
-                name: functionDefinition.name,
-                description: functionDefinition.description,
-                parameters: functionDefinition.parameters
-            }
+            name: functionDefinition.name,
+            description: functionDefinition.description,
+            parameters: functionDefinition.parameters
         }));
     }
 }
