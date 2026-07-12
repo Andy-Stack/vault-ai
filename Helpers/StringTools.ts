@@ -37,6 +37,30 @@ export abstract class StringTools {
         return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
+    // Derives a filename from the first non-empty line stripped of punctuation (hyphens kept), truncated at a word boundary.
+    public static deriveFileName(text: string, maxLength: number = 40, fallback: string = "Pasted text"): string {
+        const firstLine = text.split(/\r?\n/).find(line => line.trim().length > 0) ?? "";
+
+        const sanitized = firstLine
+            .trim()
+            .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+
+        if (!sanitized) {
+            return fallback;
+        }
+
+        if (sanitized.length <= maxLength) {
+            return sanitized;
+        }
+
+        const truncated = sanitized.slice(0, maxLength);
+        const lastSpace = truncated.lastIndexOf(" ");
+
+        return (lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated).trim();
+    }
+
     // Builds a regex from a string that matches flexibly on whitespace but strictly on all other characters.
     public static toWhitespaceFlexibleRegex(input: string): RegExp {
         const pattern = this.escapeRegex(input).replace(/(\\\s|\s)+/g, "\\s+");

@@ -17,7 +17,7 @@
 	import { Event } from "Enums/Event";
 	import type { DiffService } from "Services/DiffService";
 	import type { PlanApprovalService } from "Services/PlanApprovalService";
-	import type { Attachment } from "Conversations/Attachment";
+	import { Attachment } from "Conversations/Attachment";
 	import ChatAttachments from "./ChatAttachments.svelte";
 	import InputDisplay from "./InputDisplay.svelte";
 	import { InputMode } from "Enums/InputMode";
@@ -29,6 +29,9 @@
 	import { hideDrawerElements, restoreDrawerElements } from "Helpers/ElementHelper";
 	import { replaceCopy } from "Helpers/Helpers";
 	import { AIProvider } from "Enums/ApiProvider";
+	import { MimeType } from "Enums/MimeType";
+	import { StringTools } from "Helpers/StringTools";
+	import { FileType } from "Enums/FileType";
 
   export let attachments: Attachment[] = [];
 
@@ -499,7 +502,17 @@
     const dataTransfer = e instanceof ClipboardEvent ? e.clipboardData : e.dataTransfer;
 
     const files = await inputService.getFilesFromDataTransfer(dataTransfer);
-    const plainText = inputService.getTextFromDataTransfer(dataTransfer);
+    let plainText = inputService.getTextFromDataTransfer(dataTransfer);
+
+    // If the user pastes more than X characters then create an attachment
+    if (plainText.trim().length >= 1000) {
+      files.push(new Attachment(
+        `${StringTools.deriveFileName(plainText)}.${FileType.TEXT}`,
+        MimeType.TEXT_PLAIN,
+        StringTools.toBase64(plainText)
+      ));
+      plainText = "";
+    }
 
     const newAttachments = files.filter(file => !attachments.some(attachment => attachment.base64 === file.base64));
     attachments = [...attachments, ...newAttachments];
