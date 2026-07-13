@@ -11,8 +11,9 @@ import { conversationStore } from 'Stores/ConversationStore';
 import { Selector } from 'Enums/Selector';
 import type { ChatService } from 'Services/ChatService';
 import type VaultkeeperAIPlugin from 'main';
+import { createConversationHistoryState } from './ConversationHistoryModalState.svelte';
 
-interface IListItem {
+export interface IListItem {
     id: string;
     date: string;
     updated: Date;
@@ -28,7 +29,7 @@ export class ConversationHistoryModal extends Modal {
     private readonly chatService: ChatService = Resolve<ChatService>(Services.ChatService);
 
     private component: ReturnType<typeof mount> | null = null;
-    private items: IListItem[] = [];
+    private readonly state = createConversationHistoryState();
     private conversations: Conversation[] = [];
     public onModalClose?: () => void;
 
@@ -38,13 +39,32 @@ export class ConversationHistoryModal extends Modal {
     }
 
     onOpen() {
+        const { contentEl, modalEl, containerEl } = this;
+
+        containerEl.addClass(Selector.ConversationHistoryModal);
+        modalEl.addClass(Selector.ConversationHistoryModal);
+
+        const state = this.state;
+
+        this.component = mount(ConversationHistoryModalSvelte, {
+            target: contentEl,
+            props: {
+                get items() { return state.items; },
+                set items(value: IListItem[]) { state.items = value; },
+                get loading() { return state.loading; },
+                onClose: () => this.close(),
+                onDelete: (itemIds: string[]) => this.handleDelete(itemIds),
+                onSelect: (itemId: string) => this.handleSelect(itemId)
+            }
+        });
+
         void this.initializeContent();
     }
 
     private async initializeContent() {
         this.conversations = await this.conversationFileSystemService.getAllConversations();
 
-        this.items = this.conversations
+        this.state.items = this.conversations
         .sort((a, b) => b.updated.getTime() - a.updated.getTime())
         .map((conversation) => {
             const filePath = this.conversationFileSystemService.generateConversationPath(conversation);
@@ -58,24 +78,11 @@ export class ConversationHistoryModal extends Modal {
             };
         });
 
-        const { contentEl, modalEl, containerEl } = this;
-
-        containerEl.addClass(Selector.ConversationHistoryModal);
-        modalEl.addClass(Selector.ConversationHistoryModal);
-
-        this.component = mount(ConversationHistoryModalSvelte, {
-            target: contentEl,
-            props: {
-                items: this.items,
-                onClose: () => this.close(),
-                onDelete: (itemIds: string[]) => this.handleDelete(itemIds),
-                onSelect: (itemId: string) => this.handleSelect(itemId)
-            }
-        });
+        this.state.loading = false;
     }
 
     handleSelect(itemId: string) {
-        const item = this.items.find(i => i.id === itemId);
+        const item = this.state.items.find((i: IListItem) => i.id === itemId);
         const conversation = this.conversations.find(c =>
             this.conversationFileSystemService.generateConversationPath(c) === itemId
         );
@@ -88,7 +95,7 @@ export class ConversationHistoryModal extends Modal {
     }
 
     async handleDelete(itemIds: string[]) {
-        const itemsToDelete = this.items.filter(item => itemIds.includes(item.id));
+        const itemsToDelete = this.state.items.filter((item: IListItem) => itemIds.includes(item.id));
 
         let shouldResetChat = false;
         const currentPath = this.conversationFileSystemService.getCurrentConversationPath();
@@ -107,11 +114,7 @@ export class ConversationHistoryModal extends Modal {
             }
         }
 
-        this.items = this.items.filter(item => !deletedIds.includes(item.id));
-
-        if (this.component) {
-            this.component.items = this.items;
-        }
+        this.state.items = this.state.items.filter((item: IListItem) => !deletedIds.includes(item.id));
 
         if (shouldResetChat) {
             this.chatService.stop();

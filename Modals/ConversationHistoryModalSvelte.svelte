@@ -2,28 +2,43 @@
 	import { Copy } from "Enums/Copy";
 	import { setIcon } from "obsidian";
 	import { fade } from "svelte/transition";
+	import Spinner from "Components/Spinner.svelte";
+	import type { IListItem } from "./ConversationHistoryModal";
 
-  export let items: Array<{id: string, date: string, updated: Date, title: string, selected: boolean}>;
-  export let onClose: () => void;
-  export let onDelete: (itemIds: string[]) => void;
-  export let onSelect: (itemId: string) => void;
+  let {
+    items = $bindable(),
+    loading = false,
+    onClose,
+    onDelete,
+    onSelect
+  }: {
+    items: Array<IListItem>;
+    loading?: boolean;
+    onClose: () => void;
+    onDelete: (itemIds: string[]) => void;
+    onSelect: (itemId: string) => void;
+  } = $props();
 
-  let deleteButton: HTMLButtonElement;
-  let closeButton: HTMLButtonElement;
+  let deleteButton: HTMLButtonElement | undefined = $state();
+  let closeButton: HTMLButtonElement | undefined = $state();
 
-  $: if (deleteButton) {
-    setIcon(deleteButton, 'trash-2');
-  }
-  $: if (closeButton) {
-    setIcon(closeButton, 'circle-x');
-  }
+  $effect(() => {
+    if (deleteButton) {
+      setIcon(deleteButton, 'trash-2');
+    }
+  });
+  $effect(() => {
+    if (closeButton) {
+      setIcon(closeButton, 'circle-x');
+    }
+  });
 
-  let selectedItems = new Set<string>();
-  let searchQuery = "";
+  let selectedItems = $state(new Set<string>());
+  let searchQuery = $state("");
 
-  $: filteredItems = items.filter(item =>
+  let filteredItems = $derived(items.filter(item =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ).sort((a, b) => b.updated.getTime() - a.updated.getTime());
+  ).sort((a, b) => b.updated.getTime() - a.updated.getTime()));
 
   function toggleSelection(itemId: string) {
     if (selectedItems.has(itemId)) {
@@ -31,15 +46,11 @@
     } else {
       selectedItems.add(itemId);
     }
-    selectedItems = selectedItems;
+    selectedItems = new Set(selectedItems);
   }
 
   function toggleAll(state: boolean) {
-    selectedItems.clear();
-    if (state) {
-      selectedItems = new Set(items.map(item => item.id));
-    }
-    selectedItems = selectedItems;
+    selectedItems = state ? new Set(items.map(item => item.id)) : new Set();
   }
 
   function handleDelete() {
@@ -48,8 +59,7 @@
     }
     onDelete(Array.from(selectedItems));
     items = items.filter((item) => !selectedItems.has(item.id))
-    selectedItems.clear();
-    selectedItems = selectedItems;
+    selectedItems = new Set();
   }
 
   function handleConversationClick(itemId: string, event: UIEvent) {
@@ -65,7 +75,7 @@
         id="delete-button"
         class="top-bar-button clickable-icon"
         class:hidden={selectedItems.size === 0}
-        on:click={handleDelete}
+        onclick={handleDelete}
         aria-label="Delete Selected Conversations"
       ></button>
       <input
@@ -81,13 +91,17 @@
         bind:this={closeButton}
         id="close-button"
         class="top-bar-button clickable-icon"
-        on:click={onClose}
+        onclick={onClose}
         aria-label="Close Conversation History"
       ></button>
     </div>
   </div>
   <div class="conversation-history-modal-content">
-    {#if filteredItems.length === 0}
+    {#if loading}
+      <div class="history-loading-state" in:fade={{ duration: 200 }}>
+        <Spinner />
+      </div>
+    {:else if filteredItems.length === 0}
       <p class="history-empty-state" in:fade={{ duration: 200 }}>
         {Copy.NoConversationsFound}
       </p>
@@ -99,29 +113,29 @@
         <input
           type="checkbox"
           class="history-list-modal-checkbox"
-          on:change={(event) => toggleAll(event.currentTarget.checked)}
+          onchange={(event) => toggleAll(event.currentTarget.checked)}
         />
         {#each filteredItems as item (item.id)}
           <span class="history-list-modal-date history-list-modal-clickable"
-            on:click={(e) => handleConversationClick(item.id, e)}
-            on:keydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
+            onclick={(e) => handleConversationClick(item.id, e)}
+            onkeydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
             role="button"
             tabindex="0">{item.date}</span>
           <span class="history-list-modal-separator history-list-modal-clickable"
-            on:click={(e) => handleConversationClick(item.id, e)}
-            on:keydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
+            onclick={(e) => handleConversationClick(item.id, e)}
+            onkeydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
             role="button"
             tabindex="0">|</span>
           <span class="history-list-modal-title history-list-modal-clickable"
-            on:click={(e) => handleConversationClick(item.id, e)}
-            on:keydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
+            onclick={(e) => handleConversationClick(item.id, e)}
+            onkeydown={(e) => e.key === 'Enter' && handleConversationClick(item.id, e)}
             role="button"
             tabindex="0">{item.title}</span>
           <input
             type="checkbox"
             class="history-list-modal-checkbox"
             checked={selectedItems.has(item.id)}
-            on:change={() => toggleSelection(item.id)}
+            onchange={() => toggleSelection(item.id)}
           />
         {/each}
       </div>
@@ -172,6 +186,12 @@
     margin: 3vh 0px;
     text-align: center;
     color: var(--text-muted);
+  }
+
+  .history-loading-state {
+    display: flex;
+    justify-content: center;
+    margin: 3vh 0px;
   }
 
   .history-list-modal-list {

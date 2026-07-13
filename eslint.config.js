@@ -5,6 +5,7 @@ import tseslint from "typescript-eslint";
 import obsidianmd from "eslint-plugin-obsidianmd";
 import eslintComments from "@eslint-community/eslint-plugin-eslint-comments";
 import globals from "globals";
+import svelte from "eslint-plugin-svelte";
 
 export default defineConfig([
   {
@@ -83,5 +84,15 @@ export default defineConfig([
   {
     files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+
+  {
+    files: ["**/*.svelte.ts"],
+    extends: [svelte.configs.recommended],
+    languageOptions: {
+      parserOptions: {
+        parser: tseslint.parser,
+      },
+    },
   },
 ]);
