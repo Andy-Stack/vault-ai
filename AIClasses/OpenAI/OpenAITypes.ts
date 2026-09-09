@@ -86,6 +86,15 @@ export interface ResponseFailedEvent extends ResponseEvent {
     };
 }
 
+export interface ResponseIncompleteEvent extends ResponseEvent {
+    type: "response.incomplete";
+    response: {
+        incomplete_details?: {
+            reason?: string;
+        } | null;
+    };
+}
+
 export interface OpenAIToolTool {
     type: "function";
     name: string;

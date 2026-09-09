@@ -7,7 +7,7 @@ import { AIProvider, AIProviderURL } from "Enums/ApiProvider";
 import { AIToolCall } from "AIClasses/AIToolCall";
 import { fromString as aiToolFromString } from "Enums/AITool";
 import type { IAIToolDefinition } from "AIClasses/ToolDefinitions/IAIToolDefinition";
-import type { ResponseEvent, ResponseOutputTextDelta, ResponseOutputItemAdded, ResponseOutputItemDone, ResponseErrorEvent, ResponseFailedEvent, OpenAIToolTool, ResponsesAPIInput } from "./OpenAITypes";
+import type { ResponseEvent, ResponseOutputTextDelta, ResponseOutputItemAdded, ResponseOutputItemDone, ResponseErrorEvent, ResponseFailedEvent, ResponseIncompleteEvent, OpenAIToolTool, ResponsesAPIInput } from "./OpenAITypes";
 import { Exception } from "Helpers/Exception";
 import { ApiErrorType } from "Types/ApiError";
 import { MimeType, toMimeType } from "Enums/MimeType";
@@ -137,6 +137,18 @@ export class OpenAI extends BaseAIClass {
                 case "response.completed":
                 case "response.done": {
                     // Response completed
+                    isComplete = true;
+                    break;
+                }
+
+                case "response.incomplete": {
+                    // Response ended early (e.g. hit max_output_tokens or was content-filtered).
+                    // The partial content already streamed is still a valid response, so complete
+                    // normally like response.completed rather than discarding it as an error - but log the reason
+                    // so a truncated response is diagnosable instead of silently indistinguishable from a full one.
+                    const incompleteEvent = event as ResponseIncompleteEvent;
+                    const reason = incompleteEvent.response?.incomplete_details?.reason;
+                    Exception.log(`OpenAI response.incomplete: ${reason || "unknown reason"}`);
                     isComplete = true;
                     break;
                 }

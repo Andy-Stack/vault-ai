@@ -30,9 +30,9 @@ export class VaultCacheService {
   private folders: Map<string, TFolder> = new Map();
   private mapping: FileTagMapping = new FileTagMapping();
 
-  private preparedTags: { prepared: Fuzzysort.Prepared, tag: string }[] = [];
-  private preparedFiles: { prepared: Fuzzysort.Prepared, file: TFile }[] = [];
-  private preparedFolders: { prepared: Fuzzysort.Prepared, folder: TFolder }[] = [];
+  private preparedTags: { prepared: fuzzysort.Prepared, tag: string }[] = [];
+  private preparedFiles: { prepared: fuzzysort.Prepared, file: TFile }[] = [];
+  private preparedFolders: { prepared: fuzzysort.Prepared, folder: TFolder }[] = [];
 
   private initialised = false;
 
@@ -53,15 +53,15 @@ export class VaultCacheService {
     void tryInitialise();
   }
 
-  public matchTag(input: string): Fuzzysort.KeyResults<{ prepared: Fuzzysort.Prepared, tag: string }> {
+  public matchTag(input: string): fuzzysort.KeyResults<{ prepared: fuzzysort.Prepared, tag: string }> {
     return fuzzysort.go(input.toLowerCase(), this.preparedTags, this.fuzzysortOptions);
   }
 
-  public matchFile(input: string): Fuzzysort.KeyResults<{ prepared: Fuzzysort.Prepared, file: TFile }> {
+  public matchFile(input: string): fuzzysort.KeyResults<{ prepared: fuzzysort.Prepared, file: TFile }> {
     return fuzzysort.go(input.toLowerCase(), this.preparedFiles, this.fuzzysortOptions);
   }
 
-  public matchFolder(input: string): Fuzzysort.KeyResults<{ prepared: Fuzzysort.Prepared, folder: TFolder }> {
+  public matchFolder(input: string): fuzzysort.KeyResults<{ prepared: fuzzysort.Prepared, folder: TFolder }> {
     return fuzzysort.go(input.toLowerCase(), this.preparedFolders, this.fuzzysortOptions);
   }
 

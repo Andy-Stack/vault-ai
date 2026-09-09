@@ -109,6 +109,7 @@ export class StreamingService {
     parseStreamChunk: (chunk: string) => IStreamChunk): AsyncGenerator<IStreamChunk, boolean, unknown> {
       let buffer = "";
       let lastChunkWasComplete = false;
+      let receivedAnyEvent = false;
 
       const decoder = new TextDecoder();
 
@@ -128,6 +129,7 @@ export class StreamingService {
             const jsonStr = line.trim().substring(5);
             try {
               const chunk = parseStreamChunk(jsonStr);
+              receivedAnyEvent = true;
               lastChunkWasComplete = chunk.isComplete;
               yield chunk;
             } catch (error) {
@@ -136,7 +138,7 @@ export class StreamingService {
               }
 
               Exception.log(error);
-              
+
               yield {
                 content: "",
                 isComplete: true,
@@ -150,6 +152,12 @@ export class StreamingService {
         if (done) {
           break;
         }
+      }
+
+      // The stream closed without the provider ever signaling completion, despite having sent at least one event.
+      // This is an unexpectedly terminated connection (e.g. dropped mid-response) rather than a genuinely empty/short response.
+      if (receivedAnyEvent && !lastChunkWasComplete) { // Throw instead of reporting as a silent success.
+        throw ApiError.fromNetworkError(new Error("Stream ended unexpectedly before completion"));
       }
 
       return lastChunkWasComplete;

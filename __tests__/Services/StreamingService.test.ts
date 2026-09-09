@@ -322,16 +322,22 @@ describe('StreamingService', () => {
 	});
 
 	describe('streamRequest - Completion Handling', () => {
-		it('should yield completion chunk if last chunk was not complete', async () => {
+		it('should surface an error instead of a silent completion if the stream ends without a completion signal', async () => {
+			// Regression test: a connection that drops mid-response (server closes the
+			// stream after sending content but before its own "done" event) must not be
+			// reported to callers as a successful empty completion - see StreamingService's
+			// processStream(), which used to let this through as { content: '', isComplete: true }.
 			const chunks = [
 				'data: {"content":"Hello","done":false}\n',
 				'data: {"content":" World","done":false}\n'
 			];
 
-			mockFetch.mockResolvedValue({
+			// Every retry attempt sees the same truncated stream, so retries are exhausted
+			// and the final chunk yielded is the error.
+			mockFetch.mockImplementation(() => Promise.resolve({
 				ok: true,
 				body: createMockStream(chunks)
-			});
+			}));
 
 			const results: IStreamChunk[] = [];
 			for await (const chunk of service.streamRequest(
@@ -342,9 +348,10 @@ describe('StreamingService', () => {
 				results.push(chunk);
 			}
 
-			expect(results).toHaveLength(3);
-			expect(results[2]).toEqual({ content: '', isComplete: true });
-		});
+			const lastChunk = results[results.length - 1];
+			expect(lastChunk.isComplete).toBe(true);
+			expect(lastChunk.error).toBeTruthy();
+		}, 30000);
 
 		it('should not yield extra completion if last chunk was complete', async () => {
 			const chunks = [

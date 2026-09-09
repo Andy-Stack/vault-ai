@@ -197,6 +197,25 @@ describe('OpenAI', () => {
             expect(result.shouldContinue).toBe(false);
         });
 
+        it('should complete normally (not as a silent no-op) on response.incomplete', () => {
+            // Regression test: response.incomplete (e.g. max_output_tokens truncation) previously
+            // fell into the "unknown event" default branch, which reports isComplete: false and
+            // lets the stream just end - silently dropping the fact that the response was cut short.
+            const exceptionSpy = vi.spyOn(Exception, 'log');
+
+            const chunk = JSON.stringify({
+                type: 'response.incomplete',
+                response: {
+                    incomplete_details: { reason: 'max_output_tokens' }
+                }
+            });
+
+            const result = (openai as any).parseStreamChunk(chunk);
+
+            expect(result.isComplete).toBe(true);
+            expect(exceptionSpy).toHaveBeenCalledWith(expect.stringContaining('max_output_tokens'));
+        });
+
         it('should handle unknown event types gracefully', () => {
             const exceptionSpy = vi.spyOn(Exception, 'log');
 
